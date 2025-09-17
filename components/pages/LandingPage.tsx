@@ -1,48 +1,45 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Shield, 
-  Trophy, 
-  Users, 
-  TrendingUp, 
-  CheckCircle, 
-  ArrowRight,
-  Star,
-  Award,
-  Target,
+  Gift, 
+  DollarSign, 
+  Calendar, 
   Zap,
-  BarChart3,
-  FileText,
-  Smartphone
+  Percent,
+  RefreshCw,
+  ArrowRight
 } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-dark-900 text-white">
+    <div className="max-h-screen bg-white">
       {/* Header */}
-      <header className="bg-dark-900 border-b border-dark-700 sticky top-0 z-50">
+      <header className="bg-[#0f172a] border-b border-gray-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary-600 rounded flex items-center justify-center">
-                <Trophy className="w-5 h-5 text-white" />
+            <div className="flex items-center space-x-3">
+              <img 
+                src="https://wdqobcvasxfiettueifs.supabase.co/storage/v1/object/public/imagem_logo/tft_base.png" 
+                alt="PremiosBase Logo" 
+                className="w-8 h-8"
+              />
+              <div className="flex items-center space-x-1">
+                <span className="text-xl font-bold text-blue-400">Premios</span>
+                <span className="text-xl font-bold text-red-400">Base</span>
               </div>
-              <span className="text-xl font-bold">
-                PREMIOS<span className="text-blue-500">.</span><span className="text-primary-500">base</span>
-              </span>
             </div>
             <div className="flex items-center space-x-4">
               <Link 
-                to="/login" 
+                to="/register" 
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-all duration-200"
               >
-                Começar
+                Cadastrar
               </Link>
               <Link 
-                to="/register" 
-                className="bg-primary-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-primary-700 transition-all duration-200"
+                to="/login" 
+                className="bg-red-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-red-700 transition-all duration-200"
               >
-                Cadastrar
+                Entrar
               </Link>
             </div>
           </div>
@@ -50,218 +47,168 @@ const LandingPage: React.FC = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-20 pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <section className="relative pt-20 pb-0 px-4 sm:px-6 lg:px-8 overflow-hidden min-h-[700px]">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center relative min-h-[600px]">
             {/* Left Side - Text Content */}
-            <div className="space-y-8">
-              <h1 className="text-5xl md:text-6xl font-bold leading-tight">
-                A plataforma completa para{' '}
-                <span className="text-primary-500">corretores</span>{' '}
-                de seguros gerenciarem suas{' '}
-                <span className="text-primary-500">apólices</span>{' '}
-                de forma{' '}
-                <span className="text-primary-500">simples</span>{' '}
-                e eficiente.
+            <div className="space-y-8 relative z-10">
+              <h1 className="text-4xl md:text-5xl font-bold leading-tight text-gray-900">
+                Muito mais que prêmios: parceria de verdade para o corretor
               </h1>
               
-              <h2 className="text-2xl font-bold text-white">
-                Organize, registre e acompanhe suas apólices em um só lugar!
-              </h2>
-              
-              <p className="text-lg text-gray-300 leading-relaxed">
-                Sistema desenvolvido especialmente para corretores de seguros, com foco na simplicidade e 
-                praticidade. Cadastre apólices de seguro auto e residencial, visualize histórico completo 
-                e mantenha controle total sobre seus negócios.
+              <p className="text-lg text-gray-600 leading-relaxed">
+                Inscreva-se no Prêmios Base, participe de campanhas a cada apólice emitida e troque por recompensas incríveis. 
+                Com o suporte comercial da Base, você vende mais e vai mais longe.
               </p>
               
+              <Link 
+                to="/register" 
+                className="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-all duration-200 inline-flex items-center"
+              >
+                Vem pra Premios.Base
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Link>
             </div>
 
-            {/* Right Side - Visual Element */}
+            {/* Right Side - Trophy Image */}
             <div className="relative">
-              <div className="relative z-10">
-                {/* Trophy Statue Illustration */}
-                <div className="w-full h-96 bg-gradient-to-br from-primary-500/20 to-primary-700/20 rounded-2xl flex items-center justify-center relative overflow-hidden">
-                  <div className="text-center">
-                    <Trophy className="w-32 h-32 text-primary-500 mx-auto mb-4" />
-                    <div className="w-24 h-24 bg-primary-600 rounded-full mx-auto flex items-center justify-center">
-                      <Award className="w-12 h-12 text-white" />
-                    </div>
-                  </div>
-                  
-                  {/* Decorative Elements */}
-                  <div className="absolute top-4 right-4 w-8 h-8 bg-primary-400 rounded-full opacity-60"></div>
-                  <div className="absolute bottom-8 left-8 w-6 h-6 bg-primary-300 rounded-full opacity-40"></div>
-                  <div className="absolute top-1/2 left-4 w-4 h-4 bg-primary-500 rounded-full opacity-50"></div>
-                </div>
+              <div className="w-full h-full flex items-center justify-start lg:justify-center">
+                <img 
+                  src="https://wdqobcvasxfiettueifs.supabase.co/storage/v1/object/public/imagem_logo/premios_ftt.webp" 
+                  alt="Troféu Base Recompensas" 
+                  className="w-[700px] h-[700px] object-contain transform rotate-12"
+                />
               </div>
-              
-              {/* Background Elements */}
-              <div className="absolute -top-4 -right-4 w-32 h-32 bg-primary-600/10 rounded-full blur-xl"></div>
-              <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-primary-500/10 rounded-full blur-lg"></div>
             </div>
           </div>
         </div>
-        
-        {/* Bottom Red Section */}
-        <div className="absolute -bottom-16 left-0 right-0 h-32 bg-primary-600 transform skew-y-1"></div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Tudo que você precisa em um só lugar
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Gerencie suas apólices, acompanhe métricas e conquiste prêmios de forma simples e eficiente.
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-8 rounded-2xl border border-blue-100">
-              <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mb-6">
-                <Shield className="w-6 h-6 text-white" />
+      <section className="pt-0 pb-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Card 1: Vendeu? Ganhou */}
+            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center mb-6">
+                <Gift className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Gestão de Apólices</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Vendeu? Ganhou.</h3>
               <p className="text-gray-600">
-                Registre e gerencie todas as suas apólices de seguro auto e residencial em um só lugar.
+                Cada apólice emitida conta para a premiação. Bateu a meta, você desbloqueia recompensas maiores – simples assim.
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-8 rounded-2xl border border-green-100">
-              <div className="w-12 h-12 bg-green-600 rounded-xl flex items-center justify-center mb-6">
-                <TrendingUp className="w-6 h-6 text-white" />
+            {/* Card 2: Prêmios exclusivos */}
+            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-6">
+                <DollarSign className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Métricas em Tempo Real</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Prêmios exclusivos</h3>
               <p className="text-gray-600">
-                Acompanhe seu desempenho com dashboards intuitivos e relatórios detalhados.
+                Preencha suas apólices aqui. Cadastre suas apólices direto no site. Informe os dados, anexe os documentos e envie para a Base em poucos cliques.
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-purple-50 to-violet-50 p-8 rounded-2xl border border-purple-100">
-              <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center mb-6">
-                <Trophy className="w-6 h-6 text-white" />
+            {/* Card 3: Campanhas Contínuas */}
+            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-red-600 rounded-lg flex items-center justify-center mb-6">
+                <Calendar className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Relatórios Detalhados</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Campanhas Contínuas</h3>
               <p className="text-gray-600">
-                Acompanhe seu desempenho com relatórios completos e métricas detalhadas.
+                Campanhas diárias, semanais e mensais – oportunidades constantes para você vender mais e ganhar prêmios com a Base.
               </p>
             </div>
 
-            <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-8 rounded-2xl border border-orange-100">
-              <div className="w-12 h-12 bg-orange-600 rounded-xl flex items-center justify-center mb-6">
-                <Users className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Validação de CNPJ</h3>
-              <p className="text-gray-600">
-                Validação automática de CNPJ para garantir dados corretos e confiáveis.
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-br from-red-50 to-rose-50 p-8 rounded-2xl border border-red-100">
-              <div className="w-12 h-12 bg-red-600 rounded-xl flex items-center justify-center mb-6">
-                <Target className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Metas e Objetivos</h3>
-              <p className="text-gray-600">
-                Defina metas personalizadas e acompanhe seu progresso em tempo real.
-              </p>
-            </div>
-
-            <div className="bg-gradient-to-br from-teal-50 to-cyan-50 p-8 rounded-2xl border border-teal-100">
-              <div className="w-12 h-12 bg-teal-600 rounded-xl flex items-center justify-center mb-6">
+            {/* Card 4: Rápido e fácil */}
+            <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+              <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center mb-6">
                 <Zap className="w-6 h-6 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Interface Intuitiva</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Rápido e fácil</h3>
               <p className="text-gray-600">
-                Design moderno e responsivo para uma experiência de usuário excepcional.
+                Inscreva-se em minutos e já envie suas apólices pelo site.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">
-              Por que escolher o PremiosBase?
-            </h2>
-            <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-              A plataforma mais completa e confiável para corretores de seguros.
-            </p>
+      {/* How Prizes Work Section */}
+      <section className="pt-0 pb-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Side - Text Content */}
+            <div className="space-y-8">
+              <h2 className="text-2xl font-bold text-red-600">
+                COMO FUNCIONAM NOSSOS PRÊMIOS?
+              </h2>
+              
+              <h3 className="text-4xl font-bold text-gray-900">
+                Prêmios que combinam com você
+              </h3>
+              
+              <div className="space-y-6">
+                <div className="flex items-start space-x-4">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <Percent className="w-4 h-4 text-white" />
+                  </div>
+                  <p className="text-lg text-gray-600">
+                    Participação gratuita e resgate sem burocracia, direto pelo Portal do Corretor.
+                  </p>
+                </div>
+                
+                <div className="flex items-start space-x-4">
+                  <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+                    <RefreshCw className="w-4 h-4 text-white" />
+                  </div>
+                  <p className="text-lg text-gray-600">
+                    Campanhas que cabem no seu ritmo, com metas claras para todo perfil de corretor.
+                  </p>
+                </div>
+              </div>
+              
+              <Link 
+                to="/register" 
+                className="bg-red-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-red-700 transition-all duration-200 inline-flex items-center"
+              >
+                Participe!
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Link>
+            </div>
+
+            {/* Right Side - Image */}
+            <div className="relative">
+              <div className="w-full h-80 flex items-center justify-center">
+                <img 
+                  src="https://wdqobcvasxfiettueifs.supabase.co/storage/v1/object/public/imagem_logo/premios_ftt.webp" 
+                  alt="Como funcionam os prêmios" 
+                  className="w-[300px] h-[300px] object-contain"
+                />
+              </div>
+            </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">100% Seguro</h3>
-              <p className="text-blue-100">Seus dados protegidos com criptografia de nível bancário.</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Award className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Organização Total</h3>
-              <p className="text-blue-100">Mantenha todos os seus dados organizados e acessíveis.</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Aumente Vendas</h3>
-              <p className="text-blue-100">Ferramentas que impulsionam seu desempenho comercial.</p>
-            </div>
-
-            <div className="text-center">
-              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-white" />
-              </div>
-              <h3 className="text-xl font-semibold text-white mb-2">Suporte 24/7</h3>
-              <p className="text-blue-100">Equipe especializada sempre disponível para ajudar.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-gray-900 mb-6">
-            Pronto para organizar seus negócios?
-          </h2>
-          <p className="text-xl text-gray-600 mb-8">
-            Junte-se a milhares de corretores que já estão organizando suas apólices de forma eficiente.
-          </p>
-          <Link 
-            to="/login" 
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-12 py-4 rounded-xl font-semibold text-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl inline-flex items-center"
-          >
-            Começar
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Link>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-[#0f172a] border-t border-gray-700 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Trophy className="w-5 h-5 text-white" />
+            <div className="flex items-center space-x-3 mb-4 md:mb-0">
+              <img 
+                src="https://wdqobcvasxfiettueifs.supabase.co/storage/v1/object/public/imagem_logo/tft_base.png" 
+                alt="PremiosBase Logo" 
+                className="w-8 h-8"
+              />
+              <div className="flex items-center space-x-1">
+                <span className="text-xl font-bold text-blue-400">Premios</span>
+                <span className="text-xl font-bold text-red-400">Base</span>
               </div>
-              <span className="text-xl font-bold">PremiosBase</span>
             </div>
             <div className="text-gray-400 text-sm">
-              © 2024 PremiosBase. Todos os direitos reservados.
+              © 2024 Premios.Base. Todos os direitos reservados.
             </div>
           </div>
         </div>

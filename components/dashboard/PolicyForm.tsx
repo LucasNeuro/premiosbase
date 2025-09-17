@@ -6,7 +6,7 @@ import Input from '../ui/Input';
 import Button from '../ui/Button';
 import Card from '../ui/Card';
 import Alert from '../ui/Alert';
-import { currencyMask, unmaskCurrency } from '../../utils/masks';
+import { currencyMaskFree, unmaskCurrency } from '../../utils/masks';
 import Spinner from '../ui/Spinner';
 
 const PolicyForm: React.FC = () => {
@@ -118,7 +118,7 @@ const PolicyForm: React.FC = () => {
                             <input
                                 type="text"
                                 value={premiumValue}
-                                onChange={(e) => setPremiumValue(currencyMask(e.target.value))}
+                                onChange={(e) => setPremiumValue(currencyMaskFree(e.target.value))}
                                 placeholder="R$ 0,00"
                                 className="form-input"
                                 required

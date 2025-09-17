@@ -9,7 +9,11 @@ interface AuthContextType {
     loading: boolean;
     login: (email: string, password: string) => Promise<{ success: boolean; message: string }>;
     logout: () => Promise<void>;
-           register: (userData: Omit<User, 'id'> & { password: string }) => Promise<{ success: boolean; message: string }>;
+    register: (userData: Omit<User, 'id'> & { 
+        password: string;
+        hasMultipleCpds?: boolean;
+        additionalCpds?: Array<{id: string, number: string, name: string}>;
+    }) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -73,6 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 email: userData.email,
                 cnpj: userData.cnpj,
                 cpd: userData.cpd,
+                is_admin: userData.is_admin || false,
             };
 
             // Salvar no localStorage
@@ -95,7 +100,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
-           const register = async (userData: Omit<User, 'id'> & { password: string }) => {
+           const register = async (userData: Omit<User, 'id'> & { 
+               password: string;
+               hasMultipleCpds?: boolean;
+               additionalCpds?: Array<{id: string, number: string, name: string}>;
+           }) => {
         try {
             console.log('Iniciando cadastro de usuário:', userData);
             
@@ -103,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const { data: existingUsers, error: checkError } = await supabase
                 .from('users')
                 .select('email, cnpj, cpd')
-                .or(`email.eq.${userData.email},cnpj.eq.${userData.cnpj},cpd.eq.${userData.cpd}`);
+                .or(`email.eq.${userData.email},cnpj.eq.${userData.cnpj}${userData.cpd ? `,cpd.eq.${userData.cpd}` : ''}`);
 
             if (checkError) {
                 console.error('Erro ao verificar usuário existente:', checkError);
@@ -116,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (existingUser.cnpj === userData.cnpj) {
                     return { success: false, message: 'CNPJ já cadastrado.' };
                 }
-                if (existingUser.cpd === userData.cpd) {
+                if (userData.cpd && existingUser.cpd === userData.cpd) {
                     return { success: false, message: 'CPD já cadastrado.' };
                 }
             }
@@ -127,23 +136,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const passwordHash = await bcrypt.hash(userData.password, 10);
             
                    // Create user record in our custom users table
+                   const userInsertData: any = {
+                       name: userData.name,
+                       phone: userData.phone,
+                       email: userData.email,
+                       cnpj: userData.cnpj,
+                       has_multiple_cpds: userData.hasMultipleCpds || false,
+                       password_hash: passwordHash,
+                       cnpj_data: null, // Sem dados de CNPJ por enquanto
+                   };
+
+                   // Só adicionar CPD se não for múltiplos CPDs
+                   if (!userData.hasMultipleCpds && userData.cpd) {
+                       userInsertData.cpd = userData.cpd;
+                   }
+
                    const { data: newUser, error: userError } = await supabase
                        .from('users')
-                       .insert({
-                           name: userData.name,
-                           phone: userData.phone,
-                           email: userData.email,
-                           cnpj: userData.cnpj,
-                           cpd: userData.cpd,
-                           password_hash: passwordHash,
-                           cnpj_data: null, // Sem dados de CNPJ por enquanto
-                       })
-                       .select('id, name, phone, email, cnpj, cpd')
+                       .insert(userInsertData)
+                       .select('id, name, phone, email, cnpj, cpd, has_multiple_cpds')
                        .single();
 
             if (userError) {
                 console.error('Erro ao criar usuário:', userError);
                 return { success: false, message: `Erro ao criar usuário: ${userError.message}` };
+            }
+
+            // Salvar CPDs adicionais se existirem (formato JSONB)
+            if (userData.hasMultipleCpds && userData.additionalCpds && userData.additionalCpds.length > 0) {
+                const cpdData = {
+                    cpds: userData.additionalCpds.map(cpd => ({
+                        id: cpd.id,
+                        number: cpd.number,
+                        name: cpd.name || `CPD ${cpd.number}`,
+                        isActive: true
+                    }))
+                };
+
+                const { error: cpdError } = await supabase
+                    .from('users')
+                    .update({ cpd: cpdData })
+                    .eq('id', newUser.id);
+
+                if (cpdError) {
+                    console.error('Erro ao salvar CPDs adicionais:', cpdError);
+                    // Não falhar o cadastro por causa dos CPDs adicionais
+                }
             }
 
             console.log('Usuário criado com sucesso!', newUser.id);

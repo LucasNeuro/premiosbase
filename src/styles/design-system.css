@@ -12,6 +12,7 @@
   --light-blue: #4285F4;
   --dark-bg: #111827;
   --sidebar-blue: #0F172A;
+  --header-dark: #0f172a;
   
   /* Cores de Apoio */
   --accent-red: #EF4444;
@@ -95,7 +96,7 @@ body {
 }
 
 .btn-primary {
-  background: var(--gradient-button);
+  background: #1E293B;
   color: var(--white);
   box-shadow: var(--shadow-md);
   border: 2px solid transparent;
@@ -105,7 +106,7 @@ body {
 .btn-primary:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: var(--shadow-lg);
-  background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+  background: #334155;
 }
 
 .btn-primary:active {
@@ -591,7 +592,7 @@ body {
   border-radius: var(--radius-sm);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
   overflow: hidden;
-  border: 2px solid var(--primary-blue);
+  border: 2px solid #49de80;
   display: flex;
   flex-direction: column;
   min-height: 600px;
@@ -606,7 +607,7 @@ body {
   left: 0;
   right: 0;
   height: 4px;
-  background: linear-gradient(90deg, var(--primary-blue), var(--primary-purple));
+  background: linear-gradient(90deg, #49de80, #22c55e);
   z-index: 1;
 }
 

@@ -57,8 +57,6 @@ const ModernLoginForm: React.FC = () => {
 
     return (
         <ModernForm
-            title="Entrar"
-            subtitle="Digite suas credenciais para acessar sua conta"
             onSubmit={handleSubmit}
         >
             {message && <Alert message={message.text} type={message.type} onClose={() => setMessage(null)} />}

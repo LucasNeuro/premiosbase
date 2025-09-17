@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useAuth } from '../../hooks/useAuth';
-import { Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, CheckCircle, Plus, X, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const schema = yup.object({
@@ -11,7 +11,17 @@ const schema = yup.object({
   phone: yup.string().required('Telefone é obrigatório'),
   email: yup.string().email('Email inválido').required('Email é obrigatório'),
   cnpj: yup.string().required('CNPJ é obrigatório'),
-  cpd: yup.string().required('CPD é obrigatório'),
+  cpd: yup.string().when('hasMultipleCpds', {
+    is: false,
+    then: (schema) => schema.required('CPD é obrigatório'),
+    otherwise: (schema) => schema.notRequired()
+  }),
+  hasMultipleCpds: yup.boolean(),
+  additionalCpds: yup.array().when('hasMultipleCpds', {
+    is: true,
+    then: (schema) => schema.min(1, 'Adicione pelo menos um CPD').max(5, 'Máximo de 5 CPDs permitidos'),
+    otherwise: (schema) => schema.notRequired()
+  }),
   password: yup.string().min(6, 'Senha deve ter pelo menos 6 caracteres').required('Senha é obrigatória'),
   confirmPassword: yup.string().oneOf([yup.ref('password')], 'Senhas não coincidem').required('Confirmação de senha é obrigatória'),
 }).required();
@@ -45,6 +55,10 @@ const SimpleRegisterForm: React.FC = () => {
   const [cnpjValue, setCnpjValue] = useState('');
   const [phoneValue, setPhoneValue] = useState('');
   const [cpdValue, setCpdValue] = useState('');
+  
+  // Estados para múltiplos CPDs
+  const [hasMultipleCpds, setHasMultipleCpds] = useState(false);
+  const [additionalCpds, setAdditionalCpds] = useState<Array<{id: string, number: string, name: string}>>([]);
 
   const {
     register,
@@ -74,6 +88,31 @@ const SimpleRegisterForm: React.FC = () => {
     setValue('cpd', formatted);
   };
 
+  // Funções para gerenciar CPDs adicionais
+  const addAdditionalCpd = () => {
+    if (additionalCpds.length >= 5) {
+      setMessage({ type: 'error', text: 'Máximo de 5 CPDs permitidos.' });
+      return;
+    }
+    
+    const newCpd = {
+      id: Date.now().toString(),
+      number: '',
+      name: ''
+    };
+    setAdditionalCpds([...additionalCpds, newCpd]);
+  };
+
+  const removeAdditionalCpd = (id: string) => {
+    setAdditionalCpds(additionalCpds.filter(cpd => cpd.id !== id));
+  };
+
+  const updateAdditionalCpd = (id: string, field: 'number' | 'name', value: string) => {
+    setAdditionalCpds(additionalCpds.map(cpd => 
+      cpd.id === id ? { ...cpd, [field]: value } : cpd
+    ));
+  };
+
   const onSubmit = async (data: FormData) => {
     setIsLoading(true);
     setMessage(null);
@@ -85,6 +124,8 @@ const SimpleRegisterForm: React.FC = () => {
         email: data.email,
         cnpj: data.cnpj,
         cpd: data.cpd,
+        hasMultipleCpds: hasMultipleCpds,
+        additionalCpds: additionalCpds,
         password: data.password,
       });
 
@@ -104,6 +145,10 @@ const SimpleRegisterForm: React.FC = () => {
         setPhoneValue('');
         setCpdValue('');
         
+        // Limpar estados de múltiplos CPDs
+        setHasMultipleCpds(false);
+        setAdditionalCpds([]);
+        
         // Redirecionar para o dashboard após 2 segundos
         setTimeout(() => {
           navigate('/dashboard');
@@ -119,18 +164,9 @@ const SimpleRegisterForm: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto">
       <div className="card animate-fade-in">
         <div className="card-body">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-card rounded-full flex items-center justify-center mx-auto mb-4 shadow-glow">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gradient mb-2">Criar Conta</h2>
-            <p className="text-gray-600">Preencha os dados abaixo para criar sua conta</p>
-          </div>
 
         {message && (
           <div className={`alert ${
@@ -148,7 +184,7 @@ const SimpleRegisterForm: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="form-group">
               <label className="form-label">
                 CNPJ *
@@ -168,133 +204,252 @@ const SimpleRegisterForm: React.FC = () => {
               )}
             </div>
 
+            {!hasMultipleCpds && (
+              <div className="form-group">
+                <label className="form-label">
+                  CPD *
+                </label>
+                <input
+                  type="text"
+                  value={cpdValue}
+                  onChange={handleCpdChange}
+                  placeholder="00000000000000"
+                  className="form-input"
+                />
+                {errors.cpd && (
+                  <div className="form-error">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.cpd.message}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Campo para múltiplos CPDs */}
+          <div className="form-group">
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex items-center gap-3">
+                <label className="form-label mb-0 text-gray-700">
+                  Possuo mais de um CPD
+                </label>
+                <span className="text-xs text-gray-500">(Máximo 5 CPDs)</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setHasMultipleCpds(!hasMultipleCpds);
+                  if (hasMultipleCpds) {
+                    setAdditionalCpds([]);
+                    setCpdValue('');
+                    setValue('cpd', '');
+                  }
+                }}
+                className="flex items-center gap-2 text-sm font-medium transition-colors"
+              >
+                {hasMultipleCpds ? (
+                  <>
+                    <ToggleRight className="w-6 h-6 text-blue-600" />
+                    <span className="text-blue-600">Ativado</span>
+                  </>
+                ) : (
+                  <>
+                    <ToggleLeft className="w-6 h-6 text-gray-400" />
+                    <span className="text-gray-500">Desativado</span>
+                  </>
+                )}
+              </button>
+            </div>
+            
+            {hasMultipleCpds && (
+              <div className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-semibold text-blue-800">CPDs Adicionais</h4>
+                    <p className="text-xs text-blue-600">
+                      {additionalCpds.length}/5 CPDs cadastrados
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={addAdditionalCpd}
+                    disabled={additionalCpds.length >= 5}
+                    className="flex items-center gap-2 px-3 py-1 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Adicionar CPD
+                  </button>
+                </div>
+                
+                {additionalCpds.map((cpd, index) => (
+                  <div key={cpd.id} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-white rounded-lg border border-blue-200">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Número do CPD
+                      </label>
+                      <input
+                        type="text"
+                        value={cpd.number}
+                        onChange={(e) => updateAdditionalCpd(cpd.id, 'number', formatCPD(e.target.value))}
+                        placeholder="00000000000000"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-700 mb-1">
+                        Nome do CPD (opcional)
+                      </label>
+                      <input
+                        type="text"
+                        value={cpd.name}
+                        onChange={(e) => updateAdditionalCpd(cpd.id, 'name', e.target.value)}
+                        placeholder="Ex: CPD Filial SP"
+                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <button
+                        type="button"
+                        onClick={() => removeAdditionalCpd(cpd.id)}
+                        className="w-full px-3 py-2 bg-red-100 text-red-700 text-sm rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <X className="w-4 h-4" />
+                        Remover
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                
+                {additionalCpds.length === 0 && (
+                  <div className="text-center py-6">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <Plus className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <p className="text-sm text-gray-600 mb-2">
+                      Nenhum CPD adicional cadastrado
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Clique em "Adicionar CPD" para incluir seus CPDs
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="form-group">
               <label className="form-label">
-                CPD (SUSEP) *
+                Nome da Empresa *
               </label>
               <input
+                {...register('name')}
                 type="text"
-                value={cpdValue}
-                onChange={handleCpdChange}
-                placeholder="00000000000000"
+                placeholder="Nome da empresa"
                 className="form-input"
               />
-              {errors.cpd && (
+              {errors.name && (
                 <div className="form-error">
                   <AlertCircle className="w-4 h-4" />
-                  {errors.cpd.message}
+                  {errors.name.message}
+                </div>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">
+                Email *
+              </label>
+              <input
+                {...register('email')}
+                type="email"
+                placeholder="seu@email.com"
+                className="form-input"
+              />
+              {errors.email && (
+                <div className="form-error">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.email.message}
                 </div>
               )}
             </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label">
-              Nome da Empresa *
-            </label>
-            <input
-              {...register('name')}
-              type="text"
-              placeholder="Nome da empresa"
-              className="form-input"
-            />
-            {errors.name && (
-              <div className="form-error">
-                <AlertCircle className="w-4 h-4" />
-                {errors.name.message}
-              </div>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              Email *
-            </label>
-            <input
-              {...register('email')}
-              type="email"
-              placeholder="seu@email.com"
-              className="form-input"
-            />
-            {errors.email && (
-              <div className="form-error">
-                <AlertCircle className="w-4 h-4" />
-                {errors.email.message}
-              </div>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              Telefone *
-            </label>
-            <input
-              type="text"
-              value={phoneValue}
-              onChange={handlePhoneChange}
-              placeholder="(11) 99999-9999"
-              className="form-input"
-            />
-            {errors.phone && (
-              <div className="form-error">
-                <AlertCircle className="w-4 h-4" />
-                {errors.phone.message}
-              </div>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">
-              Senha *
-            </label>
-            <div className="relative">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="form-group">
+              <label className="form-label">
+                Telefone *
+              </label>
               <input
-                {...register('password')}
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Mínimo 6 caracteres"
-                className="form-input pr-12"
+                type="text"
+                value={phoneValue}
+                onChange={handlePhoneChange}
+                placeholder="(11) 99999-9999"
+                className="form-input"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
+              {errors.phone && (
+                <div className="form-error">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.phone.message}
+                </div>
+              )}
             </div>
-            {errors.password && (
-              <div className="form-error">
-                <AlertCircle className="w-4 h-4" />
-                {errors.password.message}
-              </div>
-            )}
           </div>
 
-          <div className="form-group">
-            <label className="form-label">
-              Confirmar Senha *
-            </label>
-            <div className="relative">
-              <input
-                {...register('confirmPassword')}
-                type={showConfirmPassword ? 'text' : 'password'}
-                placeholder="Confirme sua senha"
-                className="form-input pr-12"
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-            {errors.confirmPassword && (
-              <div className="form-error">
-                <AlertCircle className="w-4 h-4" />
-                {errors.confirmPassword.message}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="form-group">
+              <label className="form-label">
+                Senha *
+              </label>
+              <div className="relative">
+                <input
+                  {...register('password')}
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Mínimo 6 caracteres"
+                  className="form-input pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
               </div>
-            )}
+              {errors.password && (
+                <div className="form-error">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.password.message}
+                </div>
+              )}
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">
+                Confirmar Senha *
+              </label>
+              <div className="relative">
+                <input
+                  {...register('confirmPassword')}
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Confirme sua senha"
+                  className="form-input pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {errors.confirmPassword && (
+                <div className="form-error">
+                  <AlertCircle className="w-4 h-4" />
+                  {errors.confirmPassword.message}
+                </div>
+              )}
+            </div>
           </div>
 
           <button

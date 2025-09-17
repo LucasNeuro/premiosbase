@@ -1,97 +1,105 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useMemo, useCallback, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { PolicyType } from '../types';
+
+export interface CampaignCriteria {
+    policy_type: 'auto' | 'residencial';
+    target: number;
+    type: 'quantity' | 'value';
+    min_value?: number; // Para qualificações como "≥ R$ 2.000"
+}
 
 export interface Goal {
     id: string;
-    userId: string;
+    user_id: string;
     title: string;
     target: number;
-    current: number;
+    current_value: number;
+    unit: string;
     period: string;
-    type: 'apolices' | 'valor';
+    type: 'apolices' | 'valor' | 'crescimento' | 'composite';
     status: 'active' | 'completed' | 'pending';
-    createdAt: string;
-    updatedAt: string;
-}
-
-export interface GoalStats {
-    totalApolices: number;
-    totalValor: number;
-    monthlyGrowth: number;
-    goalsCompleted: number;
-    goalsActive: number;
-    performancePercentage: number;
+    admin_created_by?: string;
+    target_period: 'semana' | 'mes' | 'trimestre' | 'ano';
+    is_active: boolean;
+    progress_percentage: number;
+    last_updated: string;
+    created_at: string;
+    updated_at: string;
+    // Novos campos para campanhas compostas
+    campaign_type?: 'simple' | 'composite';
+    criteria?: CampaignCriteria[];
+    policy_types?: ('auto' | 'residencial')[];
 }
 
 interface GoalsContextType {
     goals: Goal[];
-    stats: GoalStats;
     loading: boolean;
-    addGoal: (goal: Omit<Goal, 'id' | 'userId' | 'current' | 'status' | 'createdAt' | 'updatedAt'>) => Promise<{ success: boolean; message: string }>;
-    updateGoal: (id: string, updates: Partial<Goal>) => Promise<{ success: boolean; message: string }>;
-    deleteGoal: (id: string) => Promise<{ success: boolean; message: string }>;
-    refreshGoals: () => Promise<void>;
+    lastUpdate: Date;
+    addGoal: (goal: Omit<Goal, 'id' | 'current_value' | 'status' | 'created_at' | 'updated_at'>) => Promise<{ success: boolean, message: string }>;
+    updateGoal: (goalId: string, updates: Partial<Goal>) => Promise<{ success: boolean, message: string }>;
+    deleteGoal: (goalId: string) => Promise<{ success: boolean, message: string }>;
+    refreshGoals: () => void;
+    getGoalsSummary: () => {
+        totalGoals: number;
+        activeGoals: number;
+        completedGoals: number;
+        totalTarget: number;
+        totalCurrent: number;
+    };
 }
 
 const GoalsContext = createContext<GoalsContextType | undefined>(undefined);
 
-export const GoalsProvider: React.FC<{ children: React.ReactNode; userId: string }> = ({ children, userId }) => {
+export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string }> = ({ children, userId }) => {
     const [goals, setGoals] = useState<Goal[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
-    const [policies, setPolicies] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-    // Buscar políticas do usuário para calcular estatísticas
-    const fetchPolicies = useCallback(async () => {
-        if (!userId) return;
-
-        try {
-            const { data, error } = await supabase
-                .from('policies')
-                .select('*')
-                .eq('user_id', userId)
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error('Error fetching policies:', error);
-                return;
-            }
-
-            setPolicies(data || []);
-        } catch (error) {
-            console.error('Error fetching policies:', error);
+    const fetchGoals = useCallback(async (forceRefresh = false) => {
+        if (!userId) {
+            console.log('useGoals: No userId, skipping fetch');
+            return;
         }
-    }, [userId]);
 
-    // Buscar metas do usuário
-    const fetchGoals = useCallback(async () => {
-        if (!userId) return;
-
-        setLoading(true);
+        console.log('useGoals: Fetching goals for userId:', userId);
         try {
-            // Primeiro, atualizar progresso completo (metas + insígnias)
-            const { error: updateError } = await supabase.rpc('update_user_progress_complete', {
-                p_user_id: userId
-            });
-
-            if (updateError) {
-                console.error('Error updating complete progress:', updateError);
-            }
-
-            // Depois, buscar as metas atualizadas
             const { data, error } = await supabase
                 .from('goals')
                 .select('*')
                 .eq('user_id', userId)
+                .eq('is_active', true)
                 .order('created_at', { ascending: false });
+
+            console.log('useGoals: Supabase response:', { data, error });
 
             if (error) {
                 console.error('Error fetching goals:', error);
                 return;
             }
 
-            console.log('Metas encontradas:', data);
-            setGoals(data || []);
+            const formattedGoals: Goal[] = data?.map(goal => ({
+                id: goal.id,
+                user_id: goal.user_id,
+                title: goal.title,
+                target: Number(goal.target),
+                current_value: Number(goal.current_value || 0),
+                unit: goal.unit,
+                period: goal.period,
+                type: goal.type,
+                status: goal.status,
+                admin_created_by: goal.admin_created_by,
+                target_period: goal.target_period,
+                is_active: goal.is_active,
+                progress_percentage: Number(goal.progress_percentage || 0),
+                last_updated: goal.last_updated,
+                created_at: goal.created_at,
+                updated_at: goal.updated_at,
+            })) || [];
+
+            console.log('useGoals: Formatted goals:', formattedGoals);
+            
+            setGoals(formattedGoals);
+            setLastUpdate(new Date());
         } catch (error) {
             console.error('Error fetching goals:', error);
         } finally {
@@ -99,148 +107,125 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode; userId: string
         }
     }, [userId]);
 
-    // Calcular estatísticas baseadas nas políticas
-    const calculateStats = useCallback((policies: any[]): GoalStats => {
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
+    const refreshGoals = useCallback(() => {
+        console.log('useGoals: Manual refresh triggered');
+        setLoading(true);
+        fetchGoals(true);
+    }, [fetchGoals]);
+
+    useEffect(() => {
+        console.log('useGoals: useEffect triggered, userId:', userId);
         
-        // Políticas do mês atual
-        const currentMonthPolicies = policies.filter(p => {
-            const policyDate = new Date(p.created_at);
-            return policyDate.getMonth() === currentMonth && policyDate.getFullYear() === currentYear;
-        });
-
-        // Políticas do mês anterior
-        const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-        const previousYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-        const previousMonthPolicies = policies.filter(p => {
-            const policyDate = new Date(p.created_at);
-            return policyDate.getMonth() === previousMonth && policyDate.getFullYear() === previousYear;
-        });
-
-        const totalApolices = currentMonthPolicies.length;
-        const totalValor = currentMonthPolicies.reduce((sum, p) => sum + Number(p.premium_value), 0);
-        
-        const previousApolices = previousMonthPolicies.length;
-        const monthlyGrowth = previousApolices > 0 
-            ? ((totalApolices - previousApolices) / previousApolices) * 100 
-            : 0;
-
-        // Calcular metas completadas
-        const goalsCompleted = goals.filter(g => g.status === 'completed').length;
-        const goalsActive = goals.filter(g => g.status === 'active').length;
-        const performancePercentage = goals.length > 0 ? (goalsCompleted / goals.length) * 100 : 0;
-
-        return {
-            totalApolices,
-            totalValor,
-            monthlyGrowth,
-            goalsCompleted,
-            goalsActive,
-            performancePercentage
-        };
-    }, [goals]);
-
-    const stats = useMemo(() => calculateStats(policies), [policies, calculateStats]);
-
-    // Atualizar metas com dados reais
-    const updateGoalsWithRealData = useCallback(async () => {
-        if (!userId || goals.length === 0) return;
-
-        const updatedGoals = goals.map(goal => {
-            let current = 0;
-            
-            switch (goal.type) {
-                case 'apolices':
-                    current = stats.totalApolices;
-                    break;
-                case 'valor':
-                    current = stats.totalValor;
-                    break;
-                case 'crescimento':
-                    current = Math.max(0, stats.monthlyGrowth);
-                    break;
-            }
-
-            const isCompleted = current >= goal.target;
-            const status = isCompleted ? 'completed' : 'active';
-
-            return {
-                ...goal,
-                current,
-                status
-            };
-        });
-
-        setGoals(updatedGoals);
-
-        // Atualizar no banco se necessário
-        for (const goal of updatedGoals) {
-            if (goal.current !== goals.find(g => g.id === goal.id)?.current) {
-                await supabase
-                    .from('goals')
-                    .update({ 
-                        current: goal.current, 
-                        status: goal.status,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', goal.id);
-            }
+        if (!userId) {
+            console.log('useGoals: No userId, skipping fetch');
+            setLoading(false);
+            return;
         }
-    }, [userId, goals, stats]);
 
-    useEffect(() => {
-        fetchPolicies();
+        setLoading(true);
         fetchGoals();
-    }, [fetchPolicies, fetchGoals]);
 
-    useEffect(() => {
-        updateGoalsWithRealData();
-    }, [updateGoalsWithRealData]);
+        // Configurar real-time updates
+        const channel = supabase
+            .channel(`goals-changes-${userId}`)
+            .on('postgres_changes', 
+                { 
+                    event: '*', 
+                    schema: 'public', 
+                    table: 'goals',
+                    filter: `user_id=eq.${userId}`
+                }, 
+                (payload) => {
+                    console.log('Real-time goals update received:', payload);
+                    fetchGoals(true);
+                }
+            )
+            .subscribe();
 
-    const addGoal = useCallback(async (goalData: Omit<Goal, 'id' | 'userId' | 'current' | 'status' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string }> => {
+        return () => {
+            console.log('Cleaning up goals real-time subscription');
+            supabase.removeChannel(channel);
+        };
+    }, [userId, fetchGoals]);
+
+    const addGoal = useCallback(async (goal: Omit<Goal, 'id' | 'current' | 'status' | 'created_at' | 'updated_at'>): Promise<{ success: boolean, message: string }> => {
         try {
-            // Usar a função integrada do banco para criar meta e atualizar progresso
-            const { data, error } = await supabase.rpc('create_goal_and_update_progress', {
-                p_user_id: userId,
-                p_title: goalData.title,
-                p_type: goalData.type,
-                p_target: goalData.target,
-                p_period: goalData.period
-            });
+            const { data, error } = await supabase
+                .from('goals')
+                .insert({
+                    user_id: userId,
+                    title: goal.title,
+                    target: goal.target,
+                    current_value: 0,
+                    unit: goal.unit,
+                    period: goal.period,
+                    type: goal.type,
+                    status: 'active',
+                    admin_created_by: goal.admin_created_by,
+                    target_period: goal.target_period,
+                    is_active: true,
+                })
+                .select()
+                .single();
 
             if (error) {
                 console.error('Error adding goal:', error);
                 return { success: false, message: 'Erro ao criar meta.' };
             }
 
-            // Recarregar metas
-            await fetchGoals();
+            const newGoal: Goal = {
+                id: data.id,
+                user_id: data.user_id,
+                title: data.title,
+                target: data.target,
+                current_value: data.current_value,
+                unit: data.unit,
+                period: data.period,
+                type: data.type,
+                status: data.status,
+                admin_created_by: data.admin_created_by,
+                target_period: data.target_period,
+                is_active: data.is_active,
+                progress_percentage: data.progress_percentage || 0,
+                last_updated: data.last_updated || data.updated_at,
+                created_at: data.created_at,
+                updated_at: data.updated_at,
+                campaign_type: data.campaign_type,
+                criteria: data.criteria,
+                policy_types: data.policy_types,
+            };
+
+            setGoals(prevGoals => [newGoal, ...prevGoals]);
+            setLastUpdate(new Date());
+            
             return { success: true, message: 'Meta criada com sucesso!' };
         } catch (error) {
             console.error('Error adding goal:', error);
             return { success: false, message: 'Erro interno do servidor.' };
         }
-    }, [userId, fetchGoals]);
+    }, [userId]);
 
-    const updateGoal = useCallback(async (id: string, updates: Partial<Goal>): Promise<{ success: boolean; message: string }> => {
+    const updateGoal = useCallback(async (goalId: string, updates: Partial<Goal>): Promise<{ success: boolean, message: string }> => {
         try {
             const { error } = await supabase
                 .from('goals')
-                .update({
-                    ...updates,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', id);
+                .update(updates)
+                .eq('id', goalId);
 
             if (error) {
                 console.error('Error updating goal:', error);
                 return { success: false, message: 'Erro ao atualizar meta.' };
             }
 
-            setGoals(prev => prev.map(goal => 
-                goal.id === id ? { ...goal, ...updates } : goal
-            ));
+            setGoals(prevGoals => 
+                prevGoals.map(goal => 
+                    goal.id === goalId 
+                        ? { ...goal, ...updates, updated_at: new Date().toISOString() }
+                        : goal
+                )
+            );
+            setLastUpdate(new Date());
+            
             return { success: true, message: 'Meta atualizada com sucesso!' };
         } catch (error) {
             console.error('Error updating goal:', error);
@@ -248,19 +233,21 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode; userId: string
         }
     }, []);
 
-    const deleteGoal = useCallback(async (id: string): Promise<{ success: boolean; message: string }> => {
+    const deleteGoal = useCallback(async (goalId: string): Promise<{ success: boolean, message: string }> => {
         try {
             const { error } = await supabase
                 .from('goals')
-                .delete()
-                .eq('id', id);
+                .update({ is_active: false })
+                .eq('id', goalId);
 
             if (error) {
                 console.error('Error deleting goal:', error);
                 return { success: false, message: 'Erro ao excluir meta.' };
             }
 
-            setGoals(prev => prev.filter(goal => goal.id !== id));
+            setGoals(prevGoals => prevGoals.filter(goal => goal.id !== goalId));
+            setLastUpdate(new Date());
+            
             return { success: true, message: 'Meta excluída com sucesso!' };
         } catch (error) {
             console.error('Error deleting goal:', error);
@@ -268,20 +255,33 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode; userId: string
         }
     }, []);
 
-    const refreshGoals = useCallback(async () => {
-        await fetchPolicies();
-        await fetchGoals();
-    }, [fetchPolicies, fetchGoals]);
-
+    const getGoalsSummary = useCallback(() => {
+        return goals.reduce((summary, goal) => {
+            summary.totalGoals++;
+            if (goal.status === 'active') summary.activeGoals++;
+            if (goal.status === 'completed') summary.completedGoals++;
+            summary.totalTarget += goal.target;
+            summary.totalCurrent += goal.current_value;
+            return summary;
+        }, { 
+            totalGoals: 0, 
+            activeGoals: 0, 
+            completedGoals: 0, 
+            totalTarget: 0, 
+            totalCurrent: 0 
+        });
+    }, [goals]);
+    
     const goalsContextValue = useMemo(() => ({
         goals,
-        stats,
         loading,
+        lastUpdate,
         addGoal,
         updateGoal,
         deleteGoal,
-        refreshGoals
-    }), [goals, stats, loading, addGoal, updateGoal, deleteGoal, refreshGoals]);
+        refreshGoals,
+        getGoalsSummary,
+    }), [goals, loading, lastUpdate, addGoal, updateGoal, deleteGoal, refreshGoals, getGoalsSummary]);
 
     return (
         <GoalsContext.Provider value={goalsContextValue}>

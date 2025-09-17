@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  Trophy, 
   Home, 
   BarChart3, 
   Target
@@ -32,34 +31,41 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <div className="sidebar">
+    <div className="fixed inset-y-0 left-0 z-40 bg-[#1E293B] w-64">
       {/* Logo */}
-      <div className="sidebar-header">
-        <Link to="/" className="sidebar-logo">
-          <div className="sidebar-logo-icon">
-            <Trophy className="w-6 h-6 text-white" />
+      <div className="flex items-center p-4 border-b border-slate-700">
+        <Link to="/" className="flex items-center space-x-3">
+          <div className="flex-shrink-0">
+            <img 
+              src="https://wdqobcvasxfiettueifs.supabase.co/storage/v1/object/public/imagem_logo/base-premio.jpg" 
+              alt="PremiosBase Logo" 
+              className="w-8 h-8 rounded"
+            />
           </div>
-          <span className="sidebar-logo-text">PremiosBase</span>
+          <span className="text-white font-bold text-lg">PremiosBase</span>
         </Link>
       </div>
 
       {/* Navigation */}
-      <nav className="sidebar-nav">
+      <nav className="mt-6 px-3">
         {navigationItems.map((item) => {
           const Icon = item.icon;
           return (
             <Link
               key={item.name}
               to={item.href}
-              className={`sidebar-nav-item ${item.current ? 'active' : ''}`}
+              className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 mb-1 ${
+                item.current
+                  ? 'bg-[#EF4444] text-white'
+                  : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+              }`}
             >
-              <Icon className="sidebar-nav-icon" />
+              <Icon className="w-4 h-4 flex-shrink-0" />
               <span>{item.name}</span>
             </Link>
           );
         })}
       </nav>
-
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import Input from '../ui/Input';
 import Button from '../ui/Button';
@@ -10,7 +11,8 @@ const SimpleLoginForm: React.FC = () => {
     const [password, setPassword] = useState('');
     const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
+    const { login, user } = useAuth();
+    const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -25,6 +27,18 @@ const SimpleLoginForm: React.FC = () => {
 
         const result = await login(email, password);
         setMessage({ text: result.message, type: result.success ? 'success' : 'error' });
+        
+        if (result.success) {
+            // Redirecionar baseado no role do usuário
+            setTimeout(() => {
+                if (user?.is_admin) {
+                    navigate('/admin/dashboard');
+                } else {
+                    navigate('/dashboard');
+                }
+            }, 1000);
+        }
+        
         setLoading(false);
     };
 

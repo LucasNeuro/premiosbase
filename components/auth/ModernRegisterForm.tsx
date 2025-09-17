@@ -143,8 +143,6 @@ const ModernRegisterForm: React.FC = () => {
 
     return (
         <ModernForm
-            title="Criar Conta"
-            subtitle="Preencha os dados abaixo para criar sua conta"
             onSubmit={handleSubmit}
         >
             {message && <Alert message={message.text} type={message.type} onClose={() => setMessage(null)} />}

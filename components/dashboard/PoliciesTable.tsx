@@ -1,21 +1,23 @@
 import React, { useState } from 'react';
 import { ColumnDef } from '@tanstack/react-table';
-import { usePolicies } from '../../hooks/usePolicies';
+import { usePoliciesAuxiliar } from '../../hooks/usePoliciesAuxiliar';
 import DynamicTable from '../ui/DynamicTable';
 import { supabase } from '../../lib/supabase';
 import { Trash2 } from 'lucide-react';
 import ConfirmationModal from '../ui/ConfirmationModal';
 import TicketTag from '../ui/TicketTag';
 
-import { Policy, PolicyType, ContractType } from '../../types';
+import { PolicyAuxiliar } from '../../hooks/usePoliciesAuxiliar';
+import { PolicyType, ContractType } from '../../types';
 
 
 const PoliciesTable: React.FC = () => {
-  const { policies, addPolicy, refreshPolicies, lastUpdate } = usePolicies();
+  try {
+    const { policies, addPolicy, refreshPolicies, lastUpdate } = usePoliciesAuxiliar();
   const [loading, setLoading] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
-    policy: Policy | null;
+    policy: PolicyAuxiliar | null;
   }>({
     isOpen: false,
     policy: null
@@ -36,7 +38,7 @@ const PoliciesTable: React.FC = () => {
 
   // Removed handleEdit function - not needed for audit system
 
-  const handleDelete = (policy: Policy) => {
+  const handleDelete = (policy: PolicyAuxiliar) => {
     console.log('PoliciesTable: Opening delete modal for policy:', policy);
     setDeleteModal({
       isOpen: true,
@@ -103,13 +105,13 @@ const PoliciesTable: React.FC = () => {
   };
 
 
-  const columns: ColumnDef<Policy>[] = [
+  const columns: ColumnDef<PolicyAuxiliar>[] = [
     {
-      accessorKey: 'policyNumber',
+      accessorKey: 'policy_number',
       header: () => <div className="text-left">Número da Apólice</div>,
       cell: ({ row }) => (
         <div className="font-medium text-gray-900 text-left">
-          {row.getValue('policyNumber')}
+          {row.getValue('policy_number')}
         </div>
       ),
     },
@@ -132,64 +134,28 @@ const PoliciesTable: React.FC = () => {
       },
     },
     {
-      accessorKey: 'premiumValue',
+      accessorKey: 'premium_value',
       header: () => <div className="text-left">Valor do Prêmio</div>,
       cell: ({ row }) => (
         <div className="font-semibold text-gradient text-left">
-          {formatCurrency(row.getValue('premiumValue'))}
+          {formatCurrency(row.getValue('premium_value'))}
         </div>
       ),
     },
     {
-      accessorKey: 'registrationDate',
+      accessorKey: 'registration_date',
       header: () => <div className="text-left">Data de Registro</div>,
       cell: ({ row }) => (
         <div className="text-gray-600 text-left">
-          {formatDate(row.getValue('registrationDate'))}
+          {formatDate(row.getValue('registration_date'))}
         </div>
       ),
     },
     {
-      accessorKey: 'createdAt',
-      header: () => <div className="text-left">Criado em</div>,
-      cell: ({ row }) => {
-        const date = row.getValue('createdAt') as string;
-        return (
-          <div className="text-gray-600 text-left text-xs">
-            {date ? formatDate(date) : '-'}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'updatedAt',
-      header: () => <div className="text-left">Atualizado em</div>,
-      cell: ({ row }) => {
-        const date = row.getValue('updatedAt') as string;
-        return (
-          <div className="text-gray-600 text-left text-xs">
-            {date ? formatDate(date) : '-'}
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'ticketCode',
-      header: () => <div className="text-left">Ticket</div>,
-      cell: ({ row }) => {
-        const ticketCode = row.getValue('ticketCode') as string;
-        return (
-          <div className="text-left">
-            <TicketTag ticketCode={ticketCode} />
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'contractType',
+      accessorKey: 'contract_type',
       header: () => <div className="text-left">Contrato</div>,
       cell: ({ row }) => {
-        const contractType = row.getValue('contractType') as string;
+        const contractType = row.getValue('contract_type') as string;
         return (
           <div className="text-left">
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
@@ -198,34 +164,6 @@ const PoliciesTable: React.FC = () => {
                 : 'bg-orange-100 text-orange-800'
             }`}>
               {contractType}
-            </span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'city',
-      header: () => <div className="text-left">Cidade</div>,
-      cell: ({ row }) => {
-        const city = row.getValue('city') as string;
-        return (
-          <div className="text-left">
-            <span className="text-sm text-gray-700">
-              {city || '-'}
-            </span>
-          </div>
-        );
-      },
-    },
-    {
-      accessorKey: 'id',
-      header: () => <div className="text-left">ID</div>,
-      cell: ({ row }) => {
-        const id = row.getValue('id') as string;
-        return (
-          <div className="text-left">
-            <span className="font-mono text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-              {id.substring(0, 8)}...
             </span>
           </div>
         );
@@ -273,7 +211,7 @@ const PoliciesTable: React.FC = () => {
         onClose={handleCloseModal}
         onConfirm={handleConfirmDelete}
         title="Excluir Apólice"
-        message={`Tem certeza que deseja excluir a apólice ${deleteModal.policy?.policyNumber}?\n\nValor: R$ ${deleteModal.policy?.premiumValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\nTipo: ${deleteModal.policy?.type}`}
+        message={`Tem certeza que deseja excluir a apólice ${deleteModal.policy?.policy_number}?\n\nValor: R$ ${deleteModal.policy?.premium_value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\nTipo: ${deleteModal.policy?.type}`}
         confirmText="Excluir"
         cancelText="Cancelar"
         type="danger"
@@ -281,6 +219,15 @@ const PoliciesTable: React.FC = () => {
       />
     </div>
   );
+  } catch (error) {
+    console.error('Erro no PoliciesTable:', error);
+    return (
+      <div className="bg-gray-100 border border-gray-300 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-gray-700 mb-2">Histórico de Apólices</h2>
+        <p className="text-gray-600">Carregando dados...</p>
+      </div>
+    );
+  }
 };
 
 export default PoliciesTable;

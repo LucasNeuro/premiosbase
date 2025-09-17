@@ -6,6 +6,8 @@ import LandingPage from './components/pages/LandingPage';
 import AuthPage from './components/pages/AuthPage';
 import DashboardPage from './components/pages/DashboardPage';
 import GoalsPage from './components/pages/GoalsPage';
+import AdminDashboard from './components/pages/AdminDashboard';
+import AdminRedirect from './components/auth/AdminRedirect';
 import { PoliciesProvider } from './hooks/usePolicies';
 
 const AppContent: React.FC = () => {
@@ -36,9 +38,13 @@ const AppContent: React.FC = () => {
                 path="/dashboard" 
                 element={
                     user ? (
-                        <PoliciesProvider userId={user.id || user.email}>
-                            <DashboardPage />
-                        </PoliciesProvider>
+                        user.is_admin ? (
+                            <Navigate to="/admin/dashboard" replace />
+                        ) : (
+                            <PoliciesProvider userId={user.id || user.email}>
+                                <DashboardPage />
+                            </PoliciesProvider>
+                        )
                     ) : (
                         <Navigate to="/login" replace />
                     )
@@ -55,6 +61,20 @@ const AppContent: React.FC = () => {
                         <Navigate to="/login" replace />
                     )
                 } 
+            />
+            <Route 
+                path="/admin/dashboard" 
+                element={
+                    user && user.is_admin ? (
+                        <AdminDashboard />
+                    ) : (
+                        <Navigate to="/dashboard" replace />
+                    )
+                } 
+            />
+            <Route 
+                path="/admin/redirect" 
+                element={<AdminRedirect />} 
             />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

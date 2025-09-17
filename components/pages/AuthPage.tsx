@@ -1,7 +1,5 @@
-
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Trophy } from 'lucide-react';
 import ModernLoginForm from '../auth/ModernLoginForm';
 import SimpleRegisterForm from '../auth/SimpleRegisterForm';
 
@@ -13,11 +11,6 @@ const AuthPage: React.FC = () => {
         <div className="min-h-screen bg-dark-900 flex flex-col justify-center items-center p-4">
             <div className="w-full max-w-4xl">
                 <div className="text-center mb-8">
-                    <div className="flex justify-center mb-4">
-                        <div className="w-16 h-16 bg-primary-600 rounded-2xl flex items-center justify-center">
-                            <Trophy className="w-8 h-8 text-white" />
-                        </div>
-                    </div>
                     <h2 className="text-3xl font-bold tracking-tight text-white mb-2">
                         {isLoginView ? 'Acesse sua conta' : 'Crie sua conta'}
                     </h2>

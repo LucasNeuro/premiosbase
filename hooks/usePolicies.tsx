@@ -5,6 +5,7 @@ import { PolicyType, ContractType } from '../types';
 import { supabase } from '../lib/supabase';
 import { useCache } from './useCache';
 import { generateTicketCode } from '../utils/ticketGenerator';
+import { GoalCalculationService } from '../services/goalCalculationService';
 
 interface PoliciesContextType {
     policies: Policy[];
@@ -71,8 +72,7 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
                 registrationDate: policy.registration_date,
                 ticketCode: policy.ticket_code,
                 contractType: policy.contract_type as ContractType,
-                city: policy.city || '',
-                originalPolicyId: policy.original_policy_id || '',
+                cpdNumber: policy.cpd_number || '',
                 createdAt: policy.created_at,
                 updatedAt: policy.updated_at,
             }));
@@ -111,7 +111,7 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
 
         // Configurar real-time updates
         const channel = supabase
-            .channel('policies-changes')
+            .channel(`policies-changes-${userId}`)
             .on('postgres_changes', 
                 { 
                     event: '*', 
@@ -125,12 +125,40 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
                     console.log('New record:', payload.new);
                     console.log('Old record:', payload.old);
                     
-                    // Recarregar dados quando houver mudanças
-                    fetchPolicies();
+                    // Atualizar dados imediatamente
+                    if (payload.eventType === 'INSERT' && payload.new) {
+        const newPolicy: Policy = {
+                            id: payload.new.id,
+                            policyNumber: payload.new.policy_number,
+                            type: payload.new.type as PolicyType,
+                            premiumValue: payload.new.premium_value,
+                            registrationDate: payload.new.registration_date,
+                            ticketCode: payload.new.ticket_code,
+                            contractType: payload.new.contract_type as ContractType,
+                            cpdNumber: payload.new.cpd_number || '',
+                            createdAt: payload.new.created_at,
+                            updatedAt: payload.new.updated_at,
+                        };
+                        
+                        setPolicies(prevPolicies => [newPolicy, ...prevPolicies]);
+                        setLastUpdate(new Date());
+                        
+                        // Limpar cache
+                        const cacheKey = `policies-${userId}`;
+                        cache.clear(cacheKey);
+                    } else {
+                        // Para UPDATE e DELETE, recarregar todos os dados
+                        fetchPolicies(true);
+                    }
                 }
             )
             .subscribe((status) => {
                 console.log('Real-time subscription status:', status);
+                if (status === 'SUBSCRIBED') {
+                    console.log('Successfully subscribed to real-time updates');
+                } else if (status === 'CHANNEL_ERROR') {
+                    console.error('Error subscribing to real-time updates');
+                }
             });
 
         return () => {
@@ -161,13 +189,13 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
                 .insert({
                     user_id: userId,
                     policy_number: policy.policyNumber,
-                    type: policy.type,
+                    type: policy.type, // Já está usando PolicyType.AUTO = 'Seguro Auto'
                     premium_value: policy.premiumValue,
                     registration_date: new Date().toISOString(),
                     ticket_code: ticketCode,
                     contract_type: policy.contractType,
-                    city: policy.city,
-                    original_policy_id: policy.originalPolicyId,
+                    cpd_number: policy.cpdNumber,
+                    status: 'active',
                 })
                 .select()
                 .single();
@@ -175,6 +203,14 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
             if (error) {
                 console.error('Error adding policy:', error);
                 return { success: false, message: 'Erro ao registrar apólice.' };
+            }
+
+            // Atualizar progresso das metas do usuário
+            try {
+                await GoalCalculationService.updateAllUserGoals(userId);
+            } catch (goalError) {
+                console.warn('Error updating goals after policy creation:', goalError);
+                // Não falhar a criação da apólice por causa do erro nas metas
             }
 
             const newPolicy: Policy = {
@@ -185,15 +221,19 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
                 registrationDate: data.registration_date,
                 ticketCode: data.ticket_code,
                 contractType: data.contract_type as ContractType,
-                city: data.city || '',
-                originalPolicyId: data.original_policy_id || '',
+                cpdNumber: data.cpd_number || '',
+                status: data.status || 'active',
             };
 
+            // Atualizar estado imediatamente
             setPolicies(prevPolicies => [newPolicy, ...prevPolicies]);
+            setLastUpdate(new Date());
             
             // Clear cache to ensure fresh data
             const cacheKey = `policies-${userId}`;
             cache.clear(cacheKey);
+            
+            console.log('Policy added successfully, state updated');
             
         return { success: true, message: `Apólice registrada com sucesso! Ticket: ${ticketCode}` };
         } catch (error) {

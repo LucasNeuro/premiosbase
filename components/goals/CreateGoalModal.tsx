@@ -296,7 +296,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({ onClose }) => {
                         <button
                             type="submit"
                             disabled={isSubmitting}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors duration-200 flex items-center gap-2"
+                            className="px-4 py-2 bg-[#1E293B] hover:bg-slate-700 disabled:bg-gray-400 text-white rounded-lg transition-colors duration-200 flex items-center gap-2"
                         >
                             {isSubmitting ? (
                                 <>
