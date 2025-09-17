@@ -89,11 +89,8 @@ export const useAchievements = () => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                console.log('Usuário não encontrado na autenticação');
                 return;
             }
-
-            console.log('Buscando conquistas para usuário:', user.id);
 
             const { data, error } = await supabase
                 .from('user_achievements')
@@ -110,8 +107,6 @@ export const useAchievements = () => {
                 console.error('Erro ao buscar conquistas:', error);
                 throw error;
             }
-
-            console.log('Conquistas encontradas:', data);
 
             const userAchievementsData = data?.map(item => ({
                 ...item,
@@ -130,11 +125,8 @@ export const useAchievements = () => {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) {
-                console.log('Usuário não encontrado na autenticação');
                 return;
             }
-
-            console.log('Buscando progresso para usuário:', user.id);
 
             const { data, error } = await supabase
                 .from('user_achievement_progress')
@@ -150,8 +142,6 @@ export const useAchievements = () => {
                 console.error('Erro ao buscar progresso:', error);
                 throw error;
             }
-
-            console.log('Progresso encontrado:', data);
 
             const userProgressData = data?.map(item => ({
                 ...item,

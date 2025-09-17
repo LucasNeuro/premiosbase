@@ -82,10 +82,8 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                     .order('name');
                 
                 if (allError) throw allError;
-                console.log('Users fetched (fallback):', allData);
                 setUsers(allData || []);
             } else {
-                console.log('Users fetched:', data);
                 setUsers(data || []);
             }
         } catch (error) {
@@ -103,7 +101,6 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                 .order('nome');
 
             if (error) throw error;
-            console.log('Categories fetched:', data);
             setCategories(data || []);
         } catch (error) {
             console.error('Error fetching categories:', error);
@@ -155,11 +152,8 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
     };
 
     const handleCurrencyInput = (index: number, value: string) => {
-        console.log('🎯 handleCurrencyInput - Index:', index, 'Value:', value);
-        
         // Se o valor está vazio, permitir limpar
         if (value === '' || value === 'R$ ' || value === 'R$') {
-            console.log('🎯 handleCurrencyInput - Empty value, clearing');
             setMaskedValues(prev => ({
                 ...prev,
                 [`${index}_target`]: ''
@@ -172,8 +166,6 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
         const masked = currencyMaskFree(value);
         const unmasked = unmaskCurrency(value);
         
-        console.log('🎯 handleCurrencyInput - Masked:', masked, 'Unmasked:', unmasked);
-        
         // Atualizar o valor mascarado
         setMaskedValues(prev => ({
             ...prev,
@@ -185,11 +177,8 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
     };
 
     const handleMinValueInput = (index: number, value: string) => {
-        console.log('💎 handleMinValueInput - Index:', index, 'Value:', value);
-        
         // Se o valor está vazio, permitir limpar
         if (value === '' || value === 'R$ ' || value === 'R$') {
-            console.log('💎 handleMinValueInput - Empty value, clearing');
             setMaskedValues(prev => ({
                 ...prev,
                 [`${index}_min_value`]: ''
@@ -201,8 +190,6 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
         // Aplicar a máscara LIVRE - deixa o usuário digitar como quiser
         const masked = currencyMaskFree(value);
         const unmasked = unmaskCurrency(value);
-        
-        console.log('💎 handleMinValueInput - Masked:', masked, 'Unmasked:', unmasked);
         
         // Atualizar o valor mascarado
         setMaskedValues(prev => ({
@@ -271,16 +258,8 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
 
         // Proteção contra duplo clique
         if (loading) {
-            console.warn('⚠️ Criação de campanha já em andamento, ignorando...');
             return;
         }
-
-        console.log('🚀 INICIANDO CRIAÇÃO DE CAMPANHA');
-        console.log('📋 Form Data:', formData);
-        console.log('🎯 Target Type:', formData.target_type);
-        console.log('👥 Category ID:', formData.category_id);
-        console.log('🏆 Selected Premio:', selectedPremio);
-        console.log('📊 Criteria:', formData.criteria);
 
         if (!validateForm()) return;
 
@@ -306,11 +285,7 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                 premioQuantidade: premioQuantidade
             };
 
-            console.log('📤 Campaign Data sendo enviado:', campaignData);
-
             const createdCampaign = await createCampaign(campaignData);
-            console.log('✅ Campanha criada:', createdCampaign);
-
             // Verificar se houve corretores que excederam o limite (apenas para campanhas de grupo)
             if (formData.target_type === 'group' && (createdCampaign as any)?.limitExceededInfo) {
                 const limitInfo = (createdCampaign as any).limitExceededInfo;
@@ -336,14 +311,8 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
             // Prêmios já foram vinculados dentro do createCampaign para campanhas de grupo
             // Para campanhas individuais, vincular aqui
             if (formData.target_type === 'individual' && selectedPremio && createdCampaign?.id) {
-                console.log('🏆 ===== VINCULANDO PRÊMIO (INDIVIDUAL) =====');
-                console.log('🏆 Campaign ID:', createdCampaign.id);
-                console.log('🏆 Premio ID:', selectedPremio.id);
-                console.log('🏆 Quantidade:', premioQuantidade);
-                
                 await vincularPremioCampanha(createdCampaign.id, selectedPremio.id, premioQuantidade);
-                console.log('✅ Prêmio vinculado com sucesso');
-            }
+                }
 
             if (formData.target_type === 'individual') {
                 setMessage({ text: 'Campanha individual criada com sucesso!', type: 'success' });

@@ -50,7 +50,6 @@ const DynamicPolicyForm: React.FC = () => {
         // Analisar compatibilidade com critérios
         const compatibleCampaigns = activeCampaigns.filter(campaign => {
             if (!campaign.criteria || !Array.isArray(campaign.criteria) || campaign.criteria.length === 0) {
-                console.log(`⚠️ Campanha ${campaign.title} sem critérios específicos - ignorada no dropdown`);
                 return false; // Campanhas sem critérios não aparecem no dropdown
             }
 

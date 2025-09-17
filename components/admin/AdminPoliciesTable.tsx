@@ -50,7 +50,6 @@ const AdminPoliciesTable: React.FC = () => {
                     table: 'policies' 
                 }, 
                 (payload) => {
-                    console.log('Policies change detected:', payload);
                     fetchAllPolicies(); // Recarregar dados quando houver mudanças
                 }
             )
@@ -63,8 +62,6 @@ const AdminPoliciesTable: React.FC = () => {
 
     const fetchAllPolicies = async () => {
         try {
-            console.log('Fetching all policies...');
-            
             // Buscar policies sem join primeiro
             const { data: policiesData, error: policiesError } = await supabase
                 .from('policies')
@@ -77,10 +74,7 @@ const AdminPoliciesTable: React.FC = () => {
                 return;
             }
 
-            console.log('Raw policies data:', policiesData);
-
             if (!policiesData || policiesData.length === 0) {
-                console.log('No policies found');
                 setPolicies([]);
                 return;
             }
@@ -98,8 +92,6 @@ const AdminPoliciesTable: React.FC = () => {
                 return;
             }
 
-            console.log('Users data:', usersData);
-
             // Criar mapa de usuários
             const usersMap = new Map(usersData?.map(user => [user.id, user]) || []);
 
@@ -115,7 +107,6 @@ const AdminPoliciesTable: React.FC = () => {
                 };
             });
 
-            console.log('Formatted policies:', formattedPolicies);
             setPolicies(formattedPolicies);
         } catch (error) {
             console.error('Error fetching policies:', error);

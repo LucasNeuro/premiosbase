@@ -144,7 +144,6 @@ export const usePremios = () => {
       }
 
       if (existingLink) {
-        console.log(`✅ Prêmio ${premioId} já vinculado à campanha ${goalId}`);
         return existingLink;
       }
 
@@ -161,7 +160,6 @@ export const usePremios = () => {
 
       if (error) throw error;
       
-      console.log(`✅ Prêmio ${premioId} vinculado à campanha ${goalId} com sucesso`);
       return data;
     } catch (err: any) {
       console.error('Erro ao vincular prêmio à campanha:', err);

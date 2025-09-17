@@ -121,14 +121,10 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
             const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
             const filePath = `premios/${fileName}`;
 
-            console.log('Tentando fazer upload para:', filePath);
-
             // Upload da imagem principal
             const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('premios-img')
                 .upload(filePath, file);
-
-            console.log('Resultado do upload:', { uploadData, uploadError });
 
             if (uploadError) {
                 console.error('Erro detalhado do upload:', uploadError);
@@ -139,8 +135,6 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
             const { data: { publicUrl } } = supabase.storage
                 .from('premios-img')
                 .getPublicUrl(filePath);
-
-            console.log('URL pública gerada:', publicUrl);
 
             // Criar miniatura (simplificado - em produção, usar uma biblioteca de redimensionamento)
             const thumbnailPath = `premios/thumbnails/${fileName}`;
@@ -153,10 +147,8 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
                     .from('premios-img')
                     .getPublicUrl(thumbnailPath);
                 setPreviewThumbnail(thumbnailUrl);
-                console.log('Miniatura criada:', thumbnailUrl);
-            } else {
-                console.warn('Erro ao criar miniatura:', thumbnailError);
-            }
+                } else {
+                }
 
             setPreviewImage(publicUrl);
             setUploadError(null); // Limpar erros anteriores
@@ -233,8 +225,6 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
             if (previewThumbnail) {
                 premioData.imagem_miniatura_url = previewThumbnail;
             }
-
-            console.log('Saving premio data:', premioData);
 
             if (premio) {
                 // Atualizar prêmio existente

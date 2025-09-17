@@ -33,17 +33,11 @@ const CampaignDetailsSidepanel: React.FC<CampaignDetailsSidepanelProps> = ({
     // Carregar detalhes dos critérios quando o sidepanel abre
     useEffect(() => {
         if (campaign?.id && isOpen) {
-            console.log('🔍 Carregando critérios para campanha:', campaign.id);
-            console.log('🔍 Status de aceitação:', campaign.acceptance_status);
-            console.log('🔍 Critérios brutos:', campaign.criteria);
-            
             setLoadingCriteria(true);
             setCriteriaDetails([]); // Limpar critérios anteriores
             
             getCampaignCriteriaDetails(campaign.id)
                 .then(details => {
-                    console.log('📊 Critérios carregados:', details);
-                    console.log('📊 Quantidade de critérios:', details.length);
                     setCriteriaDetails(details);
                 })
                 .catch(err => {

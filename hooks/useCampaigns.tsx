@@ -109,22 +109,15 @@ export const useCampaigns = () => {
             setError(null);
 
             // Calcular target total baseado APENAS nos critérios de VALOR
-            console.log('🎯 CREATE CAMPAIGN - Dados recebidos:', campaignData);
-            console.log('🎯 Critérios recebidos:', campaignData.criteria);
             const totalTarget = campaignData.criteria.reduce((sum, criteria) => {
-                console.log('🎯 Processando critério:', criteria, 'target_type:', criteria.target_type, 'target_value:', criteria.target_value);
                 // Só somar critérios de VALOR, não de QUANTIDADE
                 if (criteria.target_type === 'value') {
                     return sum + (criteria.target_value || 0);
                 }
                 return sum; // Critérios de quantidade não são somados ao target total
             }, 0);
-            console.log('🎯 Target total calculado (apenas critérios de valor):', totalTarget);
-
             // Para campanhas de GRUPO: criar campanhas individuais para cada corretor
             if (campaignData.target_type === 'group' && campaignData.target_category_id) {
-                console.log('🔍 Criando campanhas individuais para cada corretor da categoria:', campaignData.target_category_id);
-                
                 // Buscar todos os corretores da categoria
                 const { data: corretoresCategoria, error: categoriaError } = await supabase
                     .from('corretores_categorias')
@@ -139,10 +132,7 @@ export const useCampaigns = () => {
                     throw new Error('Nenhum corretor encontrado na categoria selecionada');
                 }
 
-                console.log('📋 Total de corretores na categoria:', corretoresCategoria.length);
-
                 // Verificar se já existe campanha para evitar duplicação
-                console.log('🔍 Verificando campanhas existentes antes de criar...');
                 const { data: existingCampaigns, error: existingError } = await supabase
                     .from('goals')
                     .select('user_id, title')
@@ -150,10 +140,7 @@ export const useCampaigns = () => {
                     .gte('created_at', new Date().toISOString().split('T')[0]); // Hoje
 
                 if (existingError) {
-                    console.warn('⚠️ Erro ao verificar campanhas existentes:', existingError);
-                }
-
-                console.log('📊 Campanhas já criadas hoje:', existingCampaigns?.length || 0);
+                    }
 
                 // Criar campanhas individuais para cada corretor
                 const createdCampaigns = [];
@@ -167,7 +154,6 @@ export const useCampaigns = () => {
                     ) || [];
 
                     if (existingForUser.length > 0) {
-                        console.warn(`⚠️ Campanha já existe para ${(corretor.users as any)?.name}, pulando...`);
                         continue;
                     }
 
@@ -181,8 +167,7 @@ export const useCampaigns = () => {
                         .in('status', ['active', 'completed']);
 
                     if (countError) {
-                        console.warn(`⚠️ Erro ao verificar campanhas ativas para ${(corretor.users as any)?.name}:`, countError);
-                    }
+                        }
 
                     // Verificar sobreposição de período com as campanhas existentes
                     const newStartDate = new Date(campaignData.start_date);
@@ -197,7 +182,6 @@ export const useCampaigns = () => {
                     }) || [];
 
                     if (overlappingCampaigns.length >= 4) {
-                        console.warn(`🚫 LIMITE EXCEDIDO: ${(corretor.users as any)?.name} já tem ${overlappingCampaigns.length} campanhas no período ${campaignData.start_date} - ${campaignData.end_date}`);
                         skippedCorretores.push({
                             name: (corretor.users as any)?.name || 'Nome não encontrado',
                             email: (corretor.users as any)?.email || '',
@@ -207,8 +191,6 @@ export const useCampaigns = () => {
                         continue;
                     }
 
-                    console.log(`✅ ${(corretor.users as any)?.name}: ${overlappingCampaigns.length}/4 campanhas no período`);
-                    
                     const goalData = {
                         title: campaignData.title + ' - ' + (corretor.users as any)?.name,
                         description: campaignData.description,
@@ -226,7 +208,6 @@ export const useCampaigns = () => {
                         record_type: 'campaign' as const
                     };
 
-                    console.log('📤 Criando campanha para:', (corretor.users as any)?.name);
                     const { data: campaign, error: campaignError } = await supabase
                         .from('goals')
                         .insert(goalData)
@@ -239,20 +220,15 @@ export const useCampaigns = () => {
                     }
 
                     createdCampaigns.push(campaign);
-                    console.log('✅ Campanha criada para:', (corretor.users as any)?.name, campaign.id);
-                }
+                    }
 
                 // Retornar a primeira campanha criada (para compatibilidade)
                 const campaign = createdCampaigns[0];
-                console.log('✅ Total de campanhas criadas:', createdCampaigns.length);
-                
                 // Vincular prêmio a todas as campanhas criadas
                 if (campaignData.selectedPremio) {
-                    console.log('🏆 Vinculando prêmio a todas as campanhas...');
                     for (const camp of createdCampaigns) {
                         await vincularPremioCampanha(camp.id, campaignData.selectedPremio!.id, campaignData.premioQuantidade || 1);
-                        console.log('✅ Prêmio vinculado à campanha:', camp.title);
-                    }
+                        }
                 }
 
                 // Preparar retorno com informações sobre limites excedidos
@@ -260,8 +236,6 @@ export const useCampaigns = () => {
                     const skippedDetails = skippedCorretores.map(c => 
                         `${c.name} (${c.activeCampaigns}/4 campanhas)`
                     ).join(', ');
-                    
-                    console.warn(`⚠️ Corretores que excederam limite: ${skippedDetails}`);
                     
                     // Adicionar informação ao retorno para o frontend processar
                     if (campaign) {
@@ -295,29 +269,21 @@ export const useCampaigns = () => {
             };
 
             // Criar a campanha na tabela goals
-            console.log('📤 Dados para inserção na tabela goals:', goalData);
             const { data: campaign, error: campaignError } = await supabase
                 .from('goals')
                 .insert(goalData)
                 .select()
                 .single();
             
-            console.log('✅ Campanha inserida:', campaign);
-            console.log('❌ Erro na inserção:', campaignError);
-
             if (campaignError) throw campaignError;
 
             // 🚫 NÃO calcular progresso inicial automático!
             // O progresso deve ser ZERO até o corretor aceitar a campanha
             // e começar a vincular novas apólices
-            console.log('⏸️ Campanha criada com progresso zero - aguardando aceitação do corretor');
-
             // Vincular prêmio à campanha individual
             if (campaignData.selectedPremio) {
-                console.log('🏆 Vinculando prêmio à campanha individual...');
                 await vincularPremioCampanha(campaign.id, campaignData.selectedPremio.id, campaignData.premioQuantidade || 1);
-                console.log('✅ Prêmio vinculado à campanha:', campaign.title);
-            }
+                }
 
             // Para campanhas de grupo, as campanhas individuais já foram criadas acima
             // Não precisamos mais da função RPC

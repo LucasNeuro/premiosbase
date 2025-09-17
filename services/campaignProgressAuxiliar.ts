@@ -29,8 +29,6 @@ export interface CampaignProgressAuxiliar {
  */
 export const calculateCampaignProgressAuxiliar = async (campaignId: string): Promise<CampaignProgressAuxiliar | null> => {
   try {
-    console.log(`🔍 Calculando progresso da campanha ${campaignId} (nova estrutura)`);
-
     // 1. Buscar dados da campanha (incluindo critérios!)
     const { data: campaign, error: campaignError } = await supabase
       .from('goals')
@@ -44,14 +42,8 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
       return null;
     }
 
-    console.log(`📋 Campanha: ${campaign.title} (${campaign.type}, meta: ${campaign.target})`);
-    console.log(`📋 Status de aceitação: ${campaign.acceptance_status}, Aceita em: ${campaign.accepted_at}`);
-    console.log(`📋 Critérios brutos da campanha:`, campaign.criteria);
-    console.log(`📋 Tipo dos critérios:`, typeof campaign.criteria);
-
     // ✅ REGRA IMPORTANTE: Só calcular progresso se a campanha foi aceita
     if (campaign.acceptance_status !== 'accepted') {
-      console.log(`⏸️ Campanha não aceita ainda - progresso = 0%`);
       return {
         campaignId,
         currentValue: 0,
@@ -95,17 +87,12 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
       const isValidTiming = linkCreatedAt >= acceptedAt;
       
       if (!isValidTiming) {
-        console.log(`⏰ Apólice ${link.policies.policy_number} ignorada - vinculada ANTES de aceitar (${link.created_at} < ${campaign.accepted_at})`);
-      } else {
-        console.log(`✅ Apólice ${link.policies.policy_number} válida - vinculada APÓS aceitar (${link.created_at} >= ${campaign.accepted_at})`);
-      }
+        } else {
+        }
       
       return isValidTiming;
     });
     
-    console.log(`🔗 Apólices válidas para cálculo: ${linkedPolicies.length}/${(linkedData || []).length}`);
-    console.log(`📅 Data de aceitação da campanha: ${campaign.accepted_at}`);
-
     // 3. Calcular progresso baseado em TODOS os critérios (lógica AND)
     let currentValue = 0;
     let progressPercentage = 0;
@@ -113,8 +100,7 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
 
     linkedPolicies.forEach((link: any, index) => {
       const policy = link.policies;
-      console.log(`   ${index + 1}. ${policy.policy_number} - R$ ${policy.premium_value} (${policy.type})`);
-    });
+      });
 
     // Verificar se há critérios específicos para análise detalhada
     let criteriaResults = [];
@@ -125,23 +111,16 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
       if (typeof campaign.criteria === 'string') {
         try {
           parsedCriteria = JSON.parse(campaign.criteria);
-          console.log('📋 Critérios parseados de string:', parsedCriteria);
-        } catch (error) {
-          console.warn('⚠️ Erro ao parsear critérios string:', error);
-        }
+          } catch (error) {
+          }
       } else if (Array.isArray(campaign.criteria)) {
         parsedCriteria = campaign.criteria;
-        console.log('📋 Critérios recebidos como array:', parsedCriteria);
-      } else {
-        console.log('📋 Critérios em formato desconhecido:', typeof campaign.criteria, campaign.criteria);
-      }
+        } else {
+        }
     } else {
-      console.log('📋 Nenhum critério encontrado na campanha');
-    }
+      }
     
     if (parsedCriteria && Array.isArray(parsedCriteria)) {
-      console.log(`📋 Processando ${parsedCriteria.length} critério(s):`);
-      
       if (true) { // Substituindo if (Array.isArray(parsedCriteria))
           // Verificar cada critério individualmente
           criteriaResults = parsedCriteria.map((criterion: any, index: number) => {
@@ -169,14 +148,12 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
               // Meta por quantidade de apólices
               currentProgress = matchingPolicies.length;
               isThisCriterionMet = currentProgress >= targetValue;
-              console.log(`📊 Critério ${index + 1} (${targetPolicyType} - Qtd): ${currentProgress}/${targetValue} apólices ${isThisCriterionMet ? '✅' : '❌'}`);
-            } else if (criterion.target_type === 'value') {
+              } else if (criterion.target_type === 'value') {
               // Meta por valor total
               currentProgress = matchingPolicies.reduce((sum: number, link: any) => 
                 sum + (link.policies?.premium_value || 0), 0);
               isThisCriterionMet = currentProgress >= targetValue;
-              console.log(`💰 Critério ${index + 1} (${targetPolicyType} - Valor): R$ ${currentProgress}/R$ ${targetValue} ${isThisCriterionMet ? '✅' : '❌'}`);
-            }
+              }
             
             return {
               criterion,
@@ -201,11 +178,9 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
           currentValue = linkedPolicies.reduce((sum: number, link: any) => 
             sum + (link.policies?.premium_value || 0), 0);
             
-          console.log(`🎯 RESULTADO FINAL: ${isCompleted ? '✅ META ATINGIDA' : '❌ META NÃO ATINGIDA'} (${progressPercentage.toFixed(1)}%)`);
-        }
+          }
     } else if (parsedCriteria) {
-      console.warn('⚠️ Critérios não são um array válido:', parsedCriteria);
-    }
+      }
     
     // Fallback para campanhas sem critérios específicos
     if (criteriaResults.length === 0) {
@@ -215,13 +190,11 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
         }, 0);
         progressPercentage = campaign.target > 0 ? (currentValue / campaign.target) * 100 : 0;
         isCompleted = progressPercentage >= 100;
-        console.log(`💰 Total em valor: R$ ${currentValue} / R$ ${campaign.target} = ${progressPercentage.toFixed(2)}%`);
-      } else if (campaign.type === 'apolices') {
+        } else if (campaign.type === 'apolices') {
         currentValue = linkedPolicies.length;
         progressPercentage = campaign.target > 0 ? (currentValue / campaign.target) * 100 : 0;
         isCompleted = progressPercentage >= 100;
-        console.log(`📊 Total em quantidade: ${currentValue} / ${campaign.target} = ${progressPercentage.toFixed(2)}%`);
-      }
+        }
     }
 
     return {
@@ -278,13 +251,11 @@ export const updateCampaignProgressAuxiliar = async (campaignId: string): Promis
       updateData.status = 'completed';
       updateData.achieved_at = new Date().toISOString();
       updateData.achieved_value = progressData.currentValue;
-      console.log(`🎉 Campanha ${campaignId} COMPLETADA!`);
-    } else if (!isNowCompleted && wasCompleted) {
+      } else if (!isNowCompleted && wasCompleted) {
       updateData.status = 'active';
       updateData.achieved_at = null;
       updateData.achieved_value = null;
-      console.log(`⚠️ Campanha ${campaignId} voltou para ATIVA`);
-    }
+      }
 
     // Verificar expiração e atualizar status baseado nas regras
     const now = new Date();
@@ -297,19 +268,16 @@ export const updateCampaignProgressAuxiliar = async (campaignId: string): Promis
         updateData.status = 'completed';
         updateData.achieved_at = new Date().toISOString();
         updateData.achieved_value = progressData.currentValue;
-        console.log(`🎉 Campanha ${campaignId} EXPIROU mas META foi ATINGIDA!`);
-      } else {
+        } else {
         // Expirou e não atingiu a meta = cancelled (não atingida)
         updateData.status = 'cancelled';
-        console.log(`❌ Campanha ${campaignId} EXPIROU sem atingir a meta`);
-      }
+        }
     } else if (!isExpired && isNowCompleted && currentCampaign.status === 'active') {
       // Não expirou e atingiu a meta = completed
       updateData.status = 'completed';
       updateData.achieved_at = new Date().toISOString();
       updateData.achieved_value = progressData.currentValue;
-      console.log(`🎉 Campanha ${campaignId} META ATINGIDA antes do prazo!`);
-    }
+      }
 
     // Atualizar no banco
     const { error: updateError } = await supabase
@@ -323,7 +291,6 @@ export const updateCampaignProgressAuxiliar = async (campaignId: string): Promis
       return false;
     }
 
-    console.log(`✅ Progresso atualizado: ${progressData.progressPercentage.toFixed(1)}% (${progressData.totalPolicies} apólices)`);
     return true;
 
   } catch (error) {
@@ -337,8 +304,6 @@ export const updateCampaignProgressAuxiliar = async (campaignId: string): Promis
  */
 export const updateAllUserCampaignProgressAuxiliar = async (userId: string): Promise<void> => {
   try {
-    console.log(`🔄 Atualizando todas as campanhas do usuário ${userId}`);
-
     // Buscar campanhas ativas do usuário
     const { data: campaigns, error } = await supabase
       .from('goals')
@@ -354,19 +319,14 @@ export const updateAllUserCampaignProgressAuxiliar = async (userId: string): Pro
     }
 
     if (campaigns && campaigns.length > 0) {
-      console.log(`📋 Encontradas ${campaigns.length} campanhas para atualizar`);
-      
       // Atualizar em paralelo
       const updatePromises = campaigns.map(campaign => {
-        console.log(`🔄 Atualizando campanha: ${campaign.title}`);
         return updateCampaignProgressAuxiliar(campaign.id);
       });
 
       await Promise.all(updatePromises);
-      console.log(`✅ Todas as campanhas atualizadas`);
-    } else {
-      console.log('📭 Nenhuma campanha encontrada para atualizar');
-    }
+      } else {
+      }
 
   } catch (error) {
     console.error('Erro ao atualizar campanhas do usuário:', error);

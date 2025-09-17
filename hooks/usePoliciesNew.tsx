@@ -217,10 +217,8 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
                     updateAllUserCampaignProgress(userId),
                     checkAndUpdateExpiredCampaigns(userId)
                 ]);
-                console.log('✅ Progresso das campanhas atualizado e campanhas expiradas verificadas');
-            } catch (error) {
-                console.warn('⚠️ Erro ao atualizar progresso das campanhas:', error);
-            }
+                } catch (error) {
+                }
 
             // Mensagem de sucesso simples
             return { 

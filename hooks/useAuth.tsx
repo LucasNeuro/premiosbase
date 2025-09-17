@@ -27,14 +27,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const checkUser = async () => {
             try {
                 const savedUser = localStorage.getItem('user');
-                console.log('Saved user from localStorage:', savedUser);
                 if (savedUser) {
                     const userData = JSON.parse(savedUser);
-                    console.log('Parsed user data:', userData);
                     setUser(userData);
                 } else {
-                    console.log('No user found in localStorage');
-                }
+                    }
             } catch (error) {
                 console.error('Error checking user session:', error);
                 localStorage.removeItem('user');
@@ -48,8 +45,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     const login = async (email: string, password: string) => {
         try {
-            console.log('Iniciando login para:', email);
-            
             // Buscar usuário na nossa tabela personalizada
             const { data: userData, error: userError } = await supabase
                 .from('users')
@@ -68,8 +63,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 return { success: false, message: 'Email ou senha incorretos.' };
             }
 
-            console.log('Login bem-sucedido:', userData.id);
-            
             const userObj = {
                 id: userData.id,
                 name: userData.name,
@@ -106,8 +99,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                additionalCpds?: Array<{id: string, number: string, name: string}>;
            }) => {
         try {
-            console.log('Iniciando cadastro de usuário:', userData);
-            
             // Check if user already exists
             const { data: existingUsers, error: checkError } = await supabase
                 .from('users')
@@ -130,8 +121,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
             }
 
-            console.log('Criando usuário na nossa tabela personalizada...');
-            
             // Hash da senha
             const passwordHash = await bcrypt.hash(userData.password, 10);
             
@@ -184,7 +173,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
             }
 
-            console.log('Usuário criado com sucesso!', newUser.id);
             return { success: true, message: 'Conta criada com sucesso! Faça login para continuar.' };
         } catch (error) {
             console.error('Erro geral no cadastro:', error);

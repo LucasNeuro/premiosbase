@@ -34,8 +34,6 @@ export const useAchievementsRealtime = (userId: string) => {
 
         try {
             setLoading(true);
-            console.log('📊 Calculando estatísticas em tempo real para user:', userId);
-
             // Buscar apólices
             const { data: policies, error: policiesError } = await supabase
                 .from('policies')
@@ -88,9 +86,7 @@ export const useAchievementsRealtime = (userId: string) => {
 
             setStats(newStats);
             setLastUpdate(new Date());
-            console.log('✅ Estatísticas atualizadas:', newStats);
-
-        } catch (error) {
+            } catch (error) {
             console.error('❌ Erro ao calcular estatísticas:', error);
         } finally {
             setLoading(false);
@@ -106,12 +102,10 @@ export const useAchievementsRealtime = (userId: string) => {
 
     // Listener para eventos em tempo real
     useRealtimeListener('campaigns', useCallback(() => {
-        console.log('🔄 Atualizando estatísticas por mudança em campanhas');
         calculateStats();
     }, [calculateStats]), [calculateStats]);
 
     useRealtimeListener('policies', useCallback(() => {
-        console.log('🔄 Atualizando estatísticas por mudança em apólices');
         calculateStats();
     }, [calculateStats]), [calculateStats]);
 

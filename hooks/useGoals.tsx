@@ -57,11 +57,9 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string
 
     const fetchGoals = useCallback(async (forceRefresh = false) => {
         if (!userId) {
-            console.log('useGoals: No userId, skipping fetch');
             return;
         }
 
-        console.log('useGoals: Fetching goals for userId:', userId);
         try {
             const { data, error } = await supabase
                 .from('goals')
@@ -69,8 +67,6 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string
                 .eq('user_id', userId)
                 .eq('is_active', true)
                 .order('created_at', { ascending: false });
-
-            console.log('useGoals: Supabase response:', { data, error });
 
             if (error) {
                 console.error('Error fetching goals:', error);
@@ -96,8 +92,6 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string
                 updated_at: goal.updated_at,
             })) || [];
 
-            console.log('useGoals: Formatted goals:', formattedGoals);
-            
             setGoals(formattedGoals);
             setLastUpdate(new Date());
         } catch (error) {
@@ -108,16 +102,12 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string
     }, [userId]);
 
     const refreshGoals = useCallback(() => {
-        console.log('useGoals: Manual refresh triggered');
         setLoading(true);
         fetchGoals(true);
     }, [fetchGoals]);
 
     useEffect(() => {
-        console.log('useGoals: useEffect triggered, userId:', userId);
-        
         if (!userId) {
-            console.log('useGoals: No userId, skipping fetch');
             setLoading(false);
             return;
         }
@@ -136,14 +126,12 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string
                     filter: `user_id=eq.${userId}`
                 }, 
                 (payload) => {
-                    console.log('Real-time goals update received:', payload);
                     fetchGoals(true);
                 }
             )
             .subscribe();
 
         return () => {
-            console.log('Cleaning up goals real-time subscription');
             supabase.removeChannel(channel);
         };
     }, [userId, fetchGoals]);

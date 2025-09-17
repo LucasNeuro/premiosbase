@@ -40,8 +40,6 @@ const AdminPremiosManager: React.FC = () => {
 
     const fetchPremios = async () => {
         try {
-            console.log('Fetching premios...');
-            
             // Calcular offset para paginação
             const offset = (currentPage - 1) * itemsPerPage;
             
@@ -61,19 +59,9 @@ const AdminPremiosManager: React.FC = () => {
                 return;
             }
 
-            console.log('Premios loaded successfully:', data);
-            console.log('Premios count:', data?.length || 0);
-            
             // Log detalhado para debug
             data?.forEach((premio, index) => {
-                console.log(`Premio ${index + 1}:`, {
-                    nome: premio.nome,
-                    tipo_id: premio.tipo_id,
-                    categoria_id: premio.categoria_id,
-                    tipo_nome: premio.tipos_premios?.nome,
-                    categoria_nome: premio.categorias_premios?.nome
                 });
-            });
             
             setPremios(data || []);
             setTotalItems(count || 0);

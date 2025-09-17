@@ -63,8 +63,6 @@ const SearchableCategoryDropdown: React.FC<SearchableCategoryDropdownProps> = ({
     const fetchCategories = async () => {
         try {
             setLoading(true);
-            console.log('Fetching categories...');
-            
             const { data, error } = await supabase
                 .from('categorias_premios')
                 .select('*')
@@ -77,8 +75,6 @@ const SearchableCategoryDropdown: React.FC<SearchableCategoryDropdownProps> = ({
                 return;
             }
 
-            console.log('Categories loaded successfully:', data);
-            console.log('Categories count:', data?.length || 0);
             setCategories(data || []);
         } catch (error) {
             console.error('Error in fetchCategories:', error);
@@ -94,8 +90,6 @@ const SearchableCategoryDropdown: React.FC<SearchableCategoryDropdownProps> = ({
         }
 
         try {
-            console.log('Creating category:', newCategory.nome);
-            
             const { data, error } = await supabase
                 .from('categorias_premios')
                 .insert([{
@@ -110,7 +104,6 @@ const SearchableCategoryDropdown: React.FC<SearchableCategoryDropdownProps> = ({
                 return;
             }
 
-            console.log('Category created successfully:', data);
             setCategories(prev => [...prev, data]);
             setSelectedCategory(data);
             onCategorySelect(data.id);

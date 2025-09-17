@@ -32,17 +32,8 @@ export class CompositeCampaignService {
         criteria: CompositeCampaignCriteria[]
     ): Promise<CompositeCampaignProgress> {
         try {
-            console.log('🎯 Calculando progresso da campanha composta (NOVA LÓGICA):', {
-                goalId,
-                userId,
-                startDate,
-                endDate,
-                criteria
-            });
-
             // Se userId está vazio, não calcular progresso (campanha de grupo)
             if (!userId || userId.trim() === '') {
-                console.log('⚠️ userId vazio - campanha de grupo, não calculando progresso');
                 return {
                     goalId,
                     totalTarget: 0,
@@ -66,15 +57,7 @@ export class CompositeCampaignService {
 
                 criteriaProgress.push(criterionProgress);
 
-                console.log('🎯 Critério processado:', {
-                    policy_type: criterion.policy_type,
-                    target_type: criterion.target_type,
-                    target_value: criterion.target_value,
-                    current_value: criterionProgress.current_value,
-                    progress: criterionProgress.progress,
-                    is_completed: criterionProgress.progress >= 100
-                });
-            }
+                }
 
             // NOVA LÓGICA: Campanha completa = TODOS os critérios atingidos
             const isCompleted = criteriaProgress.every(c => c.progress >= 100);
@@ -101,13 +84,6 @@ export class CompositeCampaignService {
                 criteriaProgress,
                 isCompleted
             };
-
-            console.log('🎯 Resultado final (NOVA LÓGICA):', {
-                ...result,
-                criteria_completed: criteriaProgress.filter(c => c.progress >= 100).length,
-                total_criteria: criteriaProgress.length,
-                all_criteria_completed: isCompleted
-            });
 
             return result;
 
@@ -204,8 +180,6 @@ export class CompositeCampaignService {
         progress: CompositeCampaignProgress
     ): Promise<void> {
         try {
-            console.log('🔄 Atualizando progresso da campanha:', goalId, progress);
-
             const { error } = await supabase
                 .from('goals')
                 .update({
@@ -223,9 +197,7 @@ export class CompositeCampaignService {
                 throw error;
             }
 
-            console.log('✅ Progresso da campanha atualizado com sucesso');
-
-        } catch (error) {
+            } catch (error) {
             console.error('Erro ao atualizar progresso da campanha:', error);
             throw error;
         }
@@ -236,8 +208,6 @@ export class CompositeCampaignService {
      */
     static async recalculateUserCompositeCampaigns(userId: string): Promise<void> {
         try {
-            console.log('🔄 Recalculando campanhas compostas do usuário:', userId);
-
             // Buscar todas as campanhas compostas do usuário
             const { data: goals, error } = await supabase
                 .from('goals')
@@ -252,7 +222,6 @@ export class CompositeCampaignService {
             }
 
             if (!goals || goals.length === 0) {
-                console.log('Nenhuma campanha composta encontrada para o usuário');
                 return;
             }
 
@@ -280,9 +249,7 @@ export class CompositeCampaignService {
                 }
             }
 
-            console.log('✅ Recalculação das campanhas compostas concluída');
-
-        } catch (error) {
+            } catch (error) {
             console.error('Erro ao recalcular campanhas compostas:', error);
         }
     }

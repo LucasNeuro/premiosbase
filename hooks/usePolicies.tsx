@@ -31,7 +31,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
 
     const fetchPolicies = useCallback(async (forceRefresh = false) => {
         if (!userId) {
-            console.log('usePolicies: No userId, skipping fetch');
             return;
         }
 
@@ -41,7 +40,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
         if (!forceRefresh) {
             const cachedData = cache.get(cacheKey);
             if (cachedData) {
-                console.log('usePolicies: Using cached data');
                 setPolicies(cachedData);
                 setLastUpdate(new Date());
                 setLoading(false);
@@ -49,15 +47,12 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
             }
         }
 
-        console.log('usePolicies: Fetching policies for userId:', userId);
         try {
             const { data, error } = await supabase
                 .from('policies')
                 .select('*')
                 .eq('user_id', userId)
                 .order('created_at', { ascending: false });
-
-            console.log('usePolicies: Supabase response:', { data, error });
 
             if (error) {
                 console.error('Error fetching policies:', error);
@@ -77,8 +72,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
                 updatedAt: policy.updated_at,
             }));
 
-            console.log('usePolicies: Formatted policies:', formattedPolicies);
-            
             // Cache the data
             cache.set(cacheKey, formattedPolicies);
             
@@ -92,16 +85,12 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
     }, [userId, cache]);
 
     const refreshPolicies = useCallback(() => {
-        console.log('usePolicies: Manual refresh triggered');
         setLoading(true); // Set loading to true when refreshing
         fetchPolicies(true); // Force refresh, bypass cache
     }, [fetchPolicies]);
 
     useEffect(() => {
-        console.log('usePolicies: useEffect triggered, userId:', userId);
-        
         if (!userId) {
-            console.log('usePolicies: No userId, skipping fetch');
             setLoading(false);
             return;
         }
@@ -120,11 +109,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
                     filter: `user_id=eq.${userId}`
                 }, 
                 (payload) => {
-                    console.log('Real-time update received:', payload);
-                    console.log('Event type:', payload.eventType);
-                    console.log('New record:', payload.new);
-                    console.log('Old record:', payload.old);
-                    
                     // Atualizar dados imediatamente
                     if (payload.eventType === 'INSERT' && payload.new) {
         const newPolicy: Policy = {
@@ -153,16 +137,13 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
                 }
             )
             .subscribe((status) => {
-                console.log('Real-time subscription status:', status);
                 if (status === 'SUBSCRIBED') {
-                    console.log('Successfully subscribed to real-time updates');
-                } else if (status === 'CHANNEL_ERROR') {
+                    } else if (status === 'CHANNEL_ERROR') {
                     console.error('Error subscribing to real-time updates');
                 }
             });
 
         return () => {
-            console.log('Cleaning up real-time subscription');
             supabase.removeChannel(channel);
         };
     }, [userId]);
@@ -209,7 +190,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
             try {
                 await GoalCalculationService.updateAllUserGoals(userId);
             } catch (goalError) {
-                console.warn('Error updating goals after policy creation:', goalError);
                 // Não falhar a criação da apólice por causa do erro nas metas
             }
 
@@ -233,9 +213,7 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
             const cacheKey = `policies-${userId}`;
             cache.clear(cacheKey);
             
-            console.log('Policy added successfully, state updated');
-            
-        return { success: true, message: `Apólice registrada com sucesso! Ticket: ${ticketCode}` };
+            return { success: true, message: `Apólice registrada com sucesso! Ticket: ${ticketCode}` };
         } catch (error) {
             console.error('Error adding policy:', error);
             return { success: false, message: 'Erro interno do servidor.' };

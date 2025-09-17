@@ -50,13 +50,11 @@ export const useGoalProgress = (userId: string, goals: any[]) => {
                     .eq('user_id', userId);
                 
                 if (error) {
-                    console.warn('Cache table not available, using direct calculation:', error);
-                } else {
+                    } else {
                     progressCache = data;
                 }
             } catch (cacheError) {
-                console.warn('Cache table not available, using direct calculation:', cacheError);
-            }
+                }
 
             // Buscar dados das apólices para estatísticas gerais
             const { data: policies, error: policiesError } = await supabase

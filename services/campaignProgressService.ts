@@ -51,26 +51,19 @@ export const calculateCampaignProgress = async (campaignId: string): Promise<Cam
     let currentValue = 0;
     let progressPercentage = 0;
 
-    console.log(`🔍 Calculando progresso para campanha ${campaignId}:`);
-    console.log(`   📋 Tipo: ${campaign.type}, Meta: ${campaign.target}`);
-    console.log(`   📄 Apólices encontradas: ${policies.length}`);
-
     if (campaign.type === 'valor') {
       // Somar valores das apólices
       currentValue = policies.reduce((sum, policy) => {
         const value = policy.policy_premium_value || 0;
-        console.log(`   💰 Apólice ${policy.policy_number}: R$ ${value}`);
         return sum + value;
       }, 0);
       
       progressPercentage = campaign.target > 0 ? (currentValue / campaign.target) * 100 : 0;
-      console.log(`   📊 Total: R$ ${currentValue} / R$ ${campaign.target} = ${progressPercentage.toFixed(2)}%`);
-    } else if (campaign.type === 'apolices') {
+      } else if (campaign.type === 'apolices') {
       // Contar número de apólices
       currentValue = policies.length;
       progressPercentage = campaign.target > 0 ? (currentValue / campaign.target) * 100 : 0;
-      console.log(`   📊 Total: ${currentValue} / ${campaign.target} apólices = ${progressPercentage.toFixed(2)}%`);
-    }
+      }
 
     const isCompleted = progressPercentage >= 100;
 
@@ -129,14 +122,12 @@ export const updateCampaignProgress = async (campaignId: string): Promise<boolea
       updateData.status = 'completed';
       updateData.achieved_at = new Date().toISOString();
       updateData.achieved_value = progressData.currentValue;
-      console.log(`🎉 Campanha ${campaignId} COMPLETADA! Meta atingida!`);
-    } else if (!isNowCompleted && wasCompleted) {
+      } else if (!isNowCompleted && wasCompleted) {
       // Campanha perdeu o status de completada (caso raro, mas possível)
       updateData.status = 'active';
       updateData.achieved_at = null;
       updateData.achieved_value = null;
-      console.log(`⚠️ Campanha ${campaignId} voltou para ATIVA (meta não atingida)`);
-    }
+      }
 
     // Verificar se campanha expirou
     const now = new Date();
@@ -146,8 +137,7 @@ export const updateCampaignProgress = async (campaignId: string): Promise<boolea
     if (isExpired && !isNowCompleted && currentCampaign.status === 'active') {
       // Campanha expirou sem atingir a meta
       updateData.status = 'cancelled'; // Ou 'expired' se preferir
-      console.log(`⏰ Campanha ${campaignId} EXPIROU sem atingir a meta`);
-    }
+      }
 
     const { error } = await supabase
       .from('goals')
@@ -160,8 +150,6 @@ export const updateCampaignProgress = async (campaignId: string): Promise<boolea
       return false;
     }
 
-    console.log(`✅ Progresso atualizado para campanha ${campaignId}: ${progressData.progressPercentage.toFixed(1)}% (Status: ${updateData.status || currentCampaign.status})`);
-    console.log(`   📊 Valor atual: ${progressData.currentValue}, Meta: ${progressData.campaignId}, Apólices vinculadas: ${progressData.totalPolicies}`);
     return true;
 
   } catch (error) {
@@ -196,8 +184,7 @@ export const updateAllUserCampaignProgress = async (userId: string): Promise<voi
       );
 
       await Promise.all(updatePromises);
-      console.log(`✅ Progresso atualizado para ${campaigns.length} campanhas do usuário ${userId}`);
-    }
+      }
 
   } catch (error) {
     console.error('Erro ao atualizar progresso das campanhas do usuário:', error);
@@ -245,8 +232,7 @@ export const checkAndUpdateExpiredCampaigns = async (userId?: string): Promise<v
         if (updateError) {
           console.error('Erro ao atualizar campanhas expiradas:', updateError);
         } else {
-          console.log(`⏰ ${expiredIds.length} campanhas marcadas como expiradas`);
-        }
+          }
       }
     }
   } catch (error) {
@@ -262,8 +248,6 @@ export const checkAndUpdateExpiredCampaigns = async (userId?: string): Promise<v
  */
 export const debugCampaignData = async (campaignId: string): Promise<void> => {
   try {
-    console.log(`🔍 === DEBUG CAMPANHA ${campaignId} ===`);
-    
     // Buscar campanha
     const { data: campaign, error: campaignError } = await supabase
       .from('goals')
@@ -277,16 +261,6 @@ export const debugCampaignData = async (campaignId: string): Promise<void> => {
       return;
     }
 
-    console.log('📋 Campanha:', {
-      id: campaign.id,
-      title: campaign.title,
-      type: campaign.type,
-      target: campaign.target,
-      current_value: campaign.current_value,
-      progress_percentage: campaign.progress_percentage,
-      status: campaign.status
-    });
-
     // Buscar apólices vinculadas
     const { data: policies, error: policiesError } = await supabase
       .from('goals')
@@ -299,10 +273,8 @@ export const debugCampaignData = async (campaignId: string): Promise<void> => {
       return;
     }
 
-    console.log(`📄 Apólices encontradas: ${policies?.length || 0}`);
     policies?.forEach((policy, index) => {
-      console.log(`   ${index + 1}. ${policy.policy_number} - R$ ${policy.policy_premium_value} (is_linked: ${policy.is_policy_linked})`);
-    });
+      });
 
     // Buscar todas as apólices do usuário (para comparação)
     const { data: allPolicies, error: allPoliciesError } = await supabase
@@ -312,11 +284,9 @@ export const debugCampaignData = async (campaignId: string): Promise<void> => {
       .eq('record_type', 'policy_link');
 
     if (!allPoliciesError) {
-      console.log(`📊 Total de apólices do usuário: ${allPolicies?.length || 0}`);
-    }
+      }
 
-    console.log('🔍 === FIM DEBUG ===');
-  } catch (error) {
+    } catch (error) {
     console.error('❌ Erro no debug:', error);
   }
 };

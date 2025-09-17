@@ -24,10 +24,7 @@ class MistralAIService {
                 throw new Error('Chave da API Mistral não configurada. Verifique a variável VITE_MISTRAL_KEY no arquivo .env.local');
             }
 
-            console.log('🤖 Fazendo chamada para Mistral API...');
-            console.log('- URL:', AI_CONFIG.MISTRAL_API_URL);
-            console.log('- Model:', AI_CONFIG.MODEL);
-            console.log('- Chave configurada:', AI_CONFIG.MISTRAL_API_KEY ? 'SIM' : 'NÃO');
+            // Fazendo chamada para Mistral API
 
             const response = await fetch(AI_CONFIG.MISTRAL_API_URL, {
                 method: 'POST',
@@ -45,7 +42,7 @@ class MistralAIService {
                 })
             });
 
-            console.log('📡 Resposta da API:', response.status, response.statusText);
+            // Resposta da API recebida
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -54,7 +51,6 @@ class MistralAIService {
             }
 
             const data: MistralResponse = await response.json();
-            console.log('✅ Resposta recebida com sucesso');
             return data.choices[0]?.message?.content || '';
         } catch (error) {
             console.error('❌ Erro ao chamar Mistral API:', error);

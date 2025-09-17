@@ -120,8 +120,6 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
 
             // DESABILITADO: Atualização automática de progresso para evitar loops
             // O progresso será atualizado apenas quando necessário (criação de apólices)
-            console.log('✅ Campanhas carregadas sem atualização automática de progresso');
-
             // Buscar apólices vinculadas às campanhas aceitas (record_type = 'policy_link')
             if (accepted.length > 0) {
                 const acceptedIds = accepted.map(c => c.id);
@@ -167,7 +165,6 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
 
             if (error) throw error;
 
-            console.log('✅ Campanha aceita - progresso resetado para 0%');
             await fetchCampaigns(); // Recarregar dados
             return { success: true, message: 'Campanha aceita com sucesso!' };
 
@@ -312,7 +309,6 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
     // Função para refresh manual
     const refreshCampaigns = useCallback(async () => {
         if (userId && userId !== '') {
-            console.log('🔄 Refresh manual das campanhas solicitado');
             await fetchCampaigns();
         }
     }, [userId, fetchCampaigns]);
@@ -327,8 +323,7 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
 
     // DESABILITADO: Listener de eventos em tempo real para evitar loops
     // useRealtimeListener('campaigns', useCallback(() => {
-    //     console.log('🔄 Atualizando campanhas via evento em tempo real');
-    //     fetchCampaigns();
+    //     //     fetchCampaigns();
     // }, [fetchCampaigns]), [fetchCampaigns]);
 
     const contextValue: GoalsContextType = {

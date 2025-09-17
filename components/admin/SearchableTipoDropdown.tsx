@@ -63,8 +63,6 @@ const SearchableTipoDropdown: React.FC<SearchableTipoDropdownProps> = ({
     const fetchTipos = async () => {
         try {
             setLoading(true);
-            console.log('Fetching tipos...');
-            
             const { data, error } = await supabase
                 .from('tipos_premios')
                 .select('*')
@@ -77,8 +75,6 @@ const SearchableTipoDropdown: React.FC<SearchableTipoDropdownProps> = ({
                 return;
             }
 
-            console.log('Tipos loaded successfully:', data);
-            console.log('Tipos count:', data?.length || 0);
             setTipos(data || []);
         } catch (error) {
             console.error('Error in fetchTipos:', error);
@@ -94,8 +90,6 @@ const SearchableTipoDropdown: React.FC<SearchableTipoDropdownProps> = ({
         }
 
         try {
-            console.log('Creating tipo:', newTipo.nome);
-            
             const { data, error } = await supabase
                 .from('tipos_premios')
                 .insert([{
@@ -110,7 +104,6 @@ const SearchableTipoDropdown: React.FC<SearchableTipoDropdownProps> = ({
                 return;
             }
 
-            console.log('Tipo created successfully:', data);
             setTipos(prev => [...prev, data]);
             setSelectedTipo(data);
             onTipoSelect(data.id);

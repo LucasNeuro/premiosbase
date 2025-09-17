@@ -13,8 +13,6 @@ import { PoliciesProvider } from './hooks/usePolicies';
 const AppContent: React.FC = () => {
     const { user, loading } = useAuth();
     
-    console.log('AppContent - User:', user, 'Loading:', loading);
-
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">

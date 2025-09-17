@@ -23,23 +23,15 @@ const PoliciesTable: React.FC = () => {
     policy: null
   });
   
-  console.log('PoliciesTable: policies received:', policies);
-  console.log('PoliciesTable: policies length:', policies.length);
-  console.log('PoliciesTable: lastUpdate:', lastUpdate);
-  console.log('PoliciesTable: loading:', loading);
-  
   // Debug: Check if policies have the correct structure
   if (policies.length > 0) {
-    console.log('PoliciesTable: First policy structure:', policies[0]);
-    console.log('PoliciesTable: Policy keys:', Object.keys(policies[0]));
-  }
+    }
   
 
 
   // Removed handleEdit function - not needed for audit system
 
   const handleDelete = (policy: PolicyAuxiliar) => {
-    console.log('PoliciesTable: Opening delete modal for policy:', policy);
     setDeleteModal({
       isOpen: true,
       policy: policy
@@ -49,7 +41,6 @@ const PoliciesTable: React.FC = () => {
   const handleConfirmDelete = async () => {
     if (!deleteModal.policy) return;
     
-    console.log('PoliciesTable: Confirming deletion of policy:', deleteModal.policy);
     setLoading(deleteModal.policy.id);
     
     try {
@@ -79,16 +70,13 @@ const PoliciesTable: React.FC = () => {
       if (error) {
         console.error('Error deleting policy:', error);
         // TODO: Implementar modal de erro
-        console.log('❌ Erro ao excluir apólice! Tente novamente ou contate o suporte.');
-      } else {
-        console.log('✅ Apólice excluída com sucesso! A tabela será atualizada automaticamente.');
+        } else {
         // A página será atualizada automaticamente pelo hook
       }
     } catch (error) {
       console.error('Error deleting policy:', error);
       // TODO: Implementar modal de erro
-      console.log('Erro ao excluir apólice');
-    } finally {
+      } finally {
       setLoading(null);
     }
   };

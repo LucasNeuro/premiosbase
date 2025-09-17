@@ -36,10 +36,6 @@ function DynamicTable<T>({
   getRowId,
   expandedRowId
 }: DynamicTableProps<T>) {
-  console.log('DynamicTable: data received:', data);
-  console.log('DynamicTable: data length:', data.length);
-  console.log('DynamicTable: columns:', columns);
-  
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -69,45 +65,15 @@ function DynamicTable<T>({
   });
 
   // Debug table configuration
-  console.log('DynamicTable: Table configuration');
-  console.log('DynamicTable: data passed to table:', data);
-  console.log('DynamicTable: columns passed to table:', columns);
-  console.log('DynamicTable: table.getRowModel().rows:', table.getRowModel().rows);
-  console.log('DynamicTable: table.getFilteredRowModel().rows:', table.getFilteredRowModel().rows);
-  
   // Debug pagination
-  console.log('DynamicTable: Pagination state:', table.getState().pagination);
-  console.log('DynamicTable: Page count:', table.getPageCount());
-  console.log('DynamicTable: Current page:', table.getState().pagination.pageIndex);
-  console.log('DynamicTable: Page size:', table.getState().pagination.pageSize);
-  console.log('DynamicTable: Can go to previous page:', table.getCanPreviousPage());
-  console.log('DynamicTable: Can go to next page:', table.getCanNextPage());
-  
-
   const filteredData = useMemo(() => {
-    console.log('DynamicTable: filteredData calculation');
-    console.log('DynamicTable: data:', data);
-    console.log('DynamicTable: data length:', data.length);
-    console.log('DynamicTable: globalFilter:', globalFilter);
-    console.log('DynamicTable: pagination state:', pagination);
-    
     // Get paginated rows
     const paginatedRows = table.getPaginationRowModel().rows;
-    console.log('DynamicTable: paginated rows:', paginatedRows);
-    console.log('DynamicTable: paginated rows length:', paginatedRows.length);
-    
     // Debug: Check if data is being processed correctly
     if (data.length > 0 && paginatedRows.length === 0) {
-      console.log('DynamicTable: WARNING - Data exists but paginated is empty!');
-      console.log('DynamicTable: Table state:', table.getState());
-      console.log('DynamicTable: Pagination state:', table.getState().pagination);
-      console.log('DynamicTable: Page count:', table.getPageCount());
-      
       // Fallback: try to get core rows directly
       const coreRows = table.getCoreRowModel().rows;
-      console.log('DynamicTable: Core rows fallback:', coreRows);
       if (coreRows.length > 0) {
-        console.log('DynamicTable: Using core rows as fallback');
         return coreRows;
       }
     }
@@ -201,7 +167,6 @@ function DynamicTable<T>({
                     </tr>
                 ) : (
                     filteredData.map((row) => {
-                        console.log('DynamicTable: Rendering row:', row.id, row.original);
                         const rowId = getRowId ? getRowId(row.original) : row.id;
                         const isExpanded = expandedRowId === rowId;
                         
@@ -209,7 +174,6 @@ function DynamicTable<T>({
                             <React.Fragment key={row.id}>
                                 <tr className="hover:bg-gray-50">
                                     {row.getVisibleCells().map((cell) => {
-                                        console.log('DynamicTable: Rendering cell:', cell.id, cell.getValue());
                                         return (
                                             <td key={cell.id} className="px-4 py-3 border-b border-gray-200">
                                                 {flexRender(
@@ -255,7 +219,6 @@ function DynamicTable<T>({
                 id="page-size"
                 value={pagination.pageSize}
                 onChange={(e) => {
-                  console.log('DynamicTable: Changing page size to:', e.target.value);
                   setPagination(prev => ({
                     ...prev,
                     pageSize: Number(e.target.value),
@@ -277,7 +240,6 @@ function DynamicTable<T>({
           <button
             className="table-pagination-btn min-w-[40px] h-10"
             onClick={() => {
-              console.log('DynamicTable: Going to first page');
               setPagination(prev => ({ ...prev, pageIndex: 0 }));
             }}
             disabled={pagination.pageIndex === 0}
@@ -288,7 +250,6 @@ function DynamicTable<T>({
           <button
             className="table-pagination-btn min-w-[40px] h-10"
             onClick={() => {
-              console.log('DynamicTable: Going to previous page');
               setPagination(prev => ({ ...prev, pageIndex: Math.max(0, prev.pageIndex - 1) }));
             }}
             disabled={pagination.pageIndex === 0}
@@ -303,7 +264,6 @@ function DynamicTable<T>({
           <button
             className="table-pagination-btn min-w-[40px] h-10"
             onClick={() => {
-              console.log('DynamicTable: Going to next page');
               setPagination(prev => ({ 
                 ...prev, 
                 pageIndex: Math.min(table.getPageCount() - 1, prev.pageIndex + 1) 
@@ -317,7 +277,6 @@ function DynamicTable<T>({
           <button
             className="table-pagination-btn min-w-[40px] h-10"
             onClick={() => {
-              console.log('DynamicTable: Going to last page');
               setPagination(prev => ({ ...prev, pageIndex: table.getPageCount() - 1 }));
             }}
             disabled={pagination.pageIndex >= table.getPageCount() - 1}

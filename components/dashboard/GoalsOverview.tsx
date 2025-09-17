@@ -55,7 +55,6 @@ const GoalsOverview: React.FC = () => {
 
     useEffect(() => {
         if (user?.id) {
-            console.log('Usuário logado:', user);
             fetchGoals();
         }
     }, [user?.id]);
@@ -95,7 +94,6 @@ const GoalsOverview: React.FC = () => {
                 return;
             }
 
-            console.log('Campanhas encontradas:', data);
             setGoals(data || []);
         } catch (error) {
             console.error('Error fetching goals:', error);

@@ -15,12 +15,10 @@ export const useRealtimeEvents = (userId: string) => {
         const lastEventTime = window[lastEventKey] || 0;
         
         if (now - lastEventTime < 2000) {
-            console.log(`⏸️ Evento ${eventName} ignorado (debounce)`);
             return;
         }
         
         window[lastEventKey] = now;
-        console.log(`📡 Disparando evento: ${eventName}`);
         
         window.dispatchEvent(new CustomEvent(eventName, {
             detail: { userId, timestamp: new Date(), data }
@@ -31,7 +29,6 @@ export const useRealtimeEvents = (userId: string) => {
     useEffect(() => {
         if (!userId || userId === '') return;
 
-        console.log('🔄 Configurando subscriptions em tempo real para user:', userId);
 
         // Subscription para campanhas (goals)
         const campaignsSubscription = supabase
@@ -45,7 +42,6 @@ export const useRealtimeEvents = (userId: string) => {
                     filter: `user_id=eq.${userId}`
                 },
                 (payload) => {
-                    console.log('📊 Mudança em campanhas detectada:', payload);
                     triggerUpdate('campaigns', payload);
                 }
             )
@@ -63,7 +59,6 @@ export const useRealtimeEvents = (userId: string) => {
                     filter: `user_id=eq.${userId}`
                 },
                 (payload) => {
-                    console.log('📄 Mudança em apólices detectada:', payload);
                     triggerUpdate('policies', payload);
                     // Atualizar campanhas também pois pode afetar progresso
                     triggerUpdate('campaigns', payload);
@@ -83,7 +78,6 @@ export const useRealtimeEvents = (userId: string) => {
                     filter: `user_id=eq.${userId}`
                 },
                 (payload) => {
-                    console.log('🔗 Mudança em vinculações detectada:', payload);
                     triggerUpdate('campaigns', payload);
                     triggerUpdate('policies', payload);
                 }
@@ -101,7 +95,6 @@ export const useRealtimeEvents = (userId: string) => {
                     table: 'campanhas_premios'
                 },
                 (payload) => {
-                    console.log('🎁 Mudança em prêmios detectada:', payload);
                     triggerUpdate('campaigns', payload);
                 }
             )
@@ -109,7 +102,6 @@ export const useRealtimeEvents = (userId: string) => {
 
         // Cleanup das subscriptions
         return () => {
-            console.log('🔄 Removendo subscriptions em tempo real');
             supabase.removeChannel(campaignsSubscription);
             supabase.removeChannel(policiesSubscription);
             supabase.removeChannel(linksSubscription);
@@ -134,7 +126,6 @@ export const useRealtimeListener = (
         const eventName = `realtime_update_${eventType}`;
         
         const handleUpdate = (event: CustomEvent) => {
-            console.log(`📢 Recebido evento ${eventName}:`, event.detail);
             callback(event.detail?.data);
         };
 

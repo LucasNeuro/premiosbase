@@ -30,11 +30,8 @@ const CampaignsKanban: React.FC = () => {
 
     // Listener para atualizações em tempo real das campanhas
     useRealtimeListener('campaigns', useCallback(() => {
-        console.log('🎯 Kanban: Atualizando campanhas via evento em tempo real');
         // Atualização imediata para evitar dados desatualizados
-        fetchCampaigns().then(() => {
-            console.log('✅ Campanhas atualizadas em tempo real');
-        }).catch(err => {
+        fetchCampaigns().catch(err => {
             console.error('❌ Erro ao atualizar campanhas:', err);
         });
         
@@ -59,7 +56,6 @@ const CampaignsKanban: React.FC = () => {
     });
     
     const allCampaignsForDisplay = Array.from(allCampaignsMap.values());
-    console.log(`📊 Campanhas únicas para display: ${allCampaignsForDisplay.length} (aceitas: ${campaigns.length}, pendentes: ${pendingCampaigns.length})`);
     
     const newCampaigns = allCampaignsForDisplay.filter(c => c.acceptance_status === 'pending');
     const activeCampaigns = allCampaignsForDisplay.filter(c => c.status === 'active' && c.acceptance_status === 'accepted');

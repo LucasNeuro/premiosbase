@@ -15,7 +15,6 @@ import { Home, Target } from 'lucide-react';
 const DashboardPage: React.FC = () => {
     const { user } = useAuth();
     
-    console.log('DashboardPage - User:', user);
     
     // DESABILITADO: Sistema de eventos em tempo real (causando loops)
     // useRealtimeEvents(user?.id || '');

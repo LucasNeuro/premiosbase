@@ -113,19 +113,15 @@ const AdminGoalsManager: React.FC = () => {
                 if (goal.campaign_type === 'composite' && goal.criteria) {
                     try {
                         const criteria = Array.isArray(goal.criteria) ? goal.criteria : JSON.parse(goal.criteria);
-                        console.log('📊 Processando critérios da campanha:', goal.title, 'criteria:', criteria);
                         realTarget = criteria.reduce((sum: number, c: any) => {
-                            console.log('📊 Critério:', c, 'target_type:', c.target_type, 'target_value:', c.target_value);
                             // Só somar critérios de VALOR, não de QUANTIDADE
                             if (c.target_type === 'value') {
                                 return sum + (c.target_value || 0);
                             }
                             return sum; // Critérios de quantidade não são somados ao target total
                         }, 0);
-                        console.log('📊 Target real calculado:', realTarget);
-                    } catch (e) {
-                        console.warn('Erro ao processar critérios:', e);
-                    }
+                        } catch (e) {
+                        }
                 }
 
                 return {
