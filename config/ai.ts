@@ -7,10 +7,12 @@ export const AI_CONFIG = {
     TEMPERATURE: 0.7
 };
 
-// Debug para verificar se a chave está sendo carregada
-console.log('🔑 Verificando configuração da API Mistral:');
-console.log('- Chave carregada:', AI_CONFIG.MISTRAL_API_KEY ? 'SIM (oculta por segurança)' : 'NÃO');
-console.log('- Tamanho da chave:', AI_CONFIG.MISTRAL_API_KEY?.length || 0);
+// Debug temporário para verificar configuração
+if (process.env.NODE_ENV === 'development') {
+  console.log('🔑 Verificando configuração da API Mistral:');
+  console.log('- Chave carregada:', AI_CONFIG.MISTRAL_API_KEY ? 'SIM (oculta por segurança)' : 'NÃO');
+  console.log('- Tamanho da chave:', AI_CONFIG.MISTRAL_API_KEY?.length || 0);
+}
 
 // Função para verificar se a API está configurada
 export const isAIConfigured = (): boolean => {

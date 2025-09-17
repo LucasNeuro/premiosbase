@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="32" height="32">
+  <!-- Fundo circular suave -->
+  <circle cx="50" cy="50" r="50" fill="url(#bg)"/>
+  
+  <!-- Gradiente de fundo -->
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#fef2f2;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#fee2e2;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="trophy" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#dc2626;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#ef4444;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#b91c1c;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Taça (corpo principal) -->
+  <path d="M25 35 Q25 25 35 25 L65 25 Q75 25 75 35 L75 50 Q75 65 65 70 L60 70 L60 75 L70 75 Q72 75 72 77 Q72 79 70 79 L30 79 Q28 79 28 77 Q28 75 30 75 L40 75 L40 70 L35 70 Q25 65 25 50 Z" fill="url(#trophy)"/>
+  
+  <!-- Alças da taça -->
+  <ellipse cx="20" cy="42" rx="8" ry="12" fill="none" stroke="url(#trophy)" stroke-width="4"/>
+  <ellipse cx="80" cy="42" rx="8" ry="12" fill="none" stroke="url(#trophy)" stroke-width="4"/>
+  
+  <!-- Letra B -->
+  <text x="50" y="55" font-family="Arial, sans-serif" font-size="24" font-weight="bold" text-anchor="middle" fill="white" stroke="rgba(0,0,0,0.2)" stroke-width="1">B</text>
+  
+  <!-- Brilho na taça -->
+  <ellipse cx="45" cy="38" rx="8" ry="4" fill="rgba(255,255,255,0.3)" opacity="0.8"/>
+</svg>
