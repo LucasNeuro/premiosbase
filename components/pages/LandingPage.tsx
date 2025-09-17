@@ -1,15 +1,8 @@
 ﻿import React from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Gift,
-  DollarSign,
-  Calendar,
-  Zap,
-  Percent,
-  RefreshCw,
-  ArrowRight,
-  Trophy,
-  Award
+  Gift, DollarSign, Calendar, Zap,
+  Percent, RefreshCw, ArrowRight, Trophy, Award
 } from 'lucide-react';
 
 const LandingPage: React.FC = () => {
@@ -29,16 +22,10 @@ const LandingPage: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Link
-                to="/register"
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-all duration-200"
-              >
+              <Link to="/register" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-all duration-200">
                 Cadastrar
               </Link>
-              <Link
-                to="/login"
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-all duration-200"
-              >
+              <Link to="/login" className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-all duration-200">
                 Entrar
               </Link>
             </div>
@@ -59,10 +46,7 @@ const LandingPage: React.FC = () => {
                 Inscreva-se no Prêmios Base, participe de campanhas a cada apólice emitida e troque por recompensas incríveis.
                 Com o suporte comercial da Base, você vende mais e vai mais longe.
               </p>
-              <Link
-                to="/register"
-                className="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-all duration-200 inline-flex items-center"
-              >
+              <Link to="/register" className="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-all duration-200 inline-flex items-center">
                 Vem pra Prêmios.Base
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
@@ -72,10 +56,10 @@ const LandingPage: React.FC = () => {
             <div className="relative">
               <div className="w-full h-full flex items-center justify-start lg:justify-center">
                 <div className="relative">
-                  {/* Fundo branco sólido (sem gradiente) */}
+                  {/* Fundo branco sólido (sem gradiente/sombra) */}
                   <div className="absolute inset-0 bg-white rounded-full opacity-100"></div>
 
-                  {/* Card branco sem shadow; imagem sem drop-shadow */}
+                  {/* Card branco sem sombra; imagem sem drop-shadow */}
                   <div className="relative z-10 rotate-6">
                     <div className="bg-white rounded-3xl p-6">
                       <img
@@ -87,7 +71,7 @@ const LandingPage: React.FC = () => {
                   </div>
 
                   {/* Selo por cima (não cortado) */}
-                  <div className="absolute -top-12 -right-12 w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center z-30 pointer-events-none">
+                  <div className="absolute -top-12 -right-12 w-24 h-24 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center z-40 pointer-events-none">
                     <Award className="w-12 h-12 text-white" />
                   </div>
                   {/* Ícone inferior removido */}
@@ -98,12 +82,13 @@ const LandingPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Features (2 por linha no desktop para mais largura) */}
+      {/* Features – alinhado ao mesmo container do Hero, 2 por linha e cards mais largos */}
       <section className="pt-0 pb-20 bg-white">
         <div className="max-w-screen-2xl mx-auto px-6 lg:px-10 pt-12">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-12">
+          {/* 2 colunas no desktop para aumentar largura de cada card; gap menor para ganhar largura útil */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-10">
             {/* Card 1 */}
-            <div className="bg-white p-14 rounded-2xl border border-gray-100">
+            <div className="bg-white p-16 rounded-3xl border border-gray-100">
               <div className="w-16 h-16 bg-red-600 rounded-xl flex items-center justify-center mb-6">
                 <Gift className="w-8 h-8 text-white" />
               </div>
@@ -114,7 +99,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             {/* Card 2 */}
-            <div className="bg-white p-14 rounded-2xl border border-gray-100">
+            <div className="bg-white p-16 rounded-3xl border border-gray-100">
               <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-6">
                 <DollarSign className="w-8 h-8 text-white" />
               </div>
@@ -125,7 +110,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             {/* Card 3 */}
-            <div className="bg-white p-14 rounded-2xl border border-gray-100">
+            <div className="bg-white p-16 rounded-3xl border border-gray-100">
               <div className="w-16 h-16 bg-red-600 rounded-xl flex items-center justify-center mb-6">
                 <Calendar className="w-8 h-8 text-white" />
               </div>
@@ -136,7 +121,7 @@ const LandingPage: React.FC = () => {
             </div>
 
             {/* Card 4 */}
-            <div className="bg-white p-14 rounded-2xl border border-gray-100">
+            <div className="bg-white p-16 rounded-3xl border border-gray-100">
               <div className="w-16 h-16 bg-blue-600 rounded-xl flex items-center justify-center mb-6">
                 <Zap className="w-8 h-8 text-white" />
               </div>
@@ -175,16 +160,13 @@ const LandingPage: React.FC = () => {
                   </p>
                 </div>
               </div>
-              <Link
-                to="/register"
-                className="bg-red-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-red-700 transition-all duration-200 inline-flex items-center"
-              >
+              <Link to="/register" className="bg-red-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-red-700 transition-all duration-200 inline-flex items-center">
                 Participe!
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             </div>
 
-            {/* Imagem secundária (sem sombra e fundo branco) */}
+            {/* Imagem secundária (fundo branco, sem sombra) */}
             <div className="relative">
               <div className="w-full h-96 flex items-center justify-center">
                 <div className="relative">
