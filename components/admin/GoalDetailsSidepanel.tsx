@@ -84,7 +84,7 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
         if (progressData) {
             setRealtimeProgress(progressData.progress);
             setRealtimeCompleted(progressData.isCompleted);
-            console.log(`🔄 [ADMIN] Progresso atualizado em tempo real: ${progressData.progress}%`);
+
         }
     }, [progressData]);
 
@@ -121,7 +121,6 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
                 .order('linked_at', { ascending: false });
 
             if (error) {
-                console.error('Error fetching linked policies:', error);
                 return;
             }
 
@@ -148,24 +147,9 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
                     campaign_received: String(goal.title || 'N/A')
                 }));
 
-            // DEBUG: Log para investigar os valores
-            console.log('🔍 DEBUG APÓLICES:', {
-                totalLinked: linkedPolicies?.length || 0,
-                totalFiltered: filteredPolicies.length,
-                policies: filteredPolicies.map(p => ({
-                    policy_number: p.policy_number,
-                    premium_value: p.premium_value,
-                    type: typeof p.premium_value
-                })),
-                totalValue: filteredPolicies.reduce((sum, p) => {
-                    const value = parseFloat(p.premium_value) || 0;
-                    return sum + value;
-                }, 0)
-            });
 
             setPolicies(filteredPolicies);
         } catch (error) {
-            console.error('Error fetching policies:', error);
         }
     };
 
@@ -180,7 +164,6 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
                 .eq('id', goal.id);
 
             if (error) {
-                console.error('Error deleting goal:', error);
                 alert('Erro ao excluir meta: ' + error.message);
                 return;
             }
@@ -188,7 +171,6 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
             onGoalUpdated();
             onClose();
         } catch (error) {
-            console.error('Error deleting goal:', error);
             alert('Erro ao excluir meta');
         } finally {
             setLoading(false);
@@ -275,7 +257,6 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
                     setRealtimeCompleted(fallbackProgress >= 100);
                 }
             } catch (error) {
-                console.error('Erro ao calcular progresso:', error);
                 // Fallback para progresso simples
                 const fallbackProgress = formatProgress(goal.current_value, goal.target);
                 setRealtimeProgress(fallbackProgress);
@@ -622,9 +603,6 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
                                 </div>
                             </div>
                         )}
-
-
-
 
                         {/* Apólices da Campanha */}
                         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-lg">

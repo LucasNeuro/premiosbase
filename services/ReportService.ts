@@ -53,23 +53,19 @@ export class ReportService {
      */
     static async getConsolidatedData(): Promise<any[]> {
         try {
-            console.log('🔄 Buscando dados consolidados...');
-            
+
             const { data, error } = await supabase
                 .from('v_campaigns_consolidated')
                 .select('*')
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('❌ Erro ao buscar dados consolidados:', error);
                 throw error;
             }
 
-            console.log(`📊 Encontrados ${data?.length || 0} registros consolidados`);
             return data || [];
 
         } catch (error) {
-            console.error('❌ Erro ao buscar dados consolidados:', error);
             throw error;
         }
     }
@@ -79,8 +75,7 @@ export class ReportService {
      */
     static async generateCampaignsReport(): Promise<CampaignReportData[]> {
         try {
-            console.log('🔄 Iniciando geração de relatório de campanhas...');
-            
+
             // Buscar dados consolidados da view
             const consolidatedData = await this.getConsolidatedData();
 
@@ -136,11 +131,9 @@ export class ReportService {
                 last_updated: item.last_updated || item.created_at
             }));
 
-            console.log(`✅ Relatório gerado com sucesso! ${reportData.length} campanhas processadas`);
             return reportData;
 
         } catch (error) {
-            console.error('❌ Erro ao gerar relatório:', error);
             throw error;
         }
     }
@@ -236,8 +229,7 @@ export class ReportService {
      */
     static async generatePerformanceReport(): Promise<any[]> {
         try {
-            console.log('🔄 Gerando relatório de performance...');
-            
+
             const consolidatedData = await this.getConsolidatedData();
             
             // Agrupar por CPD do criador
@@ -277,7 +269,6 @@ export class ReportService {
             return Array.from(performanceMap.values()).sort((a, b) => b.total_value - a.total_value);
             
         } catch (error) {
-            console.error('❌ Erro ao gerar relatório de performance:', error);
             throw error;
         }
     }
@@ -287,8 +278,7 @@ export class ReportService {
      */
     static async generateAuditReport(): Promise<any[]> {
         try {
-            console.log('🔄 Gerando relatório de auditoria...');
-            
+
             const consolidatedData = await this.getConsolidatedData();
             
             // Buscar dados de auditoria das apólices
@@ -301,14 +291,12 @@ export class ReportService {
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('❌ Erro ao buscar dados de auditoria:', error);
                 throw error;
             }
 
             return auditData || [];
             
         } catch (error) {
-            console.error('❌ Erro ao gerar relatório de auditoria:', error);
             throw error;
         }
     }
@@ -318,8 +306,7 @@ export class ReportService {
      */
     static async generateCategoryReport(): Promise<any[]> {
         try {
-            console.log('🔄 Gerando relatório por categoria...');
-            
+
             const consolidatedData = await this.getConsolidatedData();
             
             // Agrupar por categoria
@@ -353,7 +340,6 @@ export class ReportService {
             return Array.from(categoryMap.values()).sort((a, b) => b.total_value - a.total_value);
             
         } catch (error) {
-            console.error('❌ Erro ao gerar relatório por categoria:', error);
             throw error;
         }
     }
@@ -363,8 +349,7 @@ export class ReportService {
      */
     static async downloadCampaignsReport(): Promise<void> {
         try {
-            console.log('🔄 Iniciando download do relatório...');
-            
+
             // Gerar dados do relatório
             const reportData = await this.generateCampaignsReport();
             
@@ -383,11 +368,8 @@ export class ReportService {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
-            console.log('✅ Relatório baixado com sucesso!');
-            
+
         } catch (error) {
-            console.error('❌ Erro ao baixar relatório:', error);
             throw error;
         }
     }
@@ -397,8 +379,7 @@ export class ReportService {
      */
     static async downloadPerformanceReport(): Promise<void> {
         try {
-            console.log('🔄 Iniciando download do relatório de performance...');
-            
+
             const reportData = await this.generatePerformanceReport();
             const csvContent = this.convertPerformanceToCSV(reportData);
             
@@ -413,11 +394,8 @@ export class ReportService {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
-            console.log('✅ Relatório de performance baixado com sucesso!');
-            
+
         } catch (error) {
-            console.error('❌ Erro ao baixar relatório de performance:', error);
             throw error;
         }
     }

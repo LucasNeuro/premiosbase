@@ -14,8 +14,6 @@ export class CampaignProgressValidator {
         errors: string[];
     }> {
         try {
-            console.log(`🔍 Validando progresso das campanhas para usuário: ${userId}`);
-            
             // Buscar todas as campanhas ativas do usuário
             const { data: campaigns, error: campaignsError } = await supabase
                 .from('goals')
@@ -26,12 +24,10 @@ export class CampaignProgressValidator {
                 .in('status', ['active', 'completed']);
 
             if (campaignsError) {
-                console.error('❌ Erro ao buscar campanhas:', campaignsError);
                 return { validated: 0, corrected: 0, errors: [campaignsError.message] };
             }
 
             if (!campaigns || campaigns.length === 0) {
-                console.log('⚠️ Nenhuma campanha encontrada para validação');
                 return { validated: 0, corrected: 0, errors: [] };
             }
 
@@ -49,7 +45,6 @@ export class CampaignProgressValidator {
                         const correctedSuccessfully = await this.correctCampaignProgress(campaign);
                         if (correctedSuccessfully) {
                             corrected++;
-                            console.log(`✅ Campanha ${campaign.title} corrigida com sucesso`);
                         } else {
                             errors.push(`Falha ao corrigir campanha ${campaign.title}`);
                         }
@@ -58,12 +53,9 @@ export class CampaignProgressValidator {
                     errors.push(`Erro ao validar campanha ${campaign.title}: ${error.message}`);
                 }
             }
-
-            console.log(`📊 Validação concluída: ${validated} campanhas validadas, ${corrected} corrigidas`);
             return { validated, corrected, errors };
 
         } catch (error: any) {
-            console.error('❌ Erro na validação de progresso:', error);
             return { validated: 0, corrected: 0, errors: [error.message] };
         }
     }
@@ -164,16 +156,11 @@ export class CampaignProgressValidator {
             const isInconsistent = progressDiff > 0.1 || valueDiff > 1 || !statusCorrect;
 
             if (isInconsistent) {
-                console.log(`⚠️ Inconsistência detectada na campanha ${campaign.title}:`);
-                console.log(`  Progresso: ${campaign.progress_percentage}% → ${correctProgress.toFixed(1)}% (diferença: ${progressDiff.toFixed(1)}%)`);
-                console.log(`  Valor: R$ ${campaign.current_value} → R$ ${correctValue} (diferença: R$ ${valueDiff})`);
-                console.log(`  Status: ${campaign.status} → ${isCompleted ? 'completed' : 'active'}`);
             }
 
             return !isInconsistent;
 
         } catch (error: any) {
-            console.error(`❌ Erro ao validar campanha ${campaign.title}:`, error);
             return false;
         }
     }
@@ -278,14 +265,12 @@ export class CampaignProgressValidator {
                 .eq('id', campaign.id);
 
             if (updateError) {
-                console.error(`❌ Erro ao corrigir campanha ${campaign.title}:`, updateError);
                 return false;
             }
 
             return true;
 
         } catch (error: any) {
-            console.error(`❌ Erro ao corrigir campanha ${campaign.title}:`, error);
             return false;
         }
     }

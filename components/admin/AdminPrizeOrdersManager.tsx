@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Search, Filter, CheckCircle, XCircle, Clock, Truck, Package, User, Calendar, DollarSign, Eye, MoreVertical } from 'lucide-react';
+import { Search, Filter, CheckCircle, XCircle, Clock, Truck, Package, User, Calendar, DollarSign, Eye, MoreVertical, Target } from 'lucide-react';
 import DateRangePicker from '../ui/DateRangePicker';
 
 interface PrizeOrder {
@@ -62,7 +62,6 @@ const AdminPrizeOrdersManager: React.FC = () => {
                 .order('data_solicitacao', { ascending: false });
 
             if (error) {
-                console.error('Error fetching orders:', error);
                 return;
             }
 
@@ -76,7 +75,6 @@ const AdminPrizeOrdersManager: React.FC = () => {
 
             setOrders(processedOrders);
         } catch (error) {
-            console.error('Error fetching orders:', error);
         } finally {
             setLoading(false);
         }
@@ -142,7 +140,6 @@ const AdminPrizeOrdersManager: React.FC = () => {
 
             await fetchOrders();
         } catch (error) {
-            console.error('Error updating order status:', error);
             alert('Erro ao atualizar status do pedido');
         }
     };
@@ -405,7 +402,12 @@ const AdminPrizeOrdersManager: React.FC = () => {
 
             {/* Lista de Pedidos em Cards */}
             <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Pedidos de Resgate</h3>
+                <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900">Pedidos de Resgate</h3>
+                    <div className="text-sm text-gray-600">
+                        {filteredOrders.length} pedido{filteredOrders.length !== 1 ? 's' : ''} encontrado{filteredOrders.length !== 1 ? 's' : ''}
+                    </div>
+                </div>
                 
                 {filteredOrders.length === 0 ? (
                     <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
@@ -414,67 +416,118 @@ const AdminPrizeOrdersManager: React.FC = () => {
                         <p className="text-gray-600">Não há pedidos que correspondam aos filtros selecionados.</p>
                     </div>
                 ) : (
-                    <div className="space-y-3">
+                    <div className="grid gap-4">
                         {filteredOrders.map((order) => (
-                            <div key={order.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-shadow">
-                                <div className="flex items-start justify-between">
-                                    {/* Informações do Pedido */}
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-3">
-                                            <Truck className="w-5 h-5 text-blue-600" />
-                                            <h4 className="text-lg font-semibold text-gray-900">{order.premio_nome}</h4>
-                                            <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}>
-                                                {getStatusIcon(order.status)}
-                                                {getStatusLabel(order.status)}
-                                            </span>
+                            <div key={order.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm hover:shadow-md transition-all duration-200">
+                                {/* Header do Card */}
+                                <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                                            <Package className="w-6 h-6 text-white" />
                                         </div>
-                                        
-                                        <div className="space-y-2 text-sm text-gray-600">
-                                            <p><span className="font-medium">Campanha:</span> {order.campaign_title}</p>
-                                            <p><span className="font-medium">Corretor:</span> {order.user_name} ({order.user_email})</p>
-                                            <div className="flex items-center gap-4">
-                                                <span><span className="font-medium">Quantidade:</span> {order.quantidade}</span>
-                                                <span><span className="font-medium">Valor:</span> {formatCurrency(order.valor_total)}</span>
-                                                <span><span className="font-medium">Data:</span> {formatDate(order.data_solicitacao)}</span>
-                                            </div>
+                                        <div>
+                                            <h4 className="text-lg font-semibold text-gray-900">{order.premio_nome}</h4>
+                                            <p className="text-sm text-gray-600">Prêmio para {order.user_name}</p>
                                         </div>
                                     </div>
+                                    
+                                    <div className="flex items-center gap-2">
+                                        <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}>
+                                            {getStatusIcon(order.status)}
+                                            {getStatusLabel(order.status)}
+                                        </span>
+                                    </div>
+                                </div>
 
-                                    {/* Ações */}
-                                    <div className="flex items-center gap-2 ml-4">
+                                {/* Informações Detalhadas */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <Target className="w-4 h-4 text-gray-600" />
+                                            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Campanha</span>
+                                        </div>
+                                        <p className="text-sm font-semibold text-gray-900">{order.campaign_title}</p>
+                                    </div>
+
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <User className="w-4 h-4 text-gray-600" />
+                                            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Corretor</span>
+                                        </div>
+                                        <p className="text-sm font-semibold text-gray-900">{order.user_name}</p>
+                                        <p className="text-xs text-gray-500">{order.user_email}</p>
+                                    </div>
+
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <Package className="w-4 h-4 text-gray-600" />
+                                            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Quantidade</span>
+                                        </div>
+                                        <p className="text-sm font-semibold text-gray-900">{order.quantidade} unidade{order.quantidade !== 1 ? 's' : ''}</p>
+                                    </div>
+
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <DollarSign className="w-4 h-4 text-gray-600" />
+                                            <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">Valor Total</span>
+                                        </div>
+                                        <p className="text-sm font-semibold text-gray-900">{formatCurrency(order.valor_total)}</p>
+                                    </div>
+                                </div>
+
+                                {/* Informações de Data */}
+                                <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
+                                    <div className="flex items-center gap-4">
+                                        <span><span className="font-medium">Solicitado em:</span> {formatDate(order.data_solicitacao)}</span>
+                                        {order.data_aprovacao && (
+                                            <span><span className="font-medium">Aprovado em:</span> {formatDate(order.data_aprovacao)}</span>
+                                        )}
+                                        {order.data_entrega && (
+                                            <span><span className="font-medium">Entregue em:</span> {formatDate(order.data_entrega)}</span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Ações */}
+                                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                                    <div className="text-xs text-gray-500">
+                                        ID do Pedido: {order.id.slice(0, 8)}...
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-2">
                                         {order.status === 'pending' && (
                                             <>
                                                 <button
                                                     onClick={() => updateOrderStatus(order.id, 'approved')}
-                                                    className="p-2 text-green-600 hover:text-green-800 hover:bg-green-50 rounded-lg transition-colors"
-                                                    title="Aprovar"
+                                                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
                                                 >
-                                                    <CheckCircle className="w-5 h-5" />
+                                                    <CheckCircle className="w-4 h-4" />
+                                                    Aprovar
                                                 </button>
                                                 <button
                                                     onClick={() => updateOrderStatus(order.id, 'rejected')}
-                                                    className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Rejeitar"
+                                                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
                                                 >
-                                                    <XCircle className="w-5 h-5" />
+                                                    <XCircle className="w-4 h-4" />
+                                                    Rejeitar
                                                 </button>
                                             </>
                                         )}
                                         {order.status === 'approved' && (
                                             <button
                                                 onClick={() => updateOrderStatus(order.id, 'delivered')}
-                                                className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
-                                                title="Marcar como Entregue"
+                                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
                                             >
-                                                <Truck className="w-5 h-5" />
+                                                <Truck className="w-4 h-4" />
+                                                Marcar como Entregue
                                             </button>
                                         )}
                                         <button
                                             onClick={() => {/* TODO: Implementar visualização de detalhes */}}
-                                            className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-colors"
-                                            title="Ver Detalhes"
+                                            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 flex items-center gap-2 text-sm font-medium"
                                         >
-                                            <Eye className="w-5 h-5" />
+                                            <Eye className="w-4 h-4" />
+                                            Ver Detalhes
                                         </button>
                                     </div>
                                 </div>

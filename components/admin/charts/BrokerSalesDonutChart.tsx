@@ -28,7 +28,6 @@ const BrokerSalesDonutChart: React.FC = () => {
 
             setData(chartData || []);
         } catch (error) {
-            console.error('Erro ao carregar dados do gráfico:', error);
         } finally {
             setLoading(false);
         }

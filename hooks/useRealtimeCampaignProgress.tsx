@@ -18,8 +18,7 @@ export const useRealtimeCampaignProgress = (campaignId?: string) => {
   // Função para recalcular progresso
   const recalculateProgress = useCallback(async (campaignId: string) => {
     try {
-      console.log(`🔄 [REALTIME] Recalculando progresso para campanha: ${campaignId}`);
-      
+
       // Buscar dados da campanha
       const { data: campaign, error: campaignError } = await supabase
         .from('goals')
@@ -29,7 +28,6 @@ export const useRealtimeCampaignProgress = (campaignId?: string) => {
         .single();
 
       if (campaignError || !campaign) {
-        console.error('❌ [REALTIME] Erro ao buscar campanha:', campaignError);
         return;
       }
 
@@ -46,18 +44,15 @@ export const useRealtimeCampaignProgress = (campaignId?: string) => {
         };
 
         setProgressData(newProgressData);
-        console.log(`✅ [REALTIME] Progresso atualizado:`, newProgressData);
+
       }
     } catch (err: any) {
-      console.error('❌ [REALTIME] Erro ao recalcular progresso:', err);
       setError(err.message);
     }
   }, []);
 
   useEffect(() => {
     if (!campaignId) return;
-
-    console.log(`🔌 [REALTIME] Conectando ao tempo real para campanha: ${campaignId}`);
 
     // Configurar listeners para mudanças nas tabelas relevantes
     const policyLinksChannel = supabase
@@ -71,12 +66,12 @@ export const useRealtimeCampaignProgress = (campaignId?: string) => {
           filter: `campaign_id=eq.${campaignId}`
         },
         (payload) => {
-          console.log(`🔄 [REALTIME] Mudança em policy_campaign_links:`, payload);
+
           recalculateProgress(campaignId);
         }
       )
       .subscribe((status) => {
-        console.log(`📡 [REALTIME] Status da conexão policy_links:`, status);
+
         if (status === 'SUBSCRIBED') {
           setIsConnected(true);
           setError(null);
@@ -94,12 +89,12 @@ export const useRealtimeCampaignProgress = (campaignId?: string) => {
           filter: `id=eq.${campaignId}`
         },
         (payload) => {
-          console.log(`🔄 [REALTIME] Mudança em goals:`, payload);
+
           recalculateProgress(campaignId);
         }
       )
       .subscribe((status) => {
-        console.log(`📡 [REALTIME] Status da conexão goals:`, status);
+
       });
 
     const policiesChannel = supabase
@@ -113,12 +108,12 @@ export const useRealtimeCampaignProgress = (campaignId?: string) => {
           filter: `user_id=eq.${campaignId}` // Assumindo que queremos ouvir mudanças nas apólices do usuário
         },
         (payload) => {
-          console.log(`🔄 [REALTIME] Mudança em policies:`, payload);
+
           recalculateProgress(campaignId);
         }
       )
       .subscribe((status) => {
-        console.log(`📡 [REALTIME] Status da conexão policies:`, status);
+
       });
 
     // Recalcular progresso inicial
@@ -126,7 +121,7 @@ export const useRealtimeCampaignProgress = (campaignId?: string) => {
 
     // Cleanup
     return () => {
-      console.log(`🔌 [REALTIME] Desconectando canais para campanha: ${campaignId}`);
+
       supabase.removeChannel(policyLinksChannel);
       supabase.removeChannel(goalsChannel);
       supabase.removeChannel(policiesChannel);

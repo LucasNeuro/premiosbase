@@ -40,7 +40,7 @@ export default function EscolherPremioModal({
             setObservacoes(escolha.observacoes || '');
           }
         })
-        .catch(console.error);
+        .catch(() => {});
     }
   }, [isOpen, goalId, userId, verificarEscolhaExistente]);
 
@@ -65,7 +65,6 @@ export default function EscolherPremioModal({
       onPremioEscolhido?.();
       onClose();
     } catch (error: any) {
-      console.error('Erro ao escolher prêmio:', error);
       alert(`Erro: ${error.message}`);
     } finally {
       setIsSubmitting(false);

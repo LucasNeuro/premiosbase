@@ -125,7 +125,6 @@ const AdminPoliciesTable: React.FC = () => {
                 .order('created_at', { ascending: false });
 
             if (policiesError) {
-                console.error('Error fetching policies:', policiesError);
                 alert('Erro ao carregar apólices: ' + policiesError.message);
                 return;
             }
@@ -143,7 +142,6 @@ const AdminPoliciesTable: React.FC = () => {
                 .in('id', userIds);
 
             if (usersError) {
-                console.error('Error fetching users:', usersError);
                 alert('Erro ao carregar usuários: ' + usersError.message);
                 return;
             }
@@ -165,7 +163,6 @@ const AdminPoliciesTable: React.FC = () => {
 
             setPolicies(formattedPolicies);
         } catch (error) {
-            console.error('Error fetching policies:', error);
             alert('Erro ao carregar apólices');
         } finally {
             setLoading(false);
@@ -193,7 +190,6 @@ const AdminPoliciesTable: React.FC = () => {
             await fetchAllPolicies();
             setDeleteModal({ isOpen: false, policy: null });
         } catch (error) {
-            console.error('Error deleting policy:', error);
             alert('Erro ao excluir apólice');
         }
     };

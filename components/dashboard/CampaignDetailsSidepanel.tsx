@@ -42,7 +42,6 @@ const CampaignDetailsSidepanel: React.FC<CampaignDetailsSidepanelProps> = ({
                     setCriteriaDetails(details);
                 })
                 .catch(err => {
-                    console.error('❌ Erro ao carregar critérios:', err);
                     setCriteriaDetails([]);
                 })
                 .finally(() => setLoadingCriteria(false));

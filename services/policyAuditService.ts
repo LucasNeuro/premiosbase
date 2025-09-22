@@ -64,14 +64,12 @@ export class PolicyAuditService {
                 .single();
 
             if (error) {
-                console.error('Erro ao registrar auditoria:', error);
                 throw error;
             }
 
             return data;
 
         } catch (error) {
-            console.error('Erro no PolicyAuditService.recordPolicyLaunch:', error);
             throw error;
         }
     }
@@ -92,14 +90,12 @@ export class PolicyAuditService {
                 .limit(limit);
 
             if (error) {
-                console.error('Erro ao buscar histórico:', error);
                 throw error;
             }
 
             return data || [];
 
         } catch (error) {
-            console.error('Erro no PolicyAuditService.getPolicyLaunchHistory:', error);
             throw error;
         }
     }
@@ -123,7 +119,6 @@ export class PolicyAuditService {
                 .eq('user_id', userId);
 
             if (error) {
-                console.error('Erro ao buscar estatísticas:', error);
                 throw error;
             }
 
@@ -156,7 +151,6 @@ export class PolicyAuditService {
             };
 
         } catch (error) {
-            console.error('Erro no PolicyAuditService.getLaunchStatistics:', error);
             throw error;
         }
     }
@@ -225,8 +219,7 @@ export class PolicyAuditService {
         userId: string,
         onUpdate: (auditRecord: PolicyLaunchAudit) => void
     ) {
-        console.log('🔴 Configurando listener realtime para user:', userId);
-        
+
         const channel = supabase
             .channel('policy_launch_audit_changes')
             .on(
@@ -238,18 +231,16 @@ export class PolicyAuditService {
                     filter: `user_id=eq.${userId}`
                 },
                 (payload) => {
-                    console.log('🟢 Nova apólice lançada via realtime:', payload.new);
+
                     onUpdate(payload.new as PolicyLaunchAudit);
                 }
             )
             .subscribe((status) => {
-                console.log('🟡 Status do realtime:', status);
+
             });
 
-        console.log('🔴 Listener realtime configurado:', channel);
-
         return () => {
-            console.log('🔴 Removendo listener realtime');
+
             supabase.removeChannel(channel);
         };
     }

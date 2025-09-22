@@ -35,7 +35,6 @@ const SearchableTipoDropdown: React.FC<SearchableTipoDropdownProps> = ({
     const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-
     useEffect(() => {
         fetchTipos();
     }, []);
@@ -70,14 +69,11 @@ const SearchableTipoDropdown: React.FC<SearchableTipoDropdownProps> = ({
                 .order('nome');
 
             if (error) {
-                console.error('Error fetching tipos:', error);
-                console.error('Error details:', error.message, error.details, error.hint);
                 return;
             }
 
             setTipos(data || []);
         } catch (error) {
-            console.error('Error in fetchTipos:', error);
         } finally {
             setLoading(false);
         }
@@ -99,7 +95,6 @@ const SearchableTipoDropdown: React.FC<SearchableTipoDropdownProps> = ({
                 .single();
 
             if (error) {
-                console.error('Error creating tipo:', error);
                 alert('Erro ao criar tipo: ' + error.message);
                 return;
             }
@@ -116,7 +111,6 @@ const SearchableTipoDropdown: React.FC<SearchableTipoDropdownProps> = ({
                 onNewTipo(data);
             }
         } catch (error) {
-            console.error('Error:', error);
             alert('Erro inesperado ao criar tipo');
         }
     };

@@ -64,8 +64,7 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
             setError(null);
 
             // Buscar apenas campanhas do usuário logado (sem prêmios)
-            console.log(`🔍 [DASHBOARD] Buscando campanhas para user_id: ${userId}`);
-            
+
             const { data: campaignsData, error: campaignsError } = await supabase
                 .from('goals')
                 .select('*')
@@ -75,25 +74,15 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
                 .order('created_at', { ascending: false });
 
             if (campaignsError) {
-                console.error('❌ [DASHBOARD] Erro ao buscar campanhas:', campaignsError);
                 throw campaignsError;
             }
 
             const allCampaigns = campaignsData || [];
-            console.log(`🔍 [DASHBOARD] Campanhas encontradas: ${allCampaigns.length}`);
-            console.log('🔍 [DASHBOARD] Campanhas:', allCampaigns.map(c => ({
-                id: c.id,
-                title: c.title,
-                acceptance_status: c.acceptance_status,
-                created_at: c.created_at
-            })));
+
             
             // Campanhas já filtradas por user_id no banco de dados
             const accepted = allCampaigns.filter(c => c.acceptance_status === 'accepted');
             const pending = allCampaigns.filter(c => c.acceptance_status === 'pending');
-            
-            console.log(`🔍 [DASHBOARD] Campanhas aceitas: ${accepted.length}`);
-            console.log(`🔍 [DASHBOARD] Campanhas pendentes: ${pending.length}`);
 
             setCampaigns(allCampaigns);
             setAcceptedCampaigns(accepted);
@@ -119,7 +108,6 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
             }
 
         } catch (err: any) {
-            console.error('Erro ao buscar campanhas:', err);
             setError(err.message || 'Erro ao carregar dados');
         } finally {
             setLoading(false);
@@ -180,7 +168,6 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
                         }));
                     }
                 } catch (prizesError) {
-                    console.warn('Erro ao buscar prêmios (será ignorado):', prizesError);
                     // Continuar sem os prêmios para não quebrar a funcionalidade principal
                     campaignsWithPrizes = campaignsData.map(campaign => ({
                         ...campaign,
@@ -221,7 +208,6 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
             }
 
         } catch (err: any) {
-            console.error('Erro ao buscar campanhas:', err);
             setError(err.message || 'Erro ao carregar dados');
         } finally {
             setLoading(false);
@@ -230,8 +216,7 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
 
     const acceptCampaign = async (campaignId: string): Promise<{ success: boolean; message: string }> => {
         try {
-            console.log('🔄 Tentando aceitar campanha:', campaignId);
-            
+
             // SOLUÇÃO ALTERNATIVA: Usar RPC (função do banco) em vez de UPDATE direto
             const { error } = await supabase.rpc('accept_campaign', {
                 campaign_id_param: campaignId,
@@ -239,10 +224,9 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
             });
 
             if (error) {
-                console.error('❌ Erro ao chamar RPC accept_campaign:', error);
                 
                 // FALLBACK: Tentar UPDATE direto como último recurso
-                console.log('🔄 Tentando fallback com UPDATE direto...');
+
                 const { error: updateError } = await supabase
                     .from('goals')
                     .update({ acceptance_status: 'accepted' })
@@ -250,27 +234,22 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
                     .eq('user_id', userId);
                     
                 if (updateError) {
-                    console.error('❌ Erro no fallback também:', updateError);
                     throw updateError;
                 }
             }
 
-            console.log('✅ Campanha aceita com sucesso!');
-            
             // Recarregar dados
             await fetchCampaignsSimple();
             return { success: true, message: 'Campanha aceita com sucesso!' };
 
         } catch (err: any) {
-            console.error('❌ Erro ao aceitar campanha:', err);
             return { success: false, message: err.message || 'Erro ao aceitar campanha' };
         }
     };
 
     const rejectCampaign = async (campaignId: string): Promise<{ success: boolean; message: string }> => {
         try {
-            console.log('🔄 Tentando rejeitar campanha:', campaignId);
-            
+
             // SOLUÇÃO ALTERNATIVA: Usar RPC (função do banco) em vez de UPDATE direto
             const { error } = await supabase.rpc('reject_campaign', {
                 campaign_id_param: campaignId,
@@ -278,10 +257,9 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
             });
 
             if (error) {
-                console.error('❌ Erro ao chamar RPC reject_campaign:', error);
                 
                 // FALLBACK: Tentar UPDATE direto como último recurso
-                console.log('🔄 Tentando fallback com UPDATE direto...');
+
                 const { error: updateError } = await supabase
                     .from('goals')
                     .update({ acceptance_status: 'rejected' })
@@ -289,19 +267,15 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
                     .eq('user_id', userId);
                     
                 if (updateError) {
-                    console.error('❌ Erro no fallback também:', updateError);
                     throw updateError;
                 }
             }
 
-            console.log('✅ Campanha rejeitada com sucesso!');
-            
             // Recarregar dados
             await fetchCampaignsSimple();
             return { success: true, message: 'Campanha rejeitada' };
 
         } catch (err: any) {
-            console.error('❌ Erro ao rejeitar campanha:', err);
             return { success: false, message: err.message || 'Erro ao rejeitar campanha' };
         }
     };
@@ -374,7 +348,6 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
             return { success: true, message: 'Apólice vinculada à campanha com sucesso!' };
 
         } catch (err: any) {
-            console.error('Erro ao vincular apólice:', err);
             return { success: false, message: err.message || 'Erro ao vincular apólice' };
         }
     };
@@ -397,7 +370,6 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
             return { success: true, message: 'Apólice desvinculada com sucesso!' };
 
         } catch (err: any) {
-            console.error('Erro ao desvincular apólice:', err);
             return { success: false, message: err.message || 'Erro ao desvincular apólice' };
         }
     };

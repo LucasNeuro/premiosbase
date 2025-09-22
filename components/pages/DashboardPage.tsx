@@ -15,8 +15,7 @@ import { Home, Target } from 'lucide-react';
 const DashboardPage: React.FC = () => {
     const { user } = useAuth();
     const [selectedPeriod, setSelectedPeriod] = useState<'30' | '60' | 'geral'>('geral');
-    
-    
+
     // DESABILITADO: Sistema de eventos em tempo real (causando loops)
     // useRealtimeEvents(user?.id || '');
 
@@ -30,15 +29,14 @@ const DashboardPage: React.FC = () => {
     const userId = user?.id || user?.email || '';
     
     // Debug log
-    console.log('🏠 DashboardPage - User ID:', userId, 'User:', user);
-    
+
     const tabs = [
         { 
             id: 'dashboard', 
             label: 'Dashboard', 
             icon: <Home className="w-5 h-5" />,
             component: () => {
-                console.log('🏠 Dashboard tab renderizando com selectedPeriod:', selectedPeriod);
+
                 return (
                     <div className="space-y-6">
                         <SummaryCards selectedPeriod={selectedPeriod} />
@@ -53,7 +51,7 @@ const DashboardPage: React.FC = () => {
             label: 'Campanhas', 
             icon: <Target className="w-5 h-5" />,
             component: () => {
-                console.log('🎯 Campanhas tab renderizando');
+
                 return (
                     <div className="space-y-6">
                         <CampaignsKanban />

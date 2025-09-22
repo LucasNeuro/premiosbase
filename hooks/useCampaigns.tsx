@@ -85,7 +85,6 @@ export const useCampaigns = () => {
 
             setCampaigns(data || []);
         } catch (err) {
-            console.error('Error fetching campaigns:', err);
             setError(err instanceof Error ? err.message : 'Erro ao carregar campanhas');
         } finally {
             setLoading(false);
@@ -120,8 +119,7 @@ export const useCampaigns = () => {
             }, 0);
             // Para campanhas de GRUPO: criar campanhas individuais para cada corretor da categoria
             if (campaignData.target_type === 'group' && campaignData.target_category_id) {
-                console.log('🎯 [CATEGORIA] Iniciando criação de campanhas individuais para categoria...');
-                
+
                 // Buscar todos os corretores da categoria
                 const { data: corretoresCategoria, error: categoriaError } = await supabase
                     .from('corretores_categorias')
@@ -132,11 +130,8 @@ export const useCampaigns = () => {
                     .eq('categoria_id', campaignData.target_category_id);
                 
                 if (!corretoresCategoria || corretoresCategoria.length === 0 || categoriaError) {
-                    console.error('❌ Erro ao buscar corretores da categoria:', categoriaError);
                     throw new Error('Nenhum corretor encontrado na categoria selecionada');
                 }
-                
-                console.log(`🎯 [GRUPO] Encontrados ${corretoresCategoria.length} corretores na categoria`);
 
                 // Verificar se já existe campanha para evitar duplicação
                 const { data: existingCampaigns, error: existingError } = await supabase
@@ -214,10 +209,6 @@ export const useCampaigns = () => {
                         record_type: 'campaign' as const,
                         acceptance_status: 'pending' // ✅ IMPORTANTE: Definir como pending
                     };
-                    
-                    console.log(`🎯 [GRUPO] Criando campanha individual para: ${(corretor.users as any)?.name}`);
-                    console.log(`🎯 [GRUPO] user_id: ${corretor.corretor_id}`);
-                    console.log(`🎯 [GRUPO] acceptance_status: pending`);
 
                     const { data: campaign, error: campaignError } = await supabase
                         .from('goals')
@@ -226,7 +217,6 @@ export const useCampaigns = () => {
                         .single();
                     
                     if (campaignError) {
-                        console.error('❌ Erro ao criar campanha para:', (corretor.users as any)?.name, campaignError);
                         throw campaignError;
                     }
 
@@ -234,41 +224,33 @@ export const useCampaigns = () => {
                     }
 
                 // Vincular prêmios às campanhas individuais criadas
-                console.log('🎯 [CATEGORIA] Iniciando vinculação de prêmios...');
-                console.log('🎯 [CATEGORIA] selectedPremios:', campaignData.selectedPremios);
-                console.log('🎯 [CATEGORIA] selectedPremio (fallback):', campaignData.selectedPremio);
-                console.log('🎯 [CATEGORIA] campanhas individuais criadas:', createdCampaigns.length);
-                
+
+
                 if (campaignData.selectedPremios && campaignData.selectedPremios.length > 0) {
-                    console.log('🎯 [CATEGORIA] Vinculando múltiplos prêmios...');
+
                     for (const camp of createdCampaigns) {
-                        console.log(`🎯 [CATEGORIA] Vinculando prêmios à campanha: ${camp.title} (${camp.id})`);
+
                         for (const premioData of campaignData.selectedPremios) {
-                            console.log(`🎯 [CATEGORIA] Vinculando prêmio: ${premioData.premio.nome} (qtd: ${premioData.quantidade})`);
+
                             try {
                                 const result = await vincularPremioCampanha(camp.id, premioData.premio.id, premioData.quantidade);
-                                console.log('✅ [CATEGORIA] Prêmio vinculado com sucesso:', result);
+
                             } catch (error) {
-                                console.error('❌ [CATEGORIA] Erro ao vincular prêmio:', error);
                             }
                         }
                     }
                 } else if (campaignData.selectedPremio) {
-                    console.log('🎯 [CATEGORIA] Vinculando prêmio único (fallback)...');
                     // Fallback para compatibilidade com prêmio único
                     for (const camp of createdCampaigns) {
-                        console.log(`🎯 [CATEGORIA] Vinculando prêmio único à campanha: ${camp.title} (${camp.id})`);
+
                         try {
                             const result = await vincularPremioCampanha(camp.id, campaignData.selectedPremio!.id, campaignData.premioQuantidade || 1);
-                            console.log('✅ [CATEGORIA] Prêmio único vinculado com sucesso:', result);
+
                         } catch (error) {
-                            console.error('❌ [CATEGORIA] Erro ao vincular prêmio único:', error);
                         }
                     }
                 } else {
-                    console.log('⚠️ [CATEGORIA] NENHUM PRÊMIO ENCONTRADO PARA VINCULAR!');
-                    console.log('⚠️ [CATEGORIA] selectedPremios:', campaignData.selectedPremios);
-                    console.log('⚠️ [CATEGORIA] selectedPremio:', campaignData.selectedPremio);
+
                 }
 
                 // Retornar a primeira campanha criada (para compatibilidade)
@@ -324,35 +306,27 @@ export const useCampaigns = () => {
             // O progresso deve ser ZERO até o corretor aceitar a campanha
             // e começar a vincular novas apólices
             // Vincular prêmios à campanha individual
-            console.log('🎯 [INDIVIDUAL] Iniciando vinculação de prêmios...');
-            console.log('🎯 [INDIVIDUAL] selectedPremios:', campaignData.selectedPremios);
-            console.log('🎯 [INDIVIDUAL] selectedPremio (fallback):', campaignData.selectedPremio);
-            console.log('🎯 [INDIVIDUAL] campaign.id:', campaign.id);
-            
+
+
             if (campaignData.selectedPremios && campaignData.selectedPremios.length > 0) {
-                console.log('🎯 [INDIVIDUAL] Vinculando múltiplos prêmios...');
+
                 for (const premioData of campaignData.selectedPremios) {
-                    console.log(`🎯 [INDIVIDUAL] Vinculando prêmio: ${premioData.premio.nome} (qtd: ${premioData.quantidade})`);
+
                     try {
                         const result = await vincularPremioCampanha(campaign.id, premioData.premio.id, premioData.quantidade);
-                        console.log('✅ [INDIVIDUAL] Prêmio vinculado com sucesso:', result);
+
                     } catch (error) {
-                        console.error('❌ [INDIVIDUAL] Erro ao vincular prêmio:', error);
                     }
                 }
             } else if (campaignData.selectedPremio) {
-                console.log('🎯 [INDIVIDUAL] Vinculando prêmio único (fallback)...');
                 // Fallback para compatibilidade com prêmio único
                 try {
                     const result = await vincularPremioCampanha(campaign.id, campaignData.selectedPremio.id, campaignData.premioQuantidade || 1);
-                    console.log('✅ [INDIVIDUAL] Prêmio único vinculado com sucesso:', result);
+
                 } catch (error) {
-                    console.error('❌ [INDIVIDUAL] Erro ao vincular prêmio único:', error);
                 }
             } else {
-                console.log('⚠️ [INDIVIDUAL] NENHUM PRÊMIO ENCONTRADO PARA VINCULAR!');
-                console.log('⚠️ [INDIVIDUAL] selectedPremios:', campaignData.selectedPremios);
-                console.log('⚠️ [INDIVIDUAL] selectedPremio:', campaignData.selectedPremio);
+
             }
 
             // Para campanhas de grupo, as campanhas individuais já foram criadas acima
@@ -363,7 +337,6 @@ export const useCampaigns = () => {
 
             return campaign;
         } catch (err) {
-            console.error('Error creating campaign:', err);
             setError(err instanceof Error ? err.message : 'Erro ao criar campanha');
             throw err;
         } finally {
@@ -385,7 +358,6 @@ export const useCampaigns = () => {
 
             await fetchCampaigns();
         } catch (err) {
-            console.error('Error updating campaign:', err);
             setError(err instanceof Error ? err.message : 'Erro ao atualizar campanha');
             throw err;
         } finally {
@@ -407,7 +379,6 @@ export const useCampaigns = () => {
 
             await fetchCampaigns();
         } catch (err) {
-            console.error('Error deleting campaign:', err);
             setError(err instanceof Error ? err.message : 'Erro ao excluir campanha');
             throw err;
         } finally {
@@ -435,7 +406,6 @@ export const useCampaigns = () => {
 
             return data || [];
         } catch (err) {
-            console.error('Error fetching user campaigns:', err);
             setError(err instanceof Error ? err.message : 'Erro ao carregar campanhas do usuário');
             return [];
         } finally {

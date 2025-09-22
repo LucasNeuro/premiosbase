@@ -106,7 +106,6 @@ const AdminStatsOverview: React.FC = () => {
                 recentPolicies: []
             });
         } catch (error) {
-            console.error('Error fetching admin stats:', error);
         } finally {
             setLoading(false);
         }
@@ -358,7 +357,6 @@ const AdminStatsOverview: React.FC = () => {
                 {/* Vendas por Categoria de Corretores */}
                 <SalesByCategoryList />
             </div>
-
 
         </div>
     );

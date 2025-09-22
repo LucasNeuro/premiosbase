@@ -41,8 +41,7 @@ export class AdvancedReportService {
      */
     static async generateReportWithAI(config: ReportConfig): Promise<string> {
         try {
-            console.log('🤖 Iniciando geração de relatório com IA...');
-            
+
             // 1. Criar registro do relatório
             const { data: report, error: createError } = await supabase
                 .from('generated_reports')
@@ -60,11 +59,8 @@ export class AdvancedReportService {
                 .single();
 
             if (createError) {
-                console.error('❌ Erro ao criar relatório:', createError);
                 throw createError;
             }
-
-            console.log(`📊 Relatório criado: ${report.id}`);
 
             // 2. Processar em background
             this.processReportInBackground(report.id, config);
@@ -72,7 +68,6 @@ export class AdvancedReportService {
             return report.id;
 
         } catch (error) {
-            console.error('❌ Erro ao gerar relatório:', error);
             throw error;
         }
     }
@@ -82,7 +77,6 @@ export class AdvancedReportService {
      */
     private static async processReportInBackground(reportId: string, config: ReportConfig): Promise<void> {
         try {
-            console.log(`🔄 Processando relatório ${reportId} em background...`);
 
             // Atualizar progresso: 10%
             await this.updateReportProgress(reportId, 10, 'Coletando dados...');
@@ -111,10 +105,7 @@ export class AdvancedReportService {
                 ...filePaths
             });
 
-            console.log(`✅ Relatório ${reportId} processado com sucesso!`);
-
         } catch (error) {
-            console.error(`❌ Erro ao processar relatório ${reportId}:`, error);
             await this.updateReportStatus(reportId, 'failed');
         }
     }
@@ -124,7 +115,6 @@ export class AdvancedReportService {
      */
     private static async collectConsolidatedData(config: ReportConfig): Promise<any[]> {
         try {
-            console.log('📊 Coletando dados consolidados da master_campaigns_data...');
 
             // Buscar dados da tabela master_campaigns_data
             let query = supabase
@@ -149,15 +139,12 @@ export class AdvancedReportService {
             const { data, error } = await query.order('unified_created_at', { ascending: false });
 
             if (error) {
-                console.error('❌ Erro ao coletar dados:', error);
                 throw error;
             }
 
-            console.log(`📊 Coletados ${data?.length || 0} registros da master_campaigns_data`);
             return data || [];
 
         } catch (error) {
-            console.error('❌ Erro ao coletar dados consolidados:', error);
             throw error;
         }
     }
@@ -167,7 +154,6 @@ export class AdvancedReportService {
      */
     private static async processData(data: any[], config: ReportConfig): Promise<any> {
         try {
-            console.log('🔄 Processando dados...');
 
             switch (config.reportType) {
                 case 'campaigns_detailed':
@@ -183,7 +169,6 @@ export class AdvancedReportService {
             }
 
         } catch (error) {
-            console.error('❌ Erro ao processar dados:', error);
             throw error;
         }
     }
@@ -399,7 +384,6 @@ export class AdvancedReportService {
         };
     }
 
-
     /**
      * Gera arquivos do relatório
      */
@@ -428,7 +412,6 @@ export class AdvancedReportService {
             return filePaths;
 
         } catch (error) {
-            console.error('❌ Erro ao gerar arquivos:', error);
             throw error;
         }
     }
@@ -438,8 +421,7 @@ export class AdvancedReportService {
      */
     private static generateCSV(data: any, config: ReportConfig): string {
         try {
-            console.log('📄 Gerando CSV...');
-            
+
             switch (config.reportType) {
                 case 'campaigns_detailed':
                     return this.generateCampaignsCSV(data);
@@ -453,7 +435,6 @@ export class AdvancedReportService {
                     return this.generateDefaultCSV(data);
             }
         } catch (error) {
-            console.error('❌ Erro ao gerar CSV:', error);
             return 'Erro ao gerar CSV';
         }
     }
@@ -835,10 +816,7 @@ ${JSON.stringify(data, null, 2)}
                 })
                 .eq('id', reportId);
 
-            console.log(`📊 Relatório ${reportId}: ${progress}% - ${message || ''}`);
-
         } catch (error) {
-            console.error('❌ Erro ao atualizar progresso:', error);
         }
     }
 
@@ -856,7 +834,6 @@ ${JSON.stringify(data, null, 2)}
                 .eq('id', reportId);
 
         } catch (error) {
-            console.error('❌ Erro ao atualizar status:', error);
         }
     }
 
@@ -877,7 +854,6 @@ ${JSON.stringify(data, null, 2)}
                 .eq('id', reportId);
 
         } catch (error) {
-            console.error('❌ Erro ao finalizar relatório:', error);
             throw error;
         }
     }
@@ -897,7 +873,6 @@ ${JSON.stringify(data, null, 2)}
             return data || [];
 
         } catch (error) {
-            console.error('❌ Erro ao buscar relatórios:', error);
             throw error;
         }
     }
@@ -907,8 +882,7 @@ ${JSON.stringify(data, null, 2)}
      */
     static async downloadReportFile(reportId: string, format: 'csv' | 'pdf' | 'markdown'): Promise<void> {
         try {
-            console.log(`📥 Baixando arquivo ${format} do relatório ${reportId}`);
-            
+
             // Buscar dados do relatório
             const { data: report, error } = await supabase
                 .from('generated_reports')
@@ -932,7 +906,6 @@ ${JSON.stringify(data, null, 2)}
             }
             
         } catch (error) {
-            console.error('❌ Erro ao baixar arquivo:', error);
             throw error;
         }
     }
@@ -942,8 +915,7 @@ ${JSON.stringify(data, null, 2)}
      */
     static async generateReportWithProgress(reportType: string): Promise<string> {
         try {
-            console.log(`📊 Gerando relatório com progresso para ${reportType}...`);
-            
+
             const reportNames = {
                 'campaigns_detailed': 'Relatório de Campanhas Detalhado',
                 'performance_by_broker': 'Relatório de Performance por Corretor',
@@ -975,11 +947,8 @@ ${JSON.stringify(data, null, 2)}
                 .single();
 
             if (createError) {
-                console.error('❌ Erro ao criar relatório:', createError);
                 throw createError;
             }
-
-            console.log(`📊 Relatório criado: ${report.id}`);
 
             // 2. Processar em background com progresso
             this.processReportWithProgress(report.id, reportType);
@@ -987,7 +956,6 @@ ${JSON.stringify(data, null, 2)}
             return report.id;
 
         } catch (error) {
-            console.error('❌ Erro ao gerar relatório:', error);
             throw error;
         }
     }
@@ -997,7 +965,6 @@ ${JSON.stringify(data, null, 2)}
      */
     private static async processReportWithProgress(reportId: string, reportType: string): Promise<void> {
         try {
-            console.log(`🔄 Processando relatório ${reportId} em background...`);
 
             // Atualizar progresso: 10%
             await this.updateReportProgress(reportId, 10, 'Coletando dados...');
@@ -1052,10 +1019,7 @@ ${JSON.stringify(data, null, 2)}
             // Atualizar progresso: 100%
             await this.updateReportProgress(reportId, 100, 'Relatório concluído!');
 
-            console.log(`✅ Relatório ${reportId} processado com sucesso!`);
-
         } catch (error) {
-            console.error(`❌ Erro ao processar relatório ${reportId}:`, error);
             await this.updateReportStatus(reportId, 'failed');
         }
     }
@@ -1065,8 +1029,7 @@ ${JSON.stringify(data, null, 2)}
      */
     static async generateAndDownloadCSV(reportType: string): Promise<void> {
         try {
-            console.log(`📊 Gerando CSV direto para ${reportType}...`);
-            
+
             // Buscar dados da master_campaigns_data
             const { data, error } = await supabase
                 .from('master_campaigns_data')
@@ -1102,7 +1065,6 @@ ${JSON.stringify(data, null, 2)}
             this.downloadCSV(csvContent, fileName);
             
         } catch (error) {
-            console.error('❌ Erro ao gerar CSV:', error);
             throw error;
         }
     }
@@ -1137,10 +1099,7 @@ ${JSON.stringify(data, null, 2)}
 
             if (error) throw error;
 
-            console.log(`🗑️ Relatório ${reportId} excluído com sucesso`);
-
         } catch (error) {
-            console.error('❌ Erro ao excluir relatório:', error);
             throw error;
         }
     }

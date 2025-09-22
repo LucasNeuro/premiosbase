@@ -38,7 +38,6 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
       .single();
 
     if (campaignError || !campaign) {
-      console.error('❌ Erro ao buscar campanha:', campaignError);
       return null;
     }
 
@@ -74,40 +73,28 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
       .eq('policies.status', 'active');
 
     if (linkError) {
-      console.error('❌ Erro ao buscar apólices vinculadas:', linkError);
       return null;
     }
 
     // 🎯 FILTRO RIGOROSO: Só contar apólices criadas APÓS aceite da campanha
     const acceptedAt = campaign.accepted_at ? new Date(campaign.accepted_at) : new Date();
-    console.log(`🔍 [PROGRESSO] Campanha: ${campaign.title}`);
-    console.log(`🔍 [PROGRESSO] Campanha aceita em: ${acceptedAt.toISOString()}`);
-    console.log(`🔍 [PROGRESSO] Total de links encontrados: ${linkedData?.length || 0}`);
-    
+
     const linkedPolicies = (linkedData || []).filter((link: any) => {
       const linkCreatedAt = new Date(link.created_at);
       const policyCreatedAt = new Date(link.policies?.created_at);
-      
-      console.log(`🔍 [PROGRESSO] Analisando apólice: ${link.policies?.policy_number}`);
-      console.log(`🔍 [PROGRESSO] Apólice criada em: ${policyCreatedAt.toISOString()}`);
-      console.log(`🔍 [PROGRESSO] Link criado em: ${linkCreatedAt.toISOString()}`);
-      
+
       // ✅ REGRA FUNDAMENTAL: Só apólices criadas APÓS aceitar a campanha
       const isValidTiming = policyCreatedAt >= acceptedAt;
       
       if (!isValidTiming) {
-        console.log(`⚠️ [PROGRESSO] Apólice ${link.policies?.policy_number} criada ANTES do aceite da campanha - excluindo do progresso`);
-        console.log(`   ⚠️ [PROGRESSO] Apólice criada em: ${policyCreatedAt.toISOString()}`);
-        console.log(`   ⚠️ [PROGRESSO] Campanha aceita em: ${acceptedAt.toISOString()}`);
+
       } else {
-        console.log(`✅ [PROGRESSO] Apólice ${link.policies?.policy_number} criada APÓS aceite da campanha - incluindo no progresso`);
+
       }
       
       return isValidTiming;
     });
-    
-    console.log(`🔍 [PROGRESSO] Apólices válidas após filtro: ${linkedPolicies.length}`);
-    
+
     // 3. Calcular progresso baseado em TODOS os critérios (lógica AND)
     let currentValue = 0;
     let progressPercentage = 0;
@@ -229,7 +216,6 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
     };
 
   } catch (error) {
-    console.error('❌ Erro no cálculo de progresso auxiliar:', error);
     return null;
   }
 };
@@ -254,7 +240,6 @@ export const updateCampaignProgressAuxiliar = async (campaignId: string): Promis
       .single();
 
     if (fetchError) {
-      console.error('Erro ao buscar campanha atual:', fetchError);
       return false;
     }
 
@@ -309,14 +294,12 @@ export const updateCampaignProgressAuxiliar = async (campaignId: string): Promis
       .eq('record_type', 'campaign');
 
     if (updateError) {
-      console.error('Erro ao atualizar progresso:', updateError);
       return false;
     }
 
     return true;
 
   } catch (error) {
-    console.error('Erro ao atualizar progresso auxiliar:', error);
     return false;
   }
 };
@@ -326,8 +309,7 @@ export const updateCampaignProgressAuxiliar = async (campaignId: string): Promis
  */
 export const updateAllUserCampaignProgressAuxiliar = async (userId: string): Promise<void> => {
   try {
-    console.log(`🔄 Iniciando atualização de progresso para usuário: ${userId}`);
-    
+
     // Buscar campanhas ativas do usuário
     const { data: campaigns, error } = await supabase
       .from('goals')
@@ -338,29 +320,25 @@ export const updateAllUserCampaignProgressAuxiliar = async (userId: string): Pro
       .in('status', ['active', 'completed']);
 
     if (error) {
-      console.error('❌ Erro ao buscar campanhas:', error);
       return;
     }
 
     if (campaigns && campaigns.length > 0) {
-      console.log(`📊 Encontradas ${campaigns.length} campanhas para atualizar`);
-      
+
       // Atualizar em paralelo
       const updatePromises = campaigns.map(campaign => {
-        console.log(`🔄 Atualizando campanha: ${campaign.title}`);
+
         return updateCampaignProgressAuxiliar(campaign.id);
       });
 
       const results = await Promise.all(updatePromises);
       const successCount = results.filter(result => result === true).length;
-      
-      console.log(`✅ Progresso atualizado: ${successCount}/${campaigns.length} campanhas`);
+
       } else {
-      console.log('⚠️ Nenhuma campanha encontrada para atualizar');
+
       }
 
   } catch (error) {
-    console.error('Erro ao atualizar campanhas do usuário:', error);
   }
 };
 
@@ -372,7 +350,6 @@ export const getCampaignCriteriaDetails = async (campaignId: string): Promise<Cr
     const progress = await calculateCampaignProgressAuxiliar(campaignId);
     return progress?.criteriaDetails || [];
   } catch (error) {
-    console.error('❌ Erro ao buscar detalhes dos critérios:', error);
     return [];
   }
 };

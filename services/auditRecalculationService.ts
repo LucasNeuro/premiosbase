@@ -27,11 +27,10 @@ export class AuditRecalculationService {
      */
     static startAutoRecalculation(): void {
         if (this.isRunning) {
-            console.log('🔄 Serviço de recálculo já está rodando');
+
             return;
         }
 
-        console.log('🚀 Iniciando serviço de recálculo automático...');
         this.isRunning = true;
 
         // Executar imediatamente
@@ -47,7 +46,7 @@ export class AuditRecalculationService {
      * Para o serviço de recálculo automático
      */
     static stopAutoRecalculation(): void {
-        console.log('⏹️ Parando serviço de recálculo automático...');
+
         this.isRunning = false;
     }
 
@@ -64,7 +63,6 @@ export class AuditRecalculationService {
         };
 
         try {
-            console.log('🔄 Iniciando recálculo automático...');
 
             // 1. Buscar todas as campanhas ativas
             const { data: campaigns, error: campaignsError } = await supabase
@@ -79,11 +77,9 @@ export class AuditRecalculationService {
             }
 
             if (!campaigns || campaigns.length === 0) {
-                console.log('ℹ️ Nenhuma campanha ativa encontrada');
+
                 return result;
             }
-
-            console.log(`📊 Encontradas ${campaigns.length} campanhas para recálculo`);
 
             // 2. Para cada campanha, recalcular progresso
             for (const campaign of campaigns) {
@@ -91,12 +87,11 @@ export class AuditRecalculationService {
                     const progressData = await this.recalculateCampaignProgress(campaign);
                     
                     if (progressData.difference !== 0) {
-                        console.log(`📈 Campanha "${campaign.title}": ${progressData.previousProgress}% → ${progressData.currentProgress}% (${progressData.difference > 0 ? '+' : ''}${progressData.difference}%)`);
+
                         result.recalculatedCampaigns++;
                     }
                 } catch (error: any) {
                     const errorMsg = `Erro ao recalcular campanha ${campaign.id}: ${error.message}`;
-                    console.error('❌', errorMsg);
                     result.errors.push(errorMsg);
                 }
             }
@@ -106,11 +101,8 @@ export class AuditRecalculationService {
 
             const endTime = new Date();
             const duration = endTime.getTime() - startTime.getTime();
-            
-            console.log(`✅ Recálculo concluído em ${duration}ms. ${result.recalculatedCampaigns} campanhas recalculadas.`);
 
         } catch (error: any) {
-            console.error('❌ Erro no recálculo automático:', error);
             result.success = false;
             result.errors.push(error.message);
         }
@@ -252,7 +244,6 @@ export class AuditRecalculationService {
      * Verifica consistência dos dados entre auditoria e políticas
      */
     private static async auditDataConsistency(): Promise<void> {
-        console.log('🔍 Verificando consistência dos dados...');
 
         // Buscar registros de auditoria sem apólice correspondente
         const { data: orphanAudits, error: orphanError } = await supabase
@@ -261,12 +252,10 @@ export class AuditRecalculationService {
             .is('policy_id', null);
 
         if (orphanError) {
-            console.error('❌ Erro ao verificar auditorias órfãs:', orphanError);
             return;
         }
 
         if (orphanAudits && orphanAudits.length > 0) {
-            console.warn(`⚠️ Encontradas ${orphanAudits.length} auditorias órfãs (sem apólice correspondente)`);
         }
 
         // Buscar apólices sem registro de auditoria
@@ -276,15 +265,12 @@ export class AuditRecalculationService {
             .not('id', 'in', `(SELECT policy_id FROM policy_launch_audit WHERE policy_id IS NOT NULL)`);
 
         if (policiesError) {
-            console.error('❌ Erro ao verificar políticas sem auditoria:', policiesError);
             return;
         }
 
         if (policiesWithoutAudit && policiesWithoutAudit.length > 0) {
-            console.warn(`⚠️ Encontradas ${policiesWithoutAudit.length} políticas sem registro de auditoria`);
         }
 
-        console.log('✅ Verificação de consistência concluída');
     }
 
     /**

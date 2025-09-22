@@ -17,7 +17,6 @@ const TicketTag: React.FC<TicketTagProps> = ({ ticketCode, className = '' }) => 
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error('Erro ao copiar ticket:', err);
     }
   };
 

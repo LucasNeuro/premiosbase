@@ -7,8 +7,6 @@ export const AI_CONFIG = {
     TEMPERATURE: 0.7
 };
 
-// Configuração carregada silenciosamente para produção
-
 // Função para verificar se a API está configurada
 export const isAIConfigured = (): boolean => {
     return !!AI_CONFIG.MISTRAL_API_KEY && AI_CONFIG.MISTRAL_API_KEY.length > 0;

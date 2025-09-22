@@ -71,7 +71,6 @@ export class CampaignRecommendationService {
       const response = aiResponse.choices[0]?.message?.content;
       
       if (!response) {
-        console.warn('Mistral AI não retornou resposta, usando fallback');
         return this.fallbackRecommendation(context);
       }
 
@@ -82,7 +81,6 @@ export class CampaignRecommendationService {
       return recommendations;
 
     } catch (error) {
-      console.error('Erro no serviço de recomendação de campanhas:', error);
       return this.fallbackRecommendation(context);
     }
   }
@@ -175,7 +173,6 @@ IMPORTANTE: Retorne APENAS o JSON, sem texto adicional.
       return recommendedCampaigns;
 
     } catch (error) {
-      console.error('Erro ao processar resposta da IA:', error);
       return this.fallbackRecommendation({ availableCampaigns } as CampaignContext);
     }
   }

@@ -46,13 +46,11 @@ const DynamicGoalForm: React.FC<DynamicGoalFormProps> = ({ goalType, onSuccess, 
                 .order('name');
 
             if (error) {
-                console.error('Error fetching users:', error);
                 return;
             }
 
             setUsers(data || []);
         } catch (error) {
-            console.error('Error fetching users:', error);
         }
     };
 
@@ -64,7 +62,6 @@ const DynamicGoalForm: React.FC<DynamicGoalFormProps> = ({ goalType, onSuccess, 
                 .eq('is_active', true);
 
             if (error) {
-                console.error('Error fetching user goals count:', error);
                 return;
             }
 
@@ -75,7 +72,6 @@ const DynamicGoalForm: React.FC<DynamicGoalFormProps> = ({ goalType, onSuccess, 
 
             setUserGoalsCount(countMap);
         } catch (error) {
-            console.error('Error fetching user goals count:', error);
         }
     };
 
@@ -176,7 +172,6 @@ const DynamicGoalForm: React.FC<DynamicGoalFormProps> = ({ goalType, onSuccess, 
                 });
 
             if (error) {
-                console.error('Error creating goal:', error);
                 alert('Erro ao criar meta: ' + error.message);
                 return;
             }
@@ -184,7 +179,6 @@ const DynamicGoalForm: React.FC<DynamicGoalFormProps> = ({ goalType, onSuccess, 
             // Só chama onSuccess se salvou com sucesso
             onSuccess();
         } catch (error) {
-            console.error('Error creating goal:', error);
             alert('Erro ao criar meta');
         } finally {
             setLoading(false);

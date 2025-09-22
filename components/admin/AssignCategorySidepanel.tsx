@@ -45,13 +45,11 @@ const AssignCategorySidepanel: React.FC<AssignCategorySidepanelProps> = ({
                 .order('nome');
 
             if (error) {
-                console.error('Error fetching categorias:', error);
                 return;
             }
 
             setCategorias(data || []);
         } catch (error) {
-            console.error('Error fetching categorias:', error);
         }
     };
 
@@ -75,7 +73,6 @@ const AssignCategorySidepanel: React.FC<AssignCategorySidepanelProps> = ({
                 .insert(assignments);
 
             if (error) {
-                console.error('Error assigning category:', error);
                 alert('Erro ao atribuir categoria');
                 return;
             }
@@ -83,7 +80,6 @@ const AssignCategorySidepanel: React.FC<AssignCategorySidepanelProps> = ({
             alert(`Categoria atribuída com sucesso para ${selectedUsers.length} corretor(es)!`);
             onSave();
         } catch (error) {
-            console.error('Error:', error);
             alert('Erro ao atribuir categoria');
         } finally {
             setLoading(false);

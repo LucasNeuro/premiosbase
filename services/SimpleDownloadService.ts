@@ -8,8 +8,7 @@ export class SimpleDownloadService {
         try {
             // Mostrar notificação de início
             this.showNotification('📊 Iniciando download...', 'info');
-            console.log('📊 Iniciando download da tabela master_campaigns_data...');
-            
+
             // Atualizar notificação
             this.showNotification('🔍 Buscando dados no banco...', 'info');
             
@@ -20,16 +19,13 @@ export class SimpleDownloadService {
                 .order('unified_created_at', { ascending: false });
 
             if (error) {
-                console.error('❌ Erro ao buscar dados:', error);
                 this.showNotification('❌ Erro ao buscar dados no banco', 'error');
                 throw error;
             }
 
-            console.log(`📊 Encontrados ${data?.length || 0} registros`);
-
             // 2. Se não há dados na tabela master, mostrar erro
             if (!data || data.length === 0) {
-                console.log('⚠️ Tabela master_campaigns_data vazia');
+
                 this.showNotification('⚠️ Tabela master_campaigns_data vazia. Execute os scripts para configurar os triggers.', 'error');
                 return;
             }
@@ -49,10 +45,8 @@ export class SimpleDownloadService {
 
             // Notificação de sucesso
             this.showNotification('✅ Download concluído com sucesso!', 'success');
-            console.log('✅ Download concluído com sucesso!');
 
         } catch (error) {
-            console.error('❌ Erro ao fazer download:', error);
             this.showNotification('❌ Erro ao fazer download. Tente novamente.', 'error');
         }
     }
@@ -62,7 +56,6 @@ export class SimpleDownloadService {
      */
     private static async downloadFromOriginalTables(): Promise<void> {
         try {
-            console.log('📊 Coletando dados das tabelas originais...');
 
             // 1. Buscar campanhas
             this.showNotification('📋 Buscando campanhas...', 'info');
@@ -125,10 +118,8 @@ export class SimpleDownloadService {
 
             // Notificação de sucesso
             this.showNotification('✅ Download concluído com sucesso!', 'success');
-            console.log('✅ Download concluído com sucesso usando tabelas originais!');
 
         } catch (error) {
-            console.error('❌ Erro ao fazer download das tabelas originais:', error);
             this.showNotification('❌ Erro ao fazer download. Tente novamente.', 'error');
             throw error;
         }
@@ -258,10 +249,8 @@ export class SimpleDownloadService {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        
-        console.log(`📥 Download iniciado: ${filename}`);
-    }
 
+    }
 
     /**
      * Mostra notificação para o usuário

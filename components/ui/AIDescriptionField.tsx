@@ -76,7 +76,6 @@ const AIDescriptionField: React.FC<AIDescriptionFieldProps> = ({
                     break;
             }
         } catch (error) {
-            console.error('Erro na ação de IA:', error);
             alert('Erro ao processar com IA. Tente novamente.');
         } finally {
             setIsLoading(false);

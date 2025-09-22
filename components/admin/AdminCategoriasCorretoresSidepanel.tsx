@@ -72,7 +72,6 @@ const AdminCategoriasCorretoresSidepanel: React.FC<AdminCategoriasCorretoresSide
                     .eq('id', categoria.id);
 
                 if (error) {
-                    console.error('Error updating categoria:', error);
                     alert('Erro ao atualizar categoria');
                     return;
                 }
@@ -83,7 +82,6 @@ const AdminCategoriasCorretoresSidepanel: React.FC<AdminCategoriasCorretoresSide
                     .insert([categoriaData]);
 
                 if (error) {
-                    console.error('Error creating categoria:', error);
                     alert('Erro ao criar categoria');
                     return;
                 }
@@ -91,7 +89,6 @@ const AdminCategoriasCorretoresSidepanel: React.FC<AdminCategoriasCorretoresSide
 
             onSave();
         } catch (error) {
-            console.error('Error:', error);
             alert('Erro ao salvar categoria');
         } finally {
             setLoading(false);

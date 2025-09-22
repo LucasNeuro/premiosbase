@@ -80,7 +80,6 @@ const AdminUsersManager: React.FC = () => {
                 .range(offset, offset + itemsPerPage - 1);
 
             if (usersError) {
-                console.error('Error fetching users:', usersError);
                 return;
             }
 
@@ -113,67 +112,51 @@ const AdminUsersManager: React.FC = () => {
 
                     const categorias = categoriasData?.map(item => item.categorias_corretores).filter(Boolean) || [];
 
-                    // Processar CPDs
-                    let cpds: CpdInfo[] = [];
-                    console.log('🔍 Processando CPDs para usuário:', user.name, 'CPD data:', user.cpd, 'Tipo:', typeof user.cpd);
-                    
-                    if (user.cpd) {
-                        try {
-                            // Se cpd é uma string JSON, fazer parse
-                            let cpdData = user.cpd;
-                            console.log('📊 CPD Data inicial:', cpdData);
-                            
-                            if (typeof cpdData === 'string') {
-                                try {
-                                    cpdData = JSON.parse(cpdData);
-                                    console.log('✅ Parse JSON bem-sucedido:', cpdData);
-                                } catch (e) {
-                                    console.log('⚠️ Não é JSON válido, tratando como string simples');
-                                    // Se não conseguir fazer parse, tratar como string simples (CPD único)
-                                    cpds = [{
-                                        id: '1',
-                                        number: cpdData,
-                                        name: `CPD ${cpdData}`,
-                                        isActive: true
-                                    }];
-                                    console.log('📝 CPD simples criado:', cpds);
-                                }
-                            }
-
-                            if (cpdData && typeof cpdData === 'object' && cpdData.cpds && Array.isArray(cpdData.cpds)) {
-                                console.log('📋 CPDs encontrados no objeto:', cpdData.cpds);
-                                // Filtrar apenas CPDs ativos
-                                cpds = cpdData.cpds.filter((cpd: CpdInfo) => cpd.isActive);
-                                console.log('✅ CPDs ativos filtrados:', cpds);
-                            } else if (cpdData && typeof cpdData === 'object' && Array.isArray(cpdData)) {
-                                console.log('📋 CPDs em array direto:', cpdData);
-                                cpds = cpdData.filter((cpd: CpdInfo) => cpd.isActive);
-                                console.log('✅ CPDs ativos do array direto:', cpds);
-                            } else if (cpds.length === 0) {
-                                console.log('⚠️ Fallback para CPD único');
-                                // Fallback para CPD único
-                                cpds = [{
-                                    id: '1',
-                                    number: typeof user.cpd === 'string' ? user.cpd : 'N/A',
-                                    name: `CPD ${typeof user.cpd === 'string' ? user.cpd : 'N/A'}`,
-                                    isActive: true
-                                }];
-                                console.log('📝 CPD fallback criado:', cpds);
-                            }
-                        } catch (error) {
-                            console.error('❌ Erro ao processar CPDs:', error);
-                            cpds = [{
-                                id: '1',
-                                number: 'Erro',
-                                name: 'Erro ao carregar CPD',
-                                isActive: false
-                            }];
-                        }
-                    } else {
-                        console.log('❌ Usuário sem CPD');
+        // Processar CPDs
+        let cpds: CpdInfo[] = [];
+        
+        if (user.cpd) {
+            try {
+                // Se cpd é uma string JSON, fazer parse
+                let cpdData = user.cpd;
+                
+                if (typeof cpdData === 'string') {
+                    try {
+                        cpdData = JSON.parse(cpdData);
+                    } catch (e) {
+                        // Se não conseguir fazer parse, tratar como string simples (CPD único)
+                        cpds = [{
+                            id: '1',
+                            number: cpdData,
+                            name: `CPD ${cpdData}`,
+                            isActive: true
+                        }];
                     }
-                    
-                    console.log('🎯 CPDs finais para', user.name, ':', cpds);
+                }
+        
+                if (cpdData && typeof cpdData === 'object' && cpdData.cpds && Array.isArray(cpdData.cpds)) {
+                    // Filtrar apenas CPDs ativos
+                    cpds = cpdData.cpds.filter((cpd: CpdInfo) => cpd.isActive);
+                } else if (cpdData && typeof cpdData === 'object' && Array.isArray(cpdData)) {
+                    cpds = cpdData.filter((cpd: CpdInfo) => cpd.isActive);
+                } else if (cpds.length === 0) {
+                    // Fallback para CPD único
+                    cpds = [{
+                        id: '1',
+                        number: typeof user.cpd === 'string' ? user.cpd : 'N/A',
+                        name: `CPD ${typeof user.cpd === 'string' ? user.cpd : 'N/A'}`,
+                        isActive: true
+                    }];
+                }
+            } catch (error) {
+                cpds = [{
+                    id: '1',
+                    number: 'Erro',
+                    name: 'Erro ao carregar CPD',
+                    isActive: false
+                }];
+            }
+        }
 
                     return {
                         ...user,
@@ -188,7 +171,6 @@ const AdminUsersManager: React.FC = () => {
             setUsers(usersWithStats);
             setTotalItems(count || 0);
         } catch (error) {
-            console.error('Error fetching users:', error);
         } finally {
             setLoading(false);
         }
@@ -208,13 +190,11 @@ const AdminUsersManager: React.FC = () => {
                 .order('nome');
 
             if (error) {
-                console.error('Error fetching categorias:', error);
                 return;
             }
 
             setCategorias(data || []);
         } catch (error) {
-            console.error('Error fetching categorias:', error);
         }
     };
 
@@ -294,7 +274,6 @@ const AdminUsersManager: React.FC = () => {
                 await fetchCategorias();
                 await fetchUsers(); // Recarregar usuários para atualizar categorias
             } catch (error) {
-                console.error('Error deleting categoria:', error);
                 alert('Erro ao excluir categoria');
             }
         }
@@ -311,7 +290,6 @@ const AdminUsersManager: React.FC = () => {
 
             await fetchCategorias();
         } catch (error) {
-            console.error('Error updating categoria status:', error);
             alert('Erro ao atualizar status da categoria');
         }
     };
@@ -348,7 +326,6 @@ const AdminUsersManager: React.FC = () => {
 
                 await fetchUsers();
             } catch (error) {
-                console.error('Error deleting user:', error);
                 alert('Erro ao excluir usuário');
             }
         }
@@ -562,7 +539,6 @@ const AdminUsersManager: React.FC = () => {
                 </div>
             )}
 
-
             {/* Conteúdo Principal */}
             {activeTab === 'corretores' && (
             <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
@@ -767,7 +743,7 @@ const AdminUsersManager: React.FC = () => {
                         </div>
                     </div>
                 )}
-                </div>
+            </div>
             )}
 
             {/* Conteúdo de Categorias */}
@@ -925,8 +901,8 @@ const AdminUsersManager: React.FC = () => {
                                                                         style={{ backgroundColor: categoria.cor }}
                                                                     ></div>
                                                                     <span className="text-sm text-gray-500">{categoria.cor}</span>
-                                                                </div>
-                                                                
+            </div>
+
                                                                 <div className="text-sm text-gray-500">
                                                                     Criada em: {formatDate(categoria.created_at)}
                                                                 </div>

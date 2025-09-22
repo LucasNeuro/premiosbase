@@ -43,7 +43,6 @@ export class AdminChartsService {
             })) || [];
 
         } catch (error) {
-            console.error('Erro ao buscar dados de vendas mensais:', error);
             return [];
         }
     }
@@ -68,7 +67,6 @@ export class AdminChartsService {
             })) || [];
 
         } catch (error) {
-            console.error('Erro ao buscar dados de performance:', error);
             return [];
         }
     }
@@ -92,7 +90,6 @@ export class AdminChartsService {
             })) || [];
 
         } catch (error) {
-            console.error('Erro ao buscar dados de distribuição:', error);
             return [];
         }
     }
@@ -127,7 +124,6 @@ export class AdminChartsService {
             return { current, previous, growth };
 
         } catch (error) {
-            console.error('Erro ao buscar dados de crescimento:', error);
             return { current: 0, previous: 0, growth: 0 };
         }
     }

@@ -55,7 +55,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('Error fetching policies:', error);
                 return;
             }
 
@@ -78,7 +77,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
             setPolicies(formattedPolicies);
             setLastUpdate(new Date());
         } catch (error) {
-            console.error('Error fetching policies:', error);
         } finally {
             setLoading(false);
         }
@@ -139,7 +137,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
             .subscribe((status) => {
                 if (status === 'SUBSCRIBED') {
                     } else if (status === 'CHANNEL_ERROR') {
-                    console.error('Error subscribing to real-time updates');
                 }
             });
 
@@ -182,7 +179,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
                 .single();
 
             if (error) {
-                console.error('Error adding policy:', error);
                 return { success: false, message: 'Erro ao registrar apólice.' };
             }
 
@@ -215,7 +211,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
             
             return { success: true, message: `Apólice registrada com sucesso! Ticket: ${ticketCode}` };
         } catch (error) {
-            console.error('Error adding policy:', error);
             return { success: false, message: 'Erro interno do servidor.' };
         }
     }, [userId, cache]);

@@ -48,7 +48,6 @@ const AdminStatsOverview: React.FC = () => {
                 completedGoals
             });
         } catch (error) {
-            console.error('Error fetching stats:', error);
         } finally {
             setLoading(false);
         }

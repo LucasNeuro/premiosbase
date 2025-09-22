@@ -27,9 +27,7 @@ export const useAuditRecalculation = () => {
         try {
             AuditRecalculationService.startAutoRecalculation();
             setIsRunning(true);
-            console.log('✅ Serviço de recálculo automático iniciado');
         } catch (error: any) {
-            console.error('❌ Erro ao iniciar serviço de recálculo:', error);
         }
     }, []);
 
@@ -40,9 +38,7 @@ export const useAuditRecalculation = () => {
         try {
             AuditRecalculationService.stopAutoRecalculation();
             setIsRunning(false);
-            console.log('⏹️ Serviço de recálculo automático parado');
         } catch (error: any) {
-            console.error('❌ Erro ao parar serviço de recálculo:', error);
         }
     }, []);
 
@@ -52,7 +48,6 @@ export const useAuditRecalculation = () => {
     const performManualRecalculation = useCallback(async (): Promise<AuditRecalculationResult> => {
         setLoading(true);
         try {
-            console.log('🔄 Executando recálculo manual...');
             const result = await AuditRecalculationService.performRecalculation();
             
             setLastResult(result);
@@ -66,7 +61,6 @@ export const useAuditRecalculation = () => {
 
             return result;
         } catch (error: any) {
-            console.error('❌ Erro no recálculo manual:', error);
             const errorResult: AuditRecalculationResult = {
                 success: false,
                 recalculatedCampaigns: 0,
@@ -86,12 +80,9 @@ export const useAuditRecalculation = () => {
     const forceRecalculateCampaign = useCallback(async (campaignId: string): Promise<CampaignProgressData> => {
         setLoading(true);
         try {
-            console.log(`🔄 Forçando recálculo da campanha: ${campaignId}`);
             const result = await AuditRecalculationService.forceRecalculateCampaign(campaignId);
-            console.log(`✅ Campanha recalculada: ${result.campaignTitle}`);
             return result;
         } catch (error: any) {
-            console.error('❌ Erro ao recalcular campanha:', error);
             throw error;
         } finally {
             setLoading(false);

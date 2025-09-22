@@ -10,7 +10,6 @@ import TicketTag from '../ui/TicketTag';
 import { PolicyAuxiliar } from '../../hooks/usePoliciesAuxiliar';
 import { PolicyType, ContractType } from '../../types';
 
-
 const PoliciesTable: React.FC = () => {
   try {
     const { policies, addPolicy, refreshPolicies, lastUpdate } = usePoliciesAuxiliar();
@@ -26,8 +25,6 @@ const PoliciesTable: React.FC = () => {
   // Debug: Check if policies have the correct structure
   if (policies.length > 0) {
     }
-  
-
 
   // Removed handleEdit function - not needed for audit system
 
@@ -47,7 +44,6 @@ const PoliciesTable: React.FC = () => {
       await deletePolicy(deleteModal.policy.id);
       setDeleteModal({ isOpen: false, policy: null });
     } catch (error) {
-      console.error('Error deleting policy:', error);
     } finally {
       setLoading(null);
     }
@@ -68,13 +64,11 @@ const PoliciesTable: React.FC = () => {
         .eq('id', id);
 
       if (error) {
-        console.error('Error deleting policy:', error);
         // TODO: Implementar modal de erro
         } else {
         // A página será atualizada automaticamente pelo hook
       }
     } catch (error) {
-      console.error('Error deleting policy:', error);
       // TODO: Implementar modal de erro
       } finally {
       setLoading(null);
@@ -91,7 +85,6 @@ const PoliciesTable: React.FC = () => {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
-
 
   const columns: ColumnDef<PolicyAuxiliar>[] = [
     {
@@ -181,7 +174,6 @@ const PoliciesTable: React.FC = () => {
     },
   ];
 
-
   return (
     <div className="w-full">
       <DynamicTable
@@ -208,7 +200,6 @@ const PoliciesTable: React.FC = () => {
     </div>
   );
   } catch (error) {
-    console.error('Erro no PoliciesTable:', error);
     return (
       <div className="bg-gray-100 border border-gray-300 rounded-lg p-6">
         <h2 className="text-lg font-semibold text-gray-700 mb-2">Histórico de Apólices</h2>

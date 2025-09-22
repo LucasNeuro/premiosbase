@@ -51,13 +51,12 @@ const BrokerNotifications: React.FC = () => {
 
     const fetchNotifications = async () => {
         if (!user?.id) {
-            console.log('⚠️ [NOTIFICAÇÕES] Usuário não autenticado');
+
             return;
         }
 
         try {
-            console.log('🔍 [NOTIFICAÇÕES] Buscando notificações para usuário:', user.id);
-            
+
             // Buscar apenas notificações não lidas (is_read = false) do usuário atual
             const { data, error } = await supabase
                 .from('notifications')
@@ -68,29 +67,23 @@ const BrokerNotifications: React.FC = () => {
                 .limit(10);
 
             if (error) {
-                console.error('❌ [NOTIFICAÇÕES] Erro ao buscar:', error);
                 throw error;
             }
-
-            console.log('✅ [NOTIFICAÇÕES] Notificações encontradas:', data?.length || 0);
-            console.log('📋 [NOTIFICAÇÕES] Dados:', data);
 
             setNotifications(data || []);
             setUnreadCount(data?.length || 0);
         } catch (error) {
-            console.error('❌ [NOTIFICAÇÕES] Erro ao buscar notificações:', error);
         }
     };
 
     const markAsRead = async (notificationId: string) => {
         if (!user?.id) {
-            console.log('⚠️ [NOTIFICAÇÕES] Usuário não autenticado para marcar como lida');
+
             return;
         }
 
         try {
-            console.log('📝 [NOTIFICAÇÕES] Marcando notificação como lida:', notificationId);
-            
+
             const { error } = await supabase
                 .from('notifications')
                 .update({ 
@@ -101,29 +94,24 @@ const BrokerNotifications: React.FC = () => {
                 .eq('user_id', user.id);
 
             if (error) {
-                console.error('❌ [NOTIFICAÇÕES] Erro ao marcar como lida:', error);
                 throw error;
             }
-
-            console.log('✅ [NOTIFICAÇÕES] Notificação marcada como lida com sucesso');
 
             // Remover a notificação da lista local (já que só mostramos não lidas)
             setNotifications(prev => prev.filter(n => n.id !== notificationId));
             setUnreadCount(prev => Math.max(0, prev - 1));
         } catch (error) {
-            console.error('❌ [NOTIFICAÇÕES] Erro ao marcar notificação como lida:', error);
         }
     };
 
     const markAllAsRead = async () => {
         if (!user?.id) {
-            console.log('⚠️ [NOTIFICAÇÕES] Usuário não autenticado para marcar todas como lidas');
+
             return;
         }
 
         try {
-            console.log('📝 [NOTIFICAÇÕES] Marcando todas as notificações como lidas para usuário:', user.id);
-            
+
             const { error } = await supabase
                 .from('notifications')
                 .update({ 
@@ -134,17 +122,13 @@ const BrokerNotifications: React.FC = () => {
                 .eq('is_read', false);
 
             if (error) {
-                console.error('❌ [NOTIFICAÇÕES] Erro ao marcar todas como lidas:', error);
                 throw error;
             }
-
-            console.log('✅ [NOTIFICAÇÕES] Todas as notificações marcadas como lidas com sucesso');
 
             // Limpar todas as notificações da lista local
             setNotifications([]);
             setUnreadCount(0);
         } catch (error) {
-            console.error('❌ [NOTIFICAÇÕES] Erro ao marcar todas como lidas:', error);
         }
     };
 

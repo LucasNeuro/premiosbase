@@ -26,22 +26,17 @@ const AdminNotifications: React.FC = () => {
 
     const fetchNotifications = async () => {
         if (!user?.id) {
-            console.log('❌ Usuário não encontrado para buscar notificações');
+
             return;
         }
-        
-        console.log('👤 Usuário logado:', user.id, user.name, user.is_admin);
-        
+
         try {
             // Buscar todas as notificações (não apenas as não lidas) para o admin
             const data = await NotificationService.getAllNotifications(user.id);
-            console.log('🔔 Notificações do admin recebidas:', data);
-            console.log('📊 Total de notificações:', data.length);
-            console.log('📋 Notificações não lidas:', data.filter(n => !n.is_read).length);
+
             setNotifications(data);
             setUnreadCount(data.filter(n => !n.is_read).length);
         } catch (error) {
-            console.error('Erro ao buscar notificações:', error);
         }
     };
 
@@ -58,15 +53,14 @@ const AdminNotifications: React.FC = () => {
 
     const markAsRead = async (notificationId: string) => {
         try {
-            console.log('🔔 Marcando notificação como lida:', notificationId);
+
             await NotificationService.markAsRead(notificationId);
             setNotifications(prev => 
                 prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n)
             );
             setUnreadCount(prev => Math.max(0, prev - 1));
-            console.log('✅ Notificação marcada como lida com sucesso');
+
         } catch (error) {
-            console.error('❌ Erro ao marcar notificação como lida:', error);
         }
     };
 
@@ -74,15 +68,14 @@ const AdminNotifications: React.FC = () => {
         if (!user?.id) return;
         
         try {
-            console.log('🔔 Marcando todas as notificações como lidas');
+
             await NotificationService.markAllAsRead(user.id);
             setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
             setUnreadCount(0);
-            console.log('✅ Todas as notificações marcadas como lidas');
+
             // Fechar o dropdown após marcar todas como lidas
             setIsOpen(false);
         } catch (error) {
-            console.error('❌ Erro ao marcar todas como lidas:', error);
         }
     };
 

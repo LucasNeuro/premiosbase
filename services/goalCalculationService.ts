@@ -78,7 +78,6 @@ export class GoalCalculationService {
             };
 
         } catch (error) {
-            console.error('Error calculating goal progress:', error);
             return {
                 current: 0,
                 progress: 0,
@@ -99,7 +98,6 @@ export class GoalCalculationService {
             // Removido temporariamente: .eq('status', 'active')
 
         if (error) {
-            console.error('Error fetching policies:', error);
             return this.getEmptyStats();
         }
 
@@ -361,13 +359,11 @@ export class GoalCalculationService {
                 .eq('id', goalId);
 
             if (error) {
-                console.error('Error updating goal progress:', error);
                 return false;
             }
 
             return true;
         } catch (error) {
-            console.error('Error updating goal progress:', error);
             return false;
         }
     }
@@ -385,7 +381,6 @@ export class GoalCalculationService {
                 .eq('is_active', true);
 
             if (goalsError) {
-                console.error('Error fetching user goals:', goalsError);
                 return false;
             }
 
@@ -404,7 +399,6 @@ export class GoalCalculationService {
 
             return true;
         } catch (error) {
-            console.error('Error updating all user goals:', error);
             return false;
         }
     }

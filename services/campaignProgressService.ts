@@ -27,7 +27,6 @@ export const calculateCampaignProgress = async (campaignId: string): Promise<Cam
       .single();
 
     if (campaignError || !campaign) {
-      console.error('Erro ao buscar campanha:', campaignError);
       return null;
     }
 
@@ -41,7 +40,6 @@ export const calculateCampaignProgress = async (campaignId: string): Promise<Cam
       .order('vinculada_em', { ascending: false });
 
     if (policiesError) {
-      console.error('Erro ao buscar apólices vinculadas:', policiesError);
       return null;
     }
 
@@ -77,7 +75,6 @@ export const calculateCampaignProgress = async (campaignId: string): Promise<Cam
     };
 
   } catch (error) {
-    console.error('Erro no cálculo de progresso:', error);
     return null;
   }
 };
@@ -102,7 +99,6 @@ export const updateCampaignProgress = async (campaignId: string): Promise<boolea
       .single();
 
     if (fetchError) {
-      console.error('Erro ao buscar campanha atual:', fetchError);
       return false;
     }
 
@@ -146,14 +142,12 @@ export const updateCampaignProgress = async (campaignId: string): Promise<boolea
       .eq('record_type', 'campaign');
 
     if (error) {
-      console.error('Erro ao atualizar progresso da campanha:', error);
       return false;
     }
 
     return true;
 
   } catch (error) {
-    console.error('Erro ao atualizar progresso:', error);
     return false;
   }
 };
@@ -173,7 +167,6 @@ export const updateAllUserCampaignProgress = async (userId: string): Promise<voi
       .in('status', ['active', 'completed']);
 
     if (error) {
-      console.error('Erro ao buscar campanhas do usuário:', error);
       return;
     }
 
@@ -187,7 +180,6 @@ export const updateAllUserCampaignProgress = async (userId: string): Promise<voi
       }
 
   } catch (error) {
-    console.error('Erro ao atualizar progresso das campanhas do usuário:', error);
   }
 };
 
@@ -210,7 +202,6 @@ export const checkAndUpdateExpiredCampaigns = async (userId?: string): Promise<v
     const { data: expiredCampaigns, error } = await query;
 
     if (error) {
-      console.error('Erro ao buscar campanhas expiradas:', error);
       return;
     }
 
@@ -230,13 +221,11 @@ export const checkAndUpdateExpiredCampaigns = async (userId?: string): Promise<v
           .in('id', expiredIds);
 
         if (updateError) {
-          console.error('Erro ao atualizar campanhas expiradas:', updateError);
         } else {
           }
       }
     }
   } catch (error) {
-    console.error('Erro ao verificar campanhas expiradas:', error);
   }
 };
 
@@ -257,7 +246,6 @@ export const debugCampaignData = async (campaignId: string): Promise<void> => {
       .single();
 
     if (campaignError) {
-      console.error('❌ Erro ao buscar campanha:', campaignError);
       return;
     }
 
@@ -269,7 +257,6 @@ export const debugCampaignData = async (campaignId: string): Promise<void> => {
       .eq('record_type', 'policy_link');
 
     if (policiesError) {
-      console.error('❌ Erro ao buscar apólices:', policiesError);
       return;
     }
 
@@ -287,7 +274,6 @@ export const debugCampaignData = async (campaignId: string): Promise<void> => {
       }
 
     } catch (error) {
-    console.error('❌ Erro no debug:', error);
   }
 };
 
@@ -395,7 +381,6 @@ export const calculateCompositeCampaignProgress = async (campaignId: string): Pr
     };
 
   } catch (error) {
-    console.error('Erro no cálculo de progresso composto:', error);
     return null;
   }
 };

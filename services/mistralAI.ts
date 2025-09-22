@@ -24,8 +24,6 @@ class MistralAIService {
                 throw new Error('Chave da API Mistral não configurada. Verifique a variável VITE_MISTRAL_KEY no arquivo .env.local');
             }
 
-            // Fazendo chamada para Mistral API
-
             const response = await fetch(AI_CONFIG.MISTRAL_API_URL, {
                 method: 'POST',
                 headers: getAIHeaders(),
@@ -42,18 +40,14 @@ class MistralAIService {
                 })
             });
 
-            // Resposta da API recebida
-
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('❌ Erro detalhado da API:', errorText);
                 throw new Error(`Erro na API Mistral: ${response.status} - ${response.statusText}. Detalhes: ${errorText}`);
             }
 
             const data: MistralResponse = await response.json();
             return data.choices[0]?.message?.content || '';
         } catch (error) {
-            console.error('❌ Erro ao chamar Mistral API:', error);
             throw error;
         }
     }
@@ -72,7 +66,6 @@ class MistralAIService {
             const corrected = await this.callMistralAPI(prompt);
             return corrected.trim();
         } catch (error) {
-            console.error('Erro ao corrigir texto:', error);
             return text; // Retorna o texto original em caso de erro
         }
     }
@@ -98,7 +91,6 @@ class MistralAIService {
             const suggestions = await this.callMistralAPI(prompt);
             return suggestions.split('\n').filter(s => s.trim()).slice(0, 3);
         } catch (error) {
-            console.error('Erro ao gerar sugestões:', error);
             return [
                 'Meta focada em resultados e crescimento profissional.',
                 'Objetivo estratégico para desenvolvimento de vendas.',
@@ -128,7 +120,6 @@ class MistralAIService {
             const improved = await this.callMistralAPI(prompt);
             return improved.trim();
         } catch (error) {
-            console.error('Erro ao melhorar descrição:', error);
             return description;
         }
     }
@@ -152,7 +143,6 @@ class MistralAIService {
             const description = await this.callMistralAPI(prompt);
             return description.trim();
         } catch (error) {
-            console.error('Erro ao gerar descrição:', error);
             return isPremio 
                 ? `Prêmio atrativo e de qualidade para motivar o desempenho.`
                 : `Meta de ${goalType} para ${period} com foco em resultados e crescimento.`;
@@ -185,14 +175,12 @@ class MistralAIService {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                console.error('❌ Erro detalhado da API:', errorText);
                 throw new Error(`Erro na API Mistral: ${response.status} - ${response.statusText}. Detalhes: ${errorText}`);
             }
 
             const data: MistralResponse = await response.json();
             return data;
         } catch (error) {
-            console.error('❌ Erro ao chamar Mistral API via chat:', error);
             throw error;
         }
     }

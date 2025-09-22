@@ -35,7 +35,6 @@ const SearchableCategoryDropdown: React.FC<SearchableCategoryDropdownProps> = ({
     const dropdownRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-
     useEffect(() => {
         fetchCategories();
     }, []);
@@ -70,14 +69,11 @@ const SearchableCategoryDropdown: React.FC<SearchableCategoryDropdownProps> = ({
                 .order('nome');
 
             if (error) {
-                console.error('Error fetching categories:', error);
-                console.error('Error details:', error.message, error.details, error.hint);
                 return;
             }
 
             setCategories(data || []);
         } catch (error) {
-            console.error('Error in fetchCategories:', error);
         } finally {
             setLoading(false);
         }
@@ -99,7 +95,6 @@ const SearchableCategoryDropdown: React.FC<SearchableCategoryDropdownProps> = ({
                 .single();
 
             if (error) {
-                console.error('Error creating category:', error);
                 alert('Erro ao criar categoria: ' + error.message);
                 return;
             }
@@ -116,7 +111,6 @@ const SearchableCategoryDropdown: React.FC<SearchableCategoryDropdownProps> = ({
                 onNewCategory(data);
             }
         } catch (error) {
-            console.error('Error:', error);
             alert('Erro inesperado ao criar categoria');
         }
     };

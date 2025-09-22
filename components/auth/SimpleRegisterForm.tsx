@@ -70,7 +70,6 @@ const SimpleRegisterForm: React.FC = () => {
     setValue('phone', formatted);
   };
 
-
   // Funções para gerenciar CPDs adicionais
   const addAdditionalCpd = () => {
     if (additionalCpds.length >= 5) {
@@ -382,7 +381,6 @@ const SimpleRegisterForm: React.FC = () => {
                 )}
               </div>
             </div>
-
 
           <button
             type="submit"

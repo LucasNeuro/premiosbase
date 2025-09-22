@@ -45,7 +45,6 @@ export const fetchCnpjData = async (cnpj: string): Promise<CnpjData> => {
 
         return cnpjData;
     } catch (error) {
-        console.error('Erro ao buscar dados do CNPJ:', error);
         if (error instanceof Error) {
             throw error;
         }

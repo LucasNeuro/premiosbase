@@ -46,12 +46,10 @@ export const usePrizeOrders = () => {
             setError(null);
 
             if (!user) {
-                console.log('⚠️ [PEDIDOS] Usuário não autenticado - pulando busca de pedidos');
+
                 setOrders([]);
                 return;
             }
-
-            console.log(`🔍 [PEDIDOS] Buscando pedidos para usuário: ${user.id}`);
 
             const { data: ordersData, error: ordersError } = await supabase
                 .from('pedidos_premios')
@@ -60,15 +58,12 @@ export const usePrizeOrders = () => {
                 .order('data_solicitacao', { ascending: false });
 
             if (ordersError) {
-                console.error('❌ [PEDIDOS] Erro ao buscar pedidos:', ordersError);
                 throw ordersError;
             }
 
             setOrders(ordersData || []);
-            console.log(`✅ [PEDIDOS] Pedidos encontrados: ${ordersData?.length || 0}`);
 
         } catch (err: any) {
-            console.error('❌ [PEDIDOS] Erro ao buscar pedidos:', err);
             setError(err.message || 'Erro ao carregar pedidos');
         } finally {
             setLoading(false);
@@ -79,7 +74,7 @@ export const usePrizeOrders = () => {
     const calculateBalance = useCallback(async () => {
         try {
             if (!user) {
-                console.log('⚠️ [SALDO] Usuário não autenticado - pulando cálculo de saldo');
+
                 setBalance({
                     total_conquistado: 0,
                     total_pedidos_pendentes: 0,
@@ -88,14 +83,11 @@ export const usePrizeOrders = () => {
                 return;
             }
 
-            console.log(`💰 [SALDO] Calculando saldo para usuário: ${user.id}`);
-
             // Usar a função do banco para calcular o saldo
             const { data: saldoData, error: saldoError } = await supabase
                 .rpc('calcular_saldo_premiacao', { user_id_param: user.id });
 
             if (saldoError) {
-                console.error('❌ [SALDO] Erro ao calcular saldo:', saldoError);
                 throw saldoError;
             }
 
@@ -115,7 +107,6 @@ export const usePrizeOrders = () => {
                 .eq('acceptance_status', 'accepted');
 
             if (conquistadoError) {
-                console.error('❌ [SALDO] Erro ao calcular total conquistado:', conquistadoError);
             }
 
             const totalConquistado = conquistadoData?.reduce((sum, goal) => {
@@ -132,7 +123,6 @@ export const usePrizeOrders = () => {
                 .in('status', ['pending', 'approved']);
 
             if (pendentesError) {
-                console.error('❌ [SALDO] Erro ao calcular pedidos pendentes:', pendentesError);
             }
 
             const totalPedidosPendentes = pendentesData?.reduce((sum, order) => {
@@ -146,10 +136,8 @@ export const usePrizeOrders = () => {
             };
 
             setBalance(newBalance);
-            console.log(`✅ [SALDO] Saldo calculado:`, newBalance);
 
         } catch (err: any) {
-            console.error('❌ [SALDO] Erro ao calcular saldo:', err);
             setError(err.message || 'Erro ao calcular saldo');
         }
     }, []);
@@ -181,15 +169,12 @@ export const usePrizeOrders = () => {
                 });
 
             if (saldoError) {
-                console.error('❌ [PEDIDO] Erro ao verificar saldo:', saldoError);
                 throw saldoError;
             }
 
             if (!saldoSuficiente) {
                 throw new Error('Saldo insuficiente para este pedido');
             }
-
-            console.log(`🛒 [PEDIDO] Criando pedido:`, orderData);
 
             const { data: newOrder, error: createError } = await supabase
                 .from('pedidos_premios')
@@ -208,11 +193,8 @@ export const usePrizeOrders = () => {
                 .single();
 
             if (createError) {
-                console.error('❌ [PEDIDO] Erro ao criar pedido:', createError);
                 throw createError;
             }
-
-            console.log(`✅ [PEDIDO] Pedido criado com sucesso:`, newOrder);
 
             // Atualizar listas
             await fetchOrders();
@@ -221,7 +203,6 @@ export const usePrizeOrders = () => {
             return newOrder;
 
         } catch (err: any) {
-            console.error('❌ [PEDIDO] Erro ao criar pedido:', err);
             setError(err.message || 'Erro ao criar pedido');
             throw err;
         } finally {
@@ -235,26 +216,20 @@ export const usePrizeOrders = () => {
             setLoading(true);
             setError(null);
 
-            console.log(`❌ [PEDIDO] Cancelando pedido: ${orderId}`);
-
             const { error: updateError } = await supabase
                 .from('pedidos_premios')
                 .update({ status: 'cancelled' })
                 .eq('id', orderId);
 
             if (updateError) {
-                console.error('❌ [PEDIDO] Erro ao cancelar pedido:', updateError);
                 throw updateError;
             }
-
-            console.log(`✅ [PEDIDO] Pedido cancelado com sucesso`);
 
             // Atualizar listas
             await fetchOrders();
             await calculateBalance();
 
         } catch (err: any) {
-            console.error('❌ [PEDIDO] Erro ao cancelar pedido:', err);
             setError(err.message || 'Erro ao cancelar pedido');
             throw err;
         } finally {

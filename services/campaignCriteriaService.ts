@@ -97,7 +97,6 @@ export class CampaignCriteriaService {
             return matches;
 
         } catch (error) {
-            console.error('Erro ao analisar compatibilidade da apólice:', error);
             throw error;
         }
     }
@@ -146,32 +145,29 @@ export class CampaignCriteriaService {
         `;
 
         try {
-            console.log('🤖 Enviando prompt para IA...');
+
             const response = await mistralAI.chat({
                 messages: [{ role: 'user', content: prompt }]
             });
             
             let content = response.choices[0].message.content;
-            console.log('📥 Resposta bruta da IA:', content);
-            
+
             // Limpar markdown se presente
             if (content.includes('```json')) {
                 content = content.replace(/```json\s*/, '').replace(/\s*```$/, '');
-                console.log('🧹 Limpou ```json:', content);
+
             }
             if (content.includes('```')) {
                 content = content.replace(/```\s*/, '').replace(/\s*```$/, '');
-                console.log('🧹 Limpou ```:', content);
+
             }
             
             // Tentar parsear o JSON
             const result = JSON.parse(content);
-            console.log('✅ JSON parseado com sucesso:', result);
+
             return result;
         } catch (error) {
-            console.error('❌ Erro na análise de IA:', error);
-            console.error('📥 Conteúdo recebido:', response?.choices?.[0]?.message?.content);
-            console.log('🔄 Usando fallback manual...');
+
             // Fallback para análise manual
             return this.performManualCriteriaAnalysis(data);
         }
@@ -274,8 +270,7 @@ export class CampaignCriteriaService {
         userId: string
     ): Promise<{ updated: number; campaigns: string[] }> {
         try {
-            console.log(`🔄 Atualizando TODAS as campanhas ativas para o usuário: ${userId}`);
-            
+
             // 1. Buscar TODAS as campanhas ativas e aceitas do usuário
             const { data: activeCampaigns, error: campaignsError } = await supabase
                 .from('goals')
@@ -286,32 +281,26 @@ export class CampaignCriteriaService {
                 .eq('record_type', 'campaign');
 
             if (campaignsError) {
-                console.error('❌ Erro ao buscar campanhas ativas:', campaignsError);
                 throw campaignsError;
             }
 
             if (!activeCampaigns || activeCampaigns.length === 0) {
-                console.log('ℹ️ Nenhuma campanha ativa encontrada para o usuário');
+
                 return { updated: 0, campaigns: [] };
             }
-
-            console.log(`📋 Encontradas ${activeCampaigns.length} campanhas ativas`);
 
             // 2. Atualizar progresso de CADA campanha ativa
             const updatedCampaigns: string[] = [];
 
             for (const campaign of activeCampaigns) {
                 try {
-                    console.log(`🔄 Atualizando campanha: ${campaign.title}`);
+
                     await this.updateCampaignProgress(campaign.id, policyData);
                     updatedCampaigns.push(campaign.title);
-                    console.log(`✅ Campanha atualizada: ${campaign.title}`);
+
                 } catch (error) {
-                    console.error(`❌ Erro ao atualizar campanha ${campaign.title}:`, error);
                 }
             }
-
-            console.log(`🎯 Total de campanhas atualizadas: ${updatedCampaigns.length}`);
 
             return {
                 updated: updatedCampaigns.length,
@@ -319,7 +308,6 @@ export class CampaignCriteriaService {
             };
 
         } catch (error) {
-            console.error('❌ Erro ao atualizar campanhas ativas:', error);
             throw error;
         }
     }
@@ -347,7 +335,6 @@ export class CampaignCriteriaService {
                     await this.updateCampaignProgress(match.campaign_id, policyData);
                     updatedCampaigns.push(match.campaign_title);
                 } catch (error) {
-                    console.error(`Erro ao atualizar campanha ${match.campaign_id}:`, error);
                 }
             }
 
@@ -357,7 +344,6 @@ export class CampaignCriteriaService {
             };
 
         } catch (error) {
-            console.error('Erro ao atualizar campanhas compatíveis:', error);
             throw error;
         }
     }
@@ -378,12 +364,6 @@ export class CampaignCriteriaService {
         // Calcular novo progresso baseado nos critérios
         const newProgress = await this.calculateCampaignProgress(campaign, policyData);
 
-        console.log(`🔄 Atualizando campanha ${campaign.title}:`);
-        console.log(`📊 Progresso: ${newProgress.progress_percentage.toFixed(1)}%`);
-        console.log(`🏆 Concluída: ${newProgress.is_completed ? 'SIM' : 'NÃO'}`);
-        console.log(`📈 Status atual: ${campaign.status}`);
-        console.log(`📈 Novo status: ${newProgress.is_completed ? 'completed' : 'active'}`);
-
         // Atualizar no banco
         const { error: updateError } = await supabase
             .from('goals')
@@ -397,19 +377,15 @@ export class CampaignCriteriaService {
             .eq('id', campaignId);
 
         if (updateError) {
-            console.error(`❌ Erro ao atualizar campanha ${campaign.title}:`, updateError);
             throw updateError;
         }
 
-        console.log(`✅ Campanha ${campaign.title} atualizada com sucesso!`);
     }
 
     /**
      * Calcula o progresso da campanha baseado nos critérios
      */
     private static async calculateCampaignProgress(campaign: any, newPolicy: PolicyData): Promise<any> {
-        console.log(`🔍 Calculando progresso da campanha: ${campaign.title}`);
-        console.log(`📋 Critérios da campanha:`, campaign.criteria);
 
         // Buscar todas as apólices vinculadas a esta campanha
         const { data: linkedPolicies, error: policiesError } = await supabase
@@ -434,8 +410,6 @@ export class CampaignCriteriaService {
             newPolicy
         ];
 
-        console.log(`📊 Total de apólices vinculadas: ${allPolicies.length}`);
-
         // Calcular progresso baseado nos critérios
         let allCriteriaCompleted = true;
         let criteriaProgress = [];
@@ -452,11 +426,8 @@ export class CampaignCriteriaService {
                 criteriaArray = Object.values(criteria);
             }
 
-            console.log(`🎯 Processando ${criteriaArray.length} critérios`);
-
             for (let i = 0; i < criteriaArray.length; i++) {
                 const criterion = criteriaArray[i];
-                console.log(`🔍 Critério ${i + 1}:`, criterion);
 
                 const matchingPolicies = allPolicies.filter(policy => {
                     const policyTypeMap: { [key: string]: string } = {
@@ -482,8 +453,6 @@ export class CampaignCriteriaService {
                     return true;
                 });
 
-                console.log(`📋 Apólices que atendem critério ${i + 1}: ${matchingPolicies.length}`);
-
                 let criterionCurrent = 0;
                 let criterionTarget = 0;
                 let criterionCompleted = false;
@@ -495,14 +464,14 @@ export class CampaignCriteriaService {
                     criterionTarget = criterion.target_value || 0; // Para quantidade, o valor está em target_value
                     criterionProgressPercentage = criterionTarget > 0 ? (criterionCurrent / criterionTarget) * 100 : 0;
                     criterionCompleted = criterionProgressPercentage >= 100;
-                    console.log(`📊 Critério ${i + 1} (QUANTIDADE): ${criterionCurrent}/${criterionTarget} = ${criterionProgressPercentage.toFixed(1)}%`);
+
                 } else if (criterion.target_type === 'value') {
                     // Critério por valor
                     criterionCurrent = matchingPolicies.reduce((sum, policy) => sum + policy.premium_value, 0);
                     criterionTarget = criterion.target_value || 0;
                     criterionProgressPercentage = criterionTarget > 0 ? (criterionCurrent / criterionTarget) * 100 : 0;
                     criterionCompleted = criterionProgressPercentage >= 100;
-                    console.log(`💰 Critério ${i + 1} (VALOR): R$ ${criterionCurrent}/${criterionTarget} = ${criterionProgressPercentage.toFixed(1)}%`);
+
                 } else {
                     // Fallback para compatibilidade com estruturas antigas
                     if (criterion.target_count || criterion.target_quantity) {
@@ -511,14 +480,14 @@ export class CampaignCriteriaService {
                         criterionTarget = criterion.target_count || criterion.target_quantity || 0;
                         criterionProgressPercentage = criterionTarget > 0 ? (criterionCurrent / criterionTarget) * 100 : 0;
                         criterionCompleted = criterionProgressPercentage >= 100;
-                        console.log(`📊 Critério ${i + 1} (QUANTIDADE - fallback): ${criterionCurrent}/${criterionTarget} = ${criterionProgressPercentage.toFixed(1)}%`);
+
                     } else if (criterion.target_value) {
                         // Critério por valor (estrutura antiga)
                         criterionCurrent = matchingPolicies.reduce((sum, policy) => sum + policy.premium_value, 0);
                         criterionTarget = criterion.target_value;
                         criterionProgressPercentage = criterionTarget > 0 ? (criterionCurrent / criterionTarget) * 100 : 0;
                         criterionCompleted = criterionProgressPercentage >= 100;
-                        console.log(`💰 Critério ${i + 1} (VALOR - fallback): R$ ${criterionCurrent}/${criterionTarget} = ${criterionProgressPercentage.toFixed(1)}%`);
+
                     }
                 }
 
@@ -532,9 +501,9 @@ export class CampaignCriteriaService {
                 
                 if (!criterionCompleted) {
                     allCriteriaCompleted = false;
-                    console.log(`❌ Critério ${i + 1} NÃO concluído: ${criterionProgressPercentage.toFixed(1)}%`);
+
                 } else {
-                    console.log(`✅ Critério ${i + 1} concluído: ${criterionProgressPercentage.toFixed(1)}%`);
+
                 }
             }
         }
@@ -546,10 +515,6 @@ export class CampaignCriteriaService {
         
         // Uma campanha só é concluída quando TODOS os critérios estão 100%
         const isCompleted = allCriteriaCompleted && criteriaProgress.length > 0;
-
-        console.log(`🎯 Progresso geral: ${totalProgress.toFixed(1)}%`);
-        console.log(`🏆 Campanha concluída: ${isCompleted ? 'SIM' : 'NÃO'}`);
-        console.log(`📋 Critérios concluídos: ${criteriaProgress.filter(c => c.completed).length}/${criteriaProgress.length}`);
 
         return {
             current_value: criteriaProgress.reduce((sum, c) => sum + c.current, 0),

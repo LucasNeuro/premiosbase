@@ -60,7 +60,6 @@ export const useCpds = (userId: string | null) => {
                 setCpds([]);
             }
         } catch (err) {
-            console.error('Erro ao buscar CPDs:', err);
             setError('Erro ao carregar CPDs');
         } finally {
             setLoading(false);
@@ -116,7 +115,6 @@ export const useCpds = (userId: string | null) => {
             setCpds(updatedCpds.cpds.filter((cpd: Cpd) => cpd.isActive));
             return true;
         } catch (err) {
-            console.error('Erro ao adicionar CPD:', err);
             setError('Erro ao adicionar CPD');
             return false;
         } finally {
@@ -159,7 +157,6 @@ export const useCpds = (userId: string | null) => {
             setCpds(updatedCpds.cpds.filter((cpd: Cpd) => cpd.isActive));
             return true;
         } catch (err) {
-            console.error('Erro ao remover CPD:', err);
             setError('Erro ao remover CPD');
             return false;
         } finally {

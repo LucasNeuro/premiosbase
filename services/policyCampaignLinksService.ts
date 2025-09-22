@@ -56,7 +56,6 @@ export class PolicyCampaignLinksService {
 
             return data || [];
         } catch (error) {
-            console.error('Erro ao buscar vinculações:', error);
             throw error;
         }
     }
@@ -84,7 +83,6 @@ export class PolicyCampaignLinksService {
 
             return data || [];
         } catch (error) {
-            console.error('Erro ao buscar vinculações da apólice:', error);
             throw error;
         }
     }
@@ -120,7 +118,6 @@ export class PolicyCampaignLinksService {
 
             return data || [];
         } catch (error) {
-            console.error('Erro ao buscar vinculações de baixa confiança:', error);
             throw error;
         }
     }
@@ -171,7 +168,6 @@ export class PolicyCampaignLinksService {
                 manual_links: manualLinks
             };
         } catch (error) {
-            console.error('Erro ao buscar estatísticas da IA:', error);
             throw error;
         }
     }
@@ -188,7 +184,6 @@ export class PolicyCampaignLinksService {
 
             if (error) throw error;
         } catch (error) {
-            console.error('Erro ao remover vinculação:', error);
             throw error;
         }
     }
@@ -213,7 +208,6 @@ export class PolicyCampaignLinksService {
 
             if (error) throw error;
         } catch (error) {
-            console.error('Erro ao atualizar dados da IA:', error);
             throw error;
         }
     }

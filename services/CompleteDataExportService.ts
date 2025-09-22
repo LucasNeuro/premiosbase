@@ -6,8 +6,6 @@ export class CompleteDataExportService {
    */
   static async exportAllDataToTable(): Promise<string> {
     try {
-      console.log('🚀 Iniciando exportação completa de dados...');
-      
       // 1. Buscar todas as campanhas (sem relacionamentos)
       const { data: campaigns, error: campaignsError } = await supabase
         .from('goals')
@@ -19,9 +17,6 @@ export class CompleteDataExportService {
       if (campaignsError) {
         throw new Error(`Erro ao buscar campanhas: ${campaignsError.message}`);
       }
-
-      console.log(`📊 Encontradas ${campaigns?.length || 0} campanhas`);
-
       // 2. Buscar todas as apólices (sem relacionamentos)
       const { data: policies, error: policiesError } = await supabase
         .from('policies')
@@ -31,9 +26,6 @@ export class CompleteDataExportService {
       if (policiesError) {
         throw new Error(`Erro ao buscar apólices: ${policiesError.message}`);
       }
-
-      console.log(`📊 Encontradas ${policies?.length || 0} apólices`);
-
       // 3. Buscar todas as vinculações (apenas IDs)
       const { data: links, error: linksError } = await supabase
         .from('policy_campaign_links')
@@ -43,9 +35,6 @@ export class CompleteDataExportService {
       if (linksError) {
         throw new Error(`Erro ao buscar vinculações: ${linksError.message}`);
       }
-
-      console.log(`📊 Encontradas ${links?.length || 0} vinculações`);
-
       // 4. Buscar todos os prêmios
       const { data: prizes, error: prizesError } = await supabase
         .from('campanhas_premios')
@@ -61,9 +50,6 @@ export class CompleteDataExportService {
       if (prizesError) {
         throw new Error(`Erro ao buscar prêmios: ${prizesError.message}`);
       }
-
-      console.log(`📊 Encontrados ${prizes?.length || 0} prêmios`);
-
       // 5. Criar tabela temporária com todos os dados
       const tableName = `export_completo_${Date.now()}`;
       
@@ -94,16 +80,12 @@ export class CompleteDataExportService {
         .single();
 
       if (insertError) {
-        console.error('Erro ao inserir dados de exportação:', insertError);
         // Se não conseguir inserir na tabela, retornar dados diretamente
         return JSON.stringify(exportData, null, 2);
       }
-
-      console.log(`✅ Dados exportados para tabela: ${tableName}`);
       return insertData.id;
 
     } catch (error) {
-      console.error('❌ Erro ao exportar dados:', error);
       throw error;
     }
   }
@@ -113,8 +95,6 @@ export class CompleteDataExportService {
    */
   static async generateCompleteCSV(): Promise<string> {
     try {
-      console.log('🚀 Gerando CSV completo...');
-      
       // 1. Buscar todas as campanhas (sem relacionamentos)
       const { data: campaigns, error: campaignsError } = await supabase
         .from('goals')
@@ -152,7 +132,6 @@ export class CompleteDataExportService {
           .in('id', [...new Set(userIds)]); // Remove duplicatas
         
         if (usersError) {
-          console.error('Erro ao buscar usuários:', usersError);
         } else {
           usersData = users || [];
         }
@@ -218,8 +197,7 @@ export class CompleteDataExportService {
         // Buscar dados do criador e aceitador
         const creator = usersData.find(u => u.id === campaign.created_by);
         const acceptor = campaign.accepted_by ? usersData.find(u => u.id === campaign.accepted_by) : null;
-        
-        
+
         // Buscar apólices vinculadas a esta campanha
         const campaignLinks = links?.filter(link => link.campaign_id === campaign.id) || [];
         const campaignPolicies = campaignLinks.map(link => 
@@ -295,12 +273,9 @@ export class CompleteDataExportService {
       const csvContent = [headers, ...rows]
         .map(row => row.map(field => `"${field}"`).join(','))
         .join('\n');
-
-      console.log(`✅ CSV completo gerado com ${rows.length} linhas`);
       return csvContent;
 
     } catch (error) {
-      console.error('❌ Erro ao gerar CSV completo:', error);
       throw error;
     }
   }
@@ -310,8 +285,6 @@ export class CompleteDataExportService {
    */
   static async generateMarkdownReport(): Promise<string> {
     try {
-      console.log('🚀 Gerando relatório em Markdown...');
-      
       // 1. Buscar todas as campanhas (sem relacionamentos)
       const { data: campaigns, error: campaignsError } = await supabase
         .from('goals')
@@ -349,7 +322,6 @@ export class CompleteDataExportService {
           .in('id', [...new Set(userIds)]);
         
         if (usersError) {
-          console.error('Erro ao buscar usuários:', usersError);
         } else {
           usersData = users || [];
         }
@@ -425,12 +397,9 @@ export class CompleteDataExportService {
           markdown += `\n`;
         }
       });
-
-      console.log(`✅ Relatório Markdown gerado com sucesso!`);
       return markdown;
 
     } catch (error) {
-      console.error('❌ Erro ao gerar relatório Markdown:', error);
       throw error;
     }
   }
@@ -440,19 +409,14 @@ export class CompleteDataExportService {
    */
   static async generateXLSReport(): Promise<string> {
     try {
-      console.log('🚀 Gerando relatório em XLS...');
-      
       // Usar a mesma lógica do CSV, mas com formatação XLS
       const csvContent = await this.generateCompleteCSV();
       
       // Converter CSV para XLS (formato simples)
       const xlsContent = this.convertCSVToXLS(csvContent);
-      
-      console.log(`✅ Relatório XLS gerado com sucesso!`);
       return xlsContent;
 
     } catch (error) {
-      console.error('❌ Erro ao gerar relatório XLS:', error);
       throw error;
     }
   }
@@ -471,8 +435,6 @@ export class CompleteDataExportService {
    */
   static async downloadCompleteCSV(): Promise<void> {
     try {
-      console.log('🚀 Iniciando download do CSV completo...');
-      
       const csvContent = await this.generateCompleteCSV();
       
       // Criar e baixar arquivo
@@ -485,11 +447,7 @@ export class CompleteDataExportService {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
-      console.log('✅ CSV completo baixado com sucesso!');
-      
     } catch (error) {
-      console.error('❌ Erro ao baixar CSV completo:', error);
       throw error;
     }
   }
@@ -499,8 +457,6 @@ export class CompleteDataExportService {
    */
   static async downloadMarkdownReport(): Promise<void> {
     try {
-      console.log('🚀 Iniciando download do relatório Markdown...');
-      
       const markdownContent = await this.generateMarkdownReport();
       
       // Criar e baixar arquivo
@@ -513,11 +469,7 @@ export class CompleteDataExportService {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
-      console.log('✅ Relatório Markdown baixado com sucesso!');
-      
     } catch (error) {
-      console.error('❌ Erro ao baixar relatório Markdown:', error);
       throw error;
     }
   }
@@ -527,8 +479,6 @@ export class CompleteDataExportService {
    */
   static async downloadXLSReport(): Promise<void> {
     try {
-      console.log('🚀 Iniciando download do relatório XLS...');
-      
       const xlsContent = await this.generateXLSReport();
       
       // Criar e baixar arquivo
@@ -541,11 +491,7 @@ export class CompleteDataExportService {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
-      console.log('✅ Relatório XLS baixado com sucesso!');
-      
     } catch (error) {
-      console.error('❌ Erro ao baixar relatório XLS:', error);
       throw error;
     }
   }

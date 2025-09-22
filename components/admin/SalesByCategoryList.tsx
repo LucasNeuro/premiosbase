@@ -31,9 +31,7 @@ const SalesByCategoryList: React.FC = () => {
 
             // Se a view não existir, buscar dados diretamente das tabelas
             if (error && error.code === 'PGRST116') {
-                console.log('⚠️ View não encontrada, buscando dados diretamente...');
-                console.log('🔍 Erro da view:', error);
-                
+
                 // Buscar dados diretamente das tabelas - TODAS as categorias ativas
                 const { data: categoriesData, error: categoriesError } = await supabase
                     .from('categorias_corretores')
@@ -57,9 +55,6 @@ const SalesByCategoryList: React.FC = () => {
                     .order('nome'); // Ordenar por nome para consistência
 
                 if (categoriesError) throw categoriesError;
-
-                console.log('🔍 Dados brutos das categorias:', categoriesData);
-                console.log('📊 Total de categorias brutas:', categoriesData?.length);
 
                 // Processar dados para criar estatísticas por categoria
                 const processedData = categoriesData?.map(category => {
@@ -98,12 +93,8 @@ const SalesByCategoryList: React.FC = () => {
 
             if (error) throw error;
 
-            console.log('🔍 Dados das categorias recebidos:', data);
-            console.log('📊 Total de categorias:', data?.length);
-            console.log('📋 Lista de categorias:', data?.map(c => c.category_name));
             setCategories(data || []);
         } catch (error) {
-            console.error('Erro ao buscar vendas por categoria:', error);
         } finally {
             setLoading(false);
         }

@@ -48,13 +48,11 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({ isOpen, onClose, onSu
                 .order('name');
 
             if (error) {
-                console.error('Error fetching users:', error);
                 return;
             }
 
             setUsers(data || []);
         } catch (error) {
-            console.error('Error fetching users:', error);
         }
     };
 
@@ -66,7 +64,6 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({ isOpen, onClose, onSu
                 .eq('is_active', true);
 
             if (error) {
-                console.error('Error fetching user goals count:', error);
                 return;
             }
 
@@ -77,7 +74,6 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({ isOpen, onClose, onSu
 
             setUserGoalsCount(countMap);
         } catch (error) {
-            console.error('Error fetching user goals count:', error);
         }
     };
 
@@ -134,7 +130,6 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({ isOpen, onClose, onSu
                 });
 
             if (error) {
-                console.error('Error creating goal:', error);
                 alert('Erro ao criar meta: ' + error.message);
                 return;
             }
@@ -156,7 +151,6 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({ isOpen, onClose, onSu
             onSuccess();
             onClose();
         } catch (error) {
-            console.error('Error creating goal:', error);
             alert('Erro ao criar meta');
         } finally {
             setLoading(false);

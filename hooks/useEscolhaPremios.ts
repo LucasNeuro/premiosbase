@@ -78,7 +78,6 @@ export const useEscolhaPremios = () => {
       
       setEscolhas(data || []);
     } catch (err: any) {
-      console.error('Erro ao buscar escolhas de prêmios:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -111,7 +110,6 @@ export const useEscolhaPremios = () => {
       
       return data || [];
     } catch (err: any) {
-      console.error('Erro ao buscar escolhas de prêmios do corretor:', err);
       throw err;
     } finally {
       setLoading(false);
@@ -144,7 +142,6 @@ export const useEscolhaPremios = () => {
       
       return data || [];
     } catch (err: any) {
-      console.error('Erro ao buscar escolhas de prêmios da campanha:', err);
       throw err;
     } finally {
       setLoading(false);
@@ -169,7 +166,6 @@ export const useEscolhaPremios = () => {
 
       return data || null;
     } catch (err: any) {
-      console.error('Erro ao verificar escolha existente:', err);
       throw err;
     }
   };
@@ -211,7 +207,6 @@ export const useEscolhaPremios = () => {
       
       return data;
     } catch (err: any) {
-      console.error('Erro ao escolher prêmio:', err);
       throw err;
     }
   };
@@ -244,7 +239,6 @@ export const useEscolhaPremios = () => {
       
       return data;
     } catch (err: any) {
-      console.error('Erro ao alterar escolha de prêmio:', err);
       throw err;
     }
   };
@@ -279,7 +273,6 @@ export const useEscolhaPremios = () => {
       
       return data;
     } catch (err: any) {
-      console.error('Erro ao marcar prêmio como entregue:', err);
       throw err;
     }
   };
@@ -308,7 +301,6 @@ export const useEscolhaPremios = () => {
       
       return data;
     } catch (err: any) {
-      console.error('Erro ao cancelar escolha de prêmio:', err);
       throw err;
     }
   };

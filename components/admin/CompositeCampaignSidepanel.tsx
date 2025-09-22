@@ -69,7 +69,6 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
         }
     }, [isOpen]);
 
-
     const fetchUsers = async () => {
         try {
             // Tentar buscar todos os usuários primeiro
@@ -79,7 +78,6 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                 .order('name');
 
             if (error) {
-                console.error('Error fetching users:', error);
                 // Se der erro, tentar sem filtros
                 const { data: allData, error: allError } = await supabase
                     .from('users')
@@ -92,7 +90,6 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                 setUsers(data || []);
             }
         } catch (error) {
-            console.error('Error fetching users:', error);
             setUsers([]);
         }
     };
@@ -108,7 +105,6 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
             if (error) throw error;
             setCategories(data || []);
         } catch (error) {
-            console.error('Error fetching categories:', error);
         }
     };
 
@@ -368,7 +364,6 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
             }, 1500);
 
         } catch (error: any) {
-            console.error('❌ Error creating campaign:', error);
             setMessage({ text: 'Erro ao criar campanha: ' + error.message, type: 'error' });
         } finally {
             setLoading(false);
@@ -840,7 +835,7 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                             <div className="bg-blue-50 p-4 rounded-lg">
                                 <h4 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
                                     <Target className="w-5 h-5" />
-                                    Resumo da Campanha (Bilhete Composto)
+                                    <strong>RESUMO DA CAMPANHA</strong>
                                 </h4>
                                 <div className="text-sm text-blue-800 space-y-3">
                                     <div className="flex justify-between">

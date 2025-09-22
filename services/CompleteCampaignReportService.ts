@@ -85,8 +85,6 @@ export class CompleteCampaignReportService {
    */
   static async generateCompleteReport(): Promise<CompleteCampaignData[]> {
     try {
-      console.log('🚀 Iniciando geração de relatório completo...');
-      
       // 1. Buscar todas as campanhas
       const { data: campaigns, error: campaignsError } = await supabase
         .from('goals')
@@ -102,15 +100,10 @@ export class CompleteCampaignReportService {
       if (campaignsError) {
         throw new Error(`Erro ao buscar campanhas: ${campaignsError.message}`);
       }
-
-      console.log(`📊 Encontradas ${campaigns?.length || 0} campanhas`);
-
       // 2. Para cada campanha, buscar dados completos
       const completeData: CompleteCampaignData[] = [];
 
       for (const campaign of campaigns || []) {
-        console.log(`🔄 Processando campanha: ${campaign.title}`);
-        
         // Buscar apólices vinculadas
         const { data: policies, error: policiesError } = await supabase
           .from('policy_campaign_links')
@@ -125,7 +118,6 @@ export class CompleteCampaignReportService {
           .eq('is_active', true);
 
         if (policiesError) {
-          console.error(`Erro ao buscar apólices para ${campaign.title}:`, policiesError);
           continue;
         }
 
@@ -143,7 +135,6 @@ export class CompleteCampaignReportService {
           .eq('goal_id', campaign.id);
 
         if (prizesError) {
-          console.error(`Erro ao buscar prêmios para ${campaign.title}:`, prizesError);
         }
 
         // Calcular resumos
@@ -236,12 +227,9 @@ export class CompleteCampaignReportService {
 
         completeData.push(campaignData);
       }
-
-      console.log(`✅ Relatório completo gerado com ${completeData.length} campanhas`);
       return completeData;
 
     } catch (error) {
-      console.error('❌ Erro ao gerar relatório completo:', error);
       throw error;
     }
   }
@@ -325,7 +313,6 @@ export class CompleteCampaignReportService {
       return csvContent;
 
     } catch (error) {
-      console.error('❌ Erro ao gerar CSV:', error);
       throw error;
     }
   }
@@ -338,7 +325,6 @@ export class CompleteCampaignReportService {
       const data = await this.generateCompleteReport();
       return JSON.stringify(data, null, 2);
     } catch (error) {
-      console.error('❌ Erro ao gerar JSON:', error);
       throw error;
     }
   }
@@ -417,7 +403,6 @@ export class CompleteCampaignReportService {
       return markdown;
       
     } catch (error) {
-      console.error('❌ Erro ao gerar Markdown:', error);
       throw error;
     }
   }

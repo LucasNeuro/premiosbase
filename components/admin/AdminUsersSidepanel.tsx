@@ -47,19 +47,14 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
 
     // Processar CPDs quando o usuário for carregado
     useEffect(() => {
-        console.log('🔍 [Sidepanel] Processando CPDs para usuário:', user?.name, 'CPD data:', user?.cpd);
-        
         if (user?.cpd) {
             try {
                 let cpdData = user.cpd;
-                console.log('📊 [Sidepanel] CPD Data inicial:', cpdData, 'Tipo:', typeof cpdData);
                 
                 if (typeof cpdData === 'string') {
                     try {
                         cpdData = JSON.parse(cpdData);
-                        console.log('✅ [Sidepanel] Parse JSON bem-sucedido:', cpdData);
                     } catch (e) {
-                        console.log('⚠️ [Sidepanel] Não é JSON válido, tratando como string simples');
                         // Se não conseguir fazer parse, tratar como string simples (CPD único)
                         const simpleCpd = [{
                             id: '1',
@@ -67,28 +62,22 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
                             name: `CPD ${cpdData}`,
                             isActive: true
                         }];
-                        console.log('📝 [Sidepanel] CPD simples criado:', simpleCpd);
                         setCpds(simpleCpd);
                         return;
                     }
                 }
-
+    
                 if (cpdData && typeof cpdData === 'object' && cpdData.cpds && Array.isArray(cpdData.cpds)) {
-                    console.log('📋 [Sidepanel] CPDs encontrados no objeto:', cpdData.cpds);
                     setCpds(cpdData.cpds);
                 } else if (cpdData && typeof cpdData === 'object' && Array.isArray(cpdData)) {
-                    console.log('📋 [Sidepanel] CPDs em array direto:', cpdData);
                     setCpds(cpdData);
                 } else {
-                    console.log('❌ [Sidepanel] Nenhum CPD válido encontrado');
                     setCpds([]);
                 }
             } catch (error) {
-                console.error('❌ [Sidepanel] Erro ao processar CPDs:', error);
                 setCpds([]);
             }
         } else {
-            console.log('❌ [Sidepanel] Usuário sem CPD');
             setCpds([]);
         }
     }, [user]);
@@ -168,7 +157,6 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
                     .eq('id', user.id);
 
                 if (error) {
-                    console.error('Error updating user:', error);
                     alert('Erro ao atualizar corretor');
                     return;
                 }
@@ -179,7 +167,6 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
                     .insert([userData]);
 
                 if (error) {
-                    console.error('Error creating user:', error);
                     alert('Erro ao criar corretor');
                     return;
                 }
@@ -187,7 +174,6 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
 
             onSave();
         } catch (error) {
-            console.error('Error:', error);
             alert('Erro ao salvar corretor');
         } finally {
             setLoading(false);

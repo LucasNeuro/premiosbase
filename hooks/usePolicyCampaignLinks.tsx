@@ -25,7 +25,6 @@ export const usePolicyCampaignLinks = () => {
             setStatistics(statsData);
 
         } catch (err: any) {
-            console.error('Erro ao buscar vinculações:', err);
             setError(err.message || 'Erro ao carregar vinculações');
         } finally {
             setLoading(false);
@@ -36,7 +35,6 @@ export const usePolicyCampaignLinks = () => {
         try {
             return await PolicyCampaignLinksService.getPolicyLinks(policyId);
         } catch (err: any) {
-            console.error('Erro ao buscar vinculações da apólice:', err);
             throw err;
         }
     }, []);
@@ -47,7 +45,6 @@ export const usePolicyCampaignLinks = () => {
         try {
             return await PolicyCampaignLinksService.getLowConfidenceLinks(user.id, threshold);
         } catch (err: any) {
-            console.error('Erro ao buscar vinculações de baixa confiança:', err);
             throw err;
         }
     }, [user?.id]);
@@ -57,7 +54,6 @@ export const usePolicyCampaignLinks = () => {
             await PolicyCampaignLinksService.removeLink(linkId);
             await fetchLinks(); // Recarregar dados
         } catch (err: any) {
-            console.error('Erro ao remover vinculação:', err);
             throw err;
         }
     }, [fetchLinks]);
@@ -71,7 +67,6 @@ export const usePolicyCampaignLinks = () => {
             await PolicyCampaignLinksService.updateAIData(linkId, confidence, reasoning);
             await fetchLinks(); // Recarregar dados
         } catch (err: any) {
-            console.error('Erro ao atualizar dados da IA:', err);
             throw err;
         }
     }, [fetchLinks]);

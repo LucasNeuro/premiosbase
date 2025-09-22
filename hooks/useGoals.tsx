@@ -69,7 +69,6 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('Error fetching goals:', error);
                 return;
             }
 
@@ -95,7 +94,6 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string
             setGoals(formattedGoals);
             setLastUpdate(new Date());
         } catch (error) {
-            console.error('Error fetching goals:', error);
         } finally {
             setLoading(false);
         }
@@ -157,7 +155,6 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string
                 .single();
 
             if (error) {
-                console.error('Error adding goal:', error);
                 return { success: false, message: 'Erro ao criar meta.' };
             }
 
@@ -188,7 +185,6 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string
             
             return { success: true, message: 'Meta criada com sucesso!' };
         } catch (error) {
-            console.error('Error adding goal:', error);
             return { success: false, message: 'Erro interno do servidor.' };
         }
     }, [userId]);
@@ -201,7 +197,6 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string
                 .eq('id', goalId);
 
             if (error) {
-                console.error('Error updating goal:', error);
                 return { success: false, message: 'Erro ao atualizar meta.' };
             }
 
@@ -216,7 +211,6 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string
             
             return { success: true, message: 'Meta atualizada com sucesso!' };
         } catch (error) {
-            console.error('Error updating goal:', error);
             return { success: false, message: 'Erro interno do servidor.' };
         }
     }, []);
@@ -229,7 +223,6 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string
                 .eq('id', goalId);
 
             if (error) {
-                console.error('Error deleting goal:', error);
                 return { success: false, message: 'Erro ao excluir meta.' };
             }
 
@@ -238,7 +231,6 @@ export const GoalsProvider: React.FC<{ children: React.ReactNode, userId: string
             
             return { success: true, message: 'Meta excluída com sucesso!' };
         } catch (error) {
-            console.error('Error deleting goal:', error);
             return { success: false, message: 'Erro interno do servidor.' };
         }
     }, []);

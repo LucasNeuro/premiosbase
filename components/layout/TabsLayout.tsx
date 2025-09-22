@@ -24,9 +24,7 @@ const TabsLayout: React.FC<TabsLayoutProps> = ({ isAdmin = false, tabs, defaultT
     const renderContent = () => {
         const activeTabConfig = tabs.find(tab => tab.id === activeTab);
         if (!activeTabConfig) return null;
-        
-        console.log('🔄 TabsLayout renderizando tab:', activeTab, 'component:', activeTabConfig.component);
-        
+
         // Se component é uma função, chamá-la
         if (typeof activeTabConfig.component === 'function') {
             return activeTabConfig.component();

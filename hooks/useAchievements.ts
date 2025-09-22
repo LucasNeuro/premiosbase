@@ -79,7 +79,6 @@ export const useAchievements = () => {
 
             setAchievements(achievementsData);
         } catch (err) {
-            console.error('Erro ao buscar insígnias:', err);
             setError('Erro ao carregar insígnias');
         }
     };
@@ -104,7 +103,6 @@ export const useAchievements = () => {
                 .order('achieved_at', { ascending: false });
 
             if (error) {
-                console.error('Erro ao buscar conquistas:', error);
                 throw error;
             }
 
@@ -115,7 +113,6 @@ export const useAchievements = () => {
 
             setUserAchievements(userAchievementsData);
         } catch (err) {
-            console.error('Erro ao buscar conquistas do usuário:', err);
             setError('Erro ao carregar conquistas');
         }
     };
@@ -139,7 +136,6 @@ export const useAchievements = () => {
                 .eq('user_id', user.id);
 
             if (error) {
-                console.error('Erro ao buscar progresso:', error);
                 throw error;
             }
 
@@ -150,7 +146,6 @@ export const useAchievements = () => {
 
             setUserProgress(userProgressData);
         } catch (err) {
-            console.error('Erro ao buscar progresso do usuário:', err);
             setError('Erro ao carregar progresso');
         }
     };
@@ -216,7 +211,6 @@ export const useAchievements = () => {
                 fetchUserProgress()
             ]);
         } catch (err) {
-            console.error('Erro ao atualizar progresso:', err);
             setError('Erro ao atualizar progresso');
         }
     };
@@ -237,7 +231,6 @@ export const useAchievements = () => {
                 fetchUserProgress()
             ]);
         } catch (err) {
-            console.error('Erro ao carregar dados:', err);
             setError('Erro ao carregar dados');
         } finally {
             setLoading(false);

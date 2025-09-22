@@ -51,13 +51,11 @@ const CampaignAcceptance: React.FC = () => {
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('Erro ao buscar campanhas pendentes:', error);
                 return;
             }
 
             setPendingCampaigns(data || []);
         } catch (error) {
-            console.error('Erro ao buscar campanhas pendentes:', error);
         } finally {
             setLoading(false);
         }
@@ -78,7 +76,6 @@ const CampaignAcceptance: React.FC = () => {
                 .eq('id', campaignId);
 
             if (error) {
-                console.error('Erro ao aceitar campanha:', error);
                 setMessage({ text: 'Erro ao aceitar campanha: ' + error.message, type: 'error' });
                 return;
             }
@@ -87,7 +84,6 @@ const CampaignAcceptance: React.FC = () => {
             fetchPendingCampaigns(); // Recarregar lista
             
         } catch (error: any) {
-            console.error('Erro ao aceitar campanha:', error);
             setMessage({ text: 'Erro interno do sistema.', type: 'error' });
         } finally {
             setProcessingId(null);
@@ -109,7 +105,6 @@ const CampaignAcceptance: React.FC = () => {
                 .eq('id', campaignId);
 
             if (error) {
-                console.error('Erro ao rejeitar campanha:', error);
                 setMessage({ text: 'Erro ao rejeitar campanha: ' + error.message, type: 'error' });
                 return;
             }
@@ -118,7 +113,6 @@ const CampaignAcceptance: React.FC = () => {
             fetchPendingCampaigns(); // Recarregar lista
             
         } catch (error: any) {
-            console.error('Erro ao rejeitar campanha:', error);
             setMessage({ text: 'Erro interno do sistema.', type: 'error' });
         } finally {
             setProcessingId(null);

@@ -35,7 +35,6 @@ const FixCampaignStatusPanel: React.FC = () => {
             setResults(fixResults);
 
         } catch (err: any) {
-            console.error('Erro ao corrigir campanhas:', err);
             setError(err.message || 'Erro ao corrigir campanhas');
         } finally {
             setLoading(false);

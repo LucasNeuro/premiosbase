@@ -127,7 +127,6 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
                 .upload(filePath, file);
 
             if (uploadError) {
-                console.error('Erro detalhado do upload:', uploadError);
                 throw new Error(`Erro no upload: ${uploadError.message} (Código: ${uploadError.statusCode})`);
             }
 
@@ -153,7 +152,6 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
             setPreviewImage(publicUrl);
             setUploadError(null); // Limpar erros anteriores
         } catch (error: any) {
-            console.error('Error uploading image:', error);
             setUploadError(error.message || 'Erro ao fazer upload da imagem.');
         } finally {
             setUploading(false);
@@ -198,7 +196,6 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
             return;
         }
 
-
         try {
             // Filtrar apenas campos válidos (não vazios)
             const premioData: any = {
@@ -234,7 +231,6 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
                     .eq('id', premio.id);
 
                 if (error) {
-                    console.error('Error updating premio:', error);
                     alert('Erro ao atualizar prêmio: ' + error.message);
                     return;
                 }
@@ -245,7 +241,6 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
                     .insert([premioData]);
 
                 if (error) {
-                    console.error('Error creating premio:', error);
                     alert('Erro ao criar prêmio: ' + error.message);
                     return;
                 }
@@ -254,7 +249,6 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
             onSave();
             onClose();
         } catch (error: any) {
-            console.error('Error saving premio:', error);
             alert('Erro inesperado: ' + error.message);
         }
     };
@@ -405,7 +399,6 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
                             placeholder="R$ 0,00"
                         />
                     </div>
-
 
                     {/* Status */}
                     <div className="flex items-center">

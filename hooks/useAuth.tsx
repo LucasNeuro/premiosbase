@@ -29,13 +29,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const savedUser = localStorage.getItem('user');
                 if (savedUser) {
                     const userData = JSON.parse(savedUser);
-                    console.log('🔐 useAuth - Usuário carregado do localStorage:', userData);
+
                     setUser(userData);
                 } else {
-                    console.log('🔐 useAuth - Nenhum usuário encontrado no localStorage');
+
                     }
             } catch (error) {
-                console.error('Error checking user session:', error);
                 localStorage.removeItem('user');
             } finally {
                 setLoading(false);
@@ -55,7 +54,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .single();
             
             if (userError || !userData) {
-                console.error('Usuário não encontrado:', userError);
                 return { success: false, message: 'Email ou senha incorretos.' };
             }
 
@@ -81,7 +79,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             return { success: true, message: 'Login realizado com sucesso!' };
         } catch (error) {
-            console.error('Erro geral no login:', error);
             return { success: false, message: 'Erro interno do servidor.' };
         }
     };
@@ -91,7 +88,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             localStorage.removeItem('user');
             setUser(null);
         } catch (error) {
-            console.error('Error during logout:', error);
         }
     };
 
@@ -108,7 +104,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 .or(`email.eq.${userData.email},cnpj.eq.${userData.cnpj}${userData.cpd ? `,cpd.eq.${userData.cpd}` : ''}`);
 
             if (checkError) {
-                console.error('Erro ao verificar usuário existente:', checkError);
                 // Continue com o cadastro mesmo se houver erro na verificação
             } else if (existingUsers && existingUsers.length > 0) {
                 const existingUser = existingUsers[0];
@@ -149,7 +144,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                        .single();
 
             if (userError) {
-                console.error('Erro ao criar usuário:', userError);
                 return { success: false, message: `Erro ao criar usuário: ${userError.message}` };
             }
 
@@ -170,14 +164,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     .eq('id', newUser.id);
 
                 if (cpdError) {
-                    console.error('Erro ao salvar CPDs adicionais:', cpdError);
                     // Não falhar o cadastro por causa dos CPDs adicionais
                 }
             }
 
             return { success: true, message: 'Conta criada com sucesso! Faça login para continuar.' };
         } catch (error) {
-            console.error('Erro geral no cadastro:', error);
             return { success: false, message: 'Erro interno do servidor.' };
         }
     };

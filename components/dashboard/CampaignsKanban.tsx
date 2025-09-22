@@ -32,12 +32,10 @@ const CampaignsKanban: React.FC = () => {
     const [isSidepanelOpen, setIsSidepanelOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'campaigns' | 'prizes'>('campaigns');
 
-
     // Listener para atualizações em tempo real das campanhas
     useRealtimeListener('campaigns', useCallback(() => {
         // Atualização imediata para evitar dados desatualizados
         fetchCampaigns().catch(err => {
-            console.error('❌ Erro ao atualizar campanhas:', err);
         });
         
         // Também chamar o refresh global se disponível

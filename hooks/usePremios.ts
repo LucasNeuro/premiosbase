@@ -67,7 +67,6 @@ export const usePremios = () => {
       
       setPremios(data || []);
     } catch (err: any) {
-      console.error('Erro ao buscar prêmios:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -94,7 +93,6 @@ export const usePremios = () => {
       
       setPremios(data || []);
     } catch (err: any) {
-      console.error('Erro ao buscar prêmios por categoria:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -121,7 +119,6 @@ export const usePremios = () => {
       
       setPremios(data || []);
     } catch (err: any) {
-      console.error('Erro ao buscar prêmios por tipo:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -162,7 +159,6 @@ export const usePremios = () => {
       
       return data;
     } catch (err: any) {
-      console.error('Erro ao vincular prêmio à campanha:', err);
       throw err;
     }
   };
@@ -185,7 +181,6 @@ export const usePremios = () => {
       
       return data || [];
     } catch (err: any) {
-      console.error('Erro ao buscar prêmios da campanha:', err);
       throw err;
     }
   };
@@ -199,7 +194,6 @@ export const usePremios = () => {
 
       if (error) throw error;
     } catch (err: any) {
-      console.error('Erro ao remover prêmio da campanha:', err);
       throw err;
     }
   };
@@ -221,7 +215,6 @@ export const usePremios = () => {
       
       return data;
     } catch (err: any) {
-      console.error('Erro ao marcar prêmio como entregue:', err);
       throw err;
     }
   };

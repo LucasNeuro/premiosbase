@@ -87,7 +87,6 @@ export const useAchievementsRealtime = (userId: string) => {
             setStats(newStats);
             setLastUpdate(new Date());
             } catch (error) {
-            console.error('❌ Erro ao calcular estatísticas:', error);
         } finally {
             setLoading(false);
         }

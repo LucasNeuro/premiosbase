@@ -63,13 +63,11 @@ export const AdminGoalsProvider: React.FC<{ children: React.ReactNode; userId: s
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('Error fetching admin goals:', error);
                 return;
             }
 
             setAdminGoals(data || []);
         } catch (error) {
-            console.error('Error fetching admin goals:', error);
         }
     }, []);
 
@@ -84,7 +82,6 @@ export const AdminGoalsProvider: React.FC<{ children: React.ReactNode; userId: s
             });
 
             if (updateError) {
-                console.error('Error updating admin goals progress:', updateError);
             }
 
             // Depois, buscar progresso atualizado
@@ -99,7 +96,6 @@ export const AdminGoalsProvider: React.FC<{ children: React.ReactNode; userId: s
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('Error fetching user progress:', error);
                 return;
             }
 
@@ -110,7 +106,6 @@ export const AdminGoalsProvider: React.FC<{ children: React.ReactNode; userId: s
 
             setUserProgress(progressData);
         } catch (error) {
-            console.error('Error fetching user progress:', error);
         }
     }, [userId]);
 
@@ -140,7 +135,6 @@ export const AdminGoalsProvider: React.FC<{ children: React.ReactNode; userId: s
                 fetchUserProgress()
             ]);
         } catch (error) {
-            console.error('Error loading admin goals data:', error);
         } finally {
             setLoading(false);
         }
@@ -168,14 +162,12 @@ export const AdminGoalsProvider: React.FC<{ children: React.ReactNode; userId: s
             });
 
             if (error) {
-                console.error('Error creating admin goal:', error);
                 return { success: false, message: 'Erro ao criar meta.' };
             }
 
             await loadData();
             return { success: true, message: 'Meta criada com sucesso!' };
         } catch (error) {
-            console.error('Error creating admin goal:', error);
             return { success: false, message: 'Erro interno do servidor.' };
         }
     }, [loadData]);
@@ -192,7 +184,6 @@ export const AdminGoalsProvider: React.FC<{ children: React.ReactNode; userId: s
                 .eq('id', id);
 
             if (error) {
-                console.error('Error updating admin goal:', error);
                 return { success: false, message: 'Erro ao atualizar meta.' };
             }
 
@@ -201,7 +192,6 @@ export const AdminGoalsProvider: React.FC<{ children: React.ReactNode; userId: s
             ));
             return { success: true, message: 'Meta atualizada com sucesso!' };
         } catch (error) {
-            console.error('Error updating admin goal:', error);
             return { success: false, message: 'Erro interno do servidor.' };
         }
     }, []);
@@ -215,14 +205,12 @@ export const AdminGoalsProvider: React.FC<{ children: React.ReactNode; userId: s
                 .eq('id', id);
 
             if (error) {
-                console.error('Error deleting admin goal:', error);
                 return { success: false, message: 'Erro ao excluir meta.' };
             }
 
             setAdminGoals(prev => prev.filter(goal => goal.id !== id));
             return { success: true, message: 'Meta excluída com sucesso!' };
         } catch (error) {
-            console.error('Error deleting admin goal:', error);
             return { success: false, message: 'Erro interno do servidor.' };
         }
     }, []);

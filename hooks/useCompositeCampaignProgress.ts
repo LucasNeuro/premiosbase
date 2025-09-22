@@ -17,7 +17,6 @@ export const useCompositeCampaignProgress = (userId: string) => {
         try {
             await UnifiedCampaignProgressService.recalculateUserCampaigns(userId);
         } catch (err: any) {
-            console.error('Erro ao recalcular progresso:', err);
             setError(err.message);
         } finally {
             setLoading(false);
@@ -35,7 +34,6 @@ export const useCompositeCampaignProgress = (userId: string) => {
         try {
             return await UnifiedCampaignProgressService.calculateCampaignProgress(goalId);
         } catch (err: any) {
-            console.error('Erro ao calcular progresso da campanha:', err);
             setError(err.message);
             return null;
         }
@@ -51,7 +49,6 @@ export const useCompositeCampaignProgress = (userId: string) => {
         try {
             await CompositeCampaignService.updateCompositeCampaignProgress(goalId, progress);
         } catch (err: any) {
-            console.error('Erro ao atualizar progresso da campanha:', err);
             setError(err.message);
             throw err;
         }
@@ -65,5 +62,4 @@ export const useCompositeCampaignProgress = (userId: string) => {
         updateCampaignProgress
     };
 };
-
 

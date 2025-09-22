@@ -29,7 +29,6 @@ export const useRealtimeEvents = (userId: string) => {
     useEffect(() => {
         if (!userId || userId === '') return;
 
-
         // Subscription para campanhas (goals)
         const campaignsSubscription = supabase
             .channel('campaigns_realtime')

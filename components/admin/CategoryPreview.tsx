@@ -51,7 +51,6 @@ const CategoryPreview: React.FC<CategoryPreviewProps> = ({ categoryId, isVisible
             
             setUsers(data || []);
         } catch (err: any) {
-            console.error('Erro ao buscar usuários da categoria:', err);
             setError(err.message);
         } finally {
             setLoading(false);

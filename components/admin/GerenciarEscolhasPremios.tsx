@@ -26,7 +26,6 @@ export default function GerenciarEscolhasPremios() {
       const data = await fetchEscolhas();
       setEscolhas(data);
     } catch (error) {
-      console.error('Erro ao carregar escolhas:', error);
     } finally {
       setLoading(false);
     }
@@ -43,7 +42,6 @@ export default function GerenciarEscolhasPremios() {
       await carregarEscolhas();
       alert('Prêmio marcado como entregue!');
     } catch (error: any) {
-      console.error('Erro ao marcar como entregue:', error);
       alert(`Erro: ${error.message}`);
     }
   };
@@ -57,7 +55,6 @@ export default function GerenciarEscolhasPremios() {
       await carregarEscolhas();
       alert('Escolha cancelada!');
     } catch (error: any) {
-      console.error('Erro ao cancelar escolha:', error);
       alert(`Erro: ${error.message}`);
     }
   };

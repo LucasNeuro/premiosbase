@@ -9,7 +9,6 @@ import { CnpjCard } from '../ui/CnpjCard';
 import { fetchCnpjData } from '../../services/cnpjService';
 import { phoneMask, cnpjMask, cpdMask } from '../../utils/masks';
 
-
 const ModernRegisterForm: React.FC = () => {
     const [formData, setFormData] = useState({
         name: '',

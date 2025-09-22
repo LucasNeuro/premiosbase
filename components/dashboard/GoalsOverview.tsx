@@ -90,13 +90,11 @@ const GoalsOverview: React.FC = () => {
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('Error fetching goals:', error);
                 return;
             }
 
             setGoals(data || []);
         } catch (error) {
-            console.error('Error fetching goals:', error);
         } finally {
             setLoading(false);
         }
@@ -311,8 +309,6 @@ const GoalsOverview: React.FC = () => {
                     </div>
                 </div>
             )}
-
-
 
             {/* Sidepanel de Detalhes */}
             <GoalDetailsSidepanel

@@ -39,7 +39,7 @@ export const PolicyCampaignLinksPanel: React.FC<PolicyCampaignLinksPanelProps> =
             setLoadingPolicyLinks(true);
             getPolicyLinks(policyId)
                 .then(setPolicyLinks)
-                .catch(console.error)
+                .catch(() => {})
                 .finally(() => setLoadingPolicyLinks(false));
         }
     }, [policyId, getPolicyLinks]);

@@ -45,13 +45,11 @@ const PolicyCampaignForm: React.FC = () => {
                 .order('created_at', { ascending: false });
 
             if (error) {
-                console.error('Erro ao buscar campanhas:', error);
                 return;
             }
 
             setAvailableCampaigns(data || []);
         } catch (error) {
-            console.error('Erro ao buscar campanhas:', error);
         } finally {
             setLoadingCampaigns(false);
         }
@@ -94,7 +92,6 @@ const PolicyCampaignForm: React.FC = () => {
                 .single();
 
             if (policyError) {
-                console.error('Erro ao criar apólice:', policyError);
                 setMessage({ text: 'Erro ao registrar apólice: ' + policyError.message, type: 'error' });
                 setIsSubmitting(false);
                 return;
@@ -110,7 +107,6 @@ const PolicyCampaignForm: React.FC = () => {
                 });
 
             if (linkError) {
-                console.error('Erro ao vincular à campanha:', linkError);
                 setMessage({ text: 'Apólice criada, mas erro ao vincular à campanha: ' + linkError.message, type: 'error' });
                 setIsSubmitting(false);
                 return;
@@ -124,7 +120,6 @@ const PolicyCampaignForm: React.FC = () => {
             setSelectedCampaignId('');
             
         } catch (error: any) {
-            console.error('Erro geral:', error);
             setMessage({ text: 'Erro interno do sistema.', type: 'error' });
         } finally {
             setIsSubmitting(false);

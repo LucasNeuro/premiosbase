@@ -82,9 +82,7 @@ const AdminGoalsManager: React.FC = () => {
 
     // Efeito para aplicar filtros
     useEffect(() => {
-        console.log('🔍 Aplicando filtros:', filters);
-        console.log('📊 Total de campanhas:', goals.length);
-        
+
         let filtered = goals;
 
         // Filtro de busca (nome, corretor, email)
@@ -96,14 +94,14 @@ const AdminGoalsManager: React.FC = () => {
                 goal.user_name.toLowerCase().includes(searchLower) ||
                 goal.user_email.toLowerCase().includes(searchLower)
             );
-            console.log(`🔍 Filtro de busca: ${beforeSearch} → ${filtered.length}`);
+
         }
 
         // Filtro por status de aceitação
         if (filters.acceptanceStatus) {
             const beforeStatus = filtered.length;
             filtered = filtered.filter(goal => goal.acceptance_status === filters.acceptanceStatus);
-            console.log(`📋 Filtro de status: ${beforeStatus} → ${filtered.length}`);
+
         }
 
         // Filtro por período (data de início e fim)
@@ -114,40 +112,35 @@ const AdminGoalsManager: React.FC = () => {
                 const createdDateStr = goal.created_at.split('T')[0];
                 const startDateStr = filters.startDate;
                 const endDateStr = filters.endDate;
-                
-                console.log(`📅 Campanha: ${goal.title}, Criada em: ${createdDateStr}`);
-                console.log(`📅 Data início: ${startDateStr}, Data fim: ${endDateStr}`);
-                
+
                 // Se só tem data de início
                 if (startDateStr && !endDateStr) {
                     const result = createdDateStr >= startDateStr;
-                    console.log(`📅 Só início: ${result}`);
+
                     return result;
                 }
                 
                 // Se só tem data de fim
                 if (!startDateStr && endDateStr) {
                     const result = createdDateStr <= endDateStr;
-                    console.log(`📅 Só fim: ${result}`);
+
                     return result;
                 }
                 
                 // Se tem ambas as datas
                 if (startDateStr && endDateStr) {
                     const result = createdDateStr >= startDateStr && createdDateStr <= endDateStr;
-                    console.log(`📅 Ambas: ${result}`);
+
                     return result;
                 }
                 
                 return true;
             });
-            console.log(`📅 Filtro de data: ${beforeDate} → ${filtered.length}`);
+
         }
 
-        console.log(`✅ Resultado final: ${filtered.length} campanhas`);
         setFilteredGoals(filtered);
     }, [goals, filters]);
-
 
     const fetchGoals = async () => {
         try {
@@ -160,7 +153,6 @@ const AdminGoalsManager: React.FC = () => {
                 .order('created_at', { ascending: false });
 
             if (goalsError) {
-                console.error('Error fetching goals:', goalsError);
                 return;
             }
 
@@ -210,7 +202,6 @@ const AdminGoalsManager: React.FC = () => {
                         updatedStatus = progressData.isCompleted ? 'completed' : 'active';
                     }
                 } catch (error) {
-                    console.error('Erro ao recalcular progresso da campanha:', goal.id, error);
                 }
 
                 // Para campanhas compostas, calcular o target real baseado nos critérios
@@ -246,7 +237,6 @@ const AdminGoalsManager: React.FC = () => {
 
             setGoals(formattedGoals);
         } catch (error) {
-            console.error('Error fetching goals:', error);
         } finally {
             setLoading(false);
         }
@@ -264,31 +254,30 @@ const AdminGoalsManager: React.FC = () => {
 
     // Função para atualizar filtros
     const updateFilter = (key: string, value: string) => {
-        console.log(`🔄 Atualizando filtro: ${key} = ${value}`);
+
         setFilters(prev => {
             const newFilters = {
                 ...prev,
                 [key]: value
             };
-            console.log('🔄 Novos filtros:', newFilters);
+
             return newFilters;
         });
     };
 
     // Função para atualizar filtro de período
     const updateDateRange = (startDate: string | null, endDate: string | null) => {
-        console.log(`🔄 Atualizando período: ${startDate} - ${endDate}`);
+
         setFilters(prev => {
             const newFilters = {
                 ...prev,
                 startDate: startDate || '',
                 endDate: endDate || ''
             };
-            console.log('🔄 Novos filtros:', newFilters);
+
             return newFilters;
         });
     };
-
 
     const fetchUsers = async () => {
         try {
@@ -298,13 +287,11 @@ const AdminGoalsManager: React.FC = () => {
                 .eq('is_admin', false);
 
             if (error) {
-                console.error('Error fetching users:', error);
                 return;
             }
 
             setUsers(data || []);
         } catch (error) {
-            console.error('Error fetching users:', error);
         }
     };
 
@@ -325,7 +312,6 @@ const AdminGoalsManager: React.FC = () => {
         fetchGoals();
     };
 
-
     const handleCloseDetailsPanel = () => {
         setShowDetailsPanel(false);
         setSelectedGoal(null);
@@ -342,8 +328,6 @@ const AdminGoalsManager: React.FC = () => {
         const percentage = target > 0 ? (current / target) * 100 : 0;
         return Math.min(percentage, 100);
     };
-
-
 
     const columns: ColumnDef<AdminGoal>[] = [
         {
@@ -366,15 +350,6 @@ const AdminGoalsManager: React.FC = () => {
                 
                 // DEBUG: Log para investigar
                 if (row.original.title?.includes('TESTE INDIVIDUAL SIMPLES')) {
-                    console.log('🔍 DEBUG CAMPANHA:', {
-                        title: row.original.title,
-                        campaignType,
-                        type,
-                        criteria,
-                        hasCriteria: !!criteria,
-                        criteriaType: typeof criteria,
-                        criteriaString: JSON.stringify(criteria)
-                    });
                 }
                 
                 const typeLabels = {
@@ -1029,6 +1004,5 @@ const AdminGoalsManager: React.FC = () => {
         </div>
     );
 };
-
 
 export default AdminGoalsManager;

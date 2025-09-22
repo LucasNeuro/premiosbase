@@ -60,8 +60,6 @@ const AdminPremiosManager: React.FC = () => {
                 .range(offset, offset + itemsPerPage - 1);
 
             if (error) {
-                console.error('Error fetching premios:', error);
-                console.error('Error details:', error.message, error.details, error.hint);
                 return;
             }
 
@@ -72,7 +70,6 @@ const AdminPremiosManager: React.FC = () => {
             setPremios(data || []);
             setTotalItems(count || 0);
         } catch (error) {
-            console.error('Error in fetchPremios:', error);
         } finally {
             setLoading(false);
         }
@@ -103,13 +100,11 @@ const AdminPremiosManager: React.FC = () => {
                 .eq('id', id);
 
             if (error) {
-                console.error('Error deleting premio:', error);
                 return;
             }
 
             fetchPremios();
         } catch (error) {
-            console.error('Error:', error);
         }
     };
 
@@ -138,17 +133,13 @@ const AdminPremiosManager: React.FC = () => {
                 .eq('id', premio.id);
 
             if (error) {
-                console.error('Error updating premio status:', error);
                 return;
             }
 
             fetchPremios();
         } catch (error) {
-            console.error('Error:', error);
         }
     };
-
-
 
     const filteredPremios = premios.filter(premio => {
         // Filtro de busca

@@ -40,7 +40,6 @@ export const usePolicyTimeline = () => {
             setTimelineItems(formattedItems);
 
         } catch (err: any) {
-            console.error('Erro ao buscar timeline:', err);
             setError(err.message || 'Erro ao carregar timeline');
         } finally {
             setLoading(false);
@@ -58,7 +57,6 @@ export const usePolicyTimeline = () => {
         try {
             return await PolicyAuditService.getLaunchStatistics(user.id);
         } catch (err: any) {
-            console.error('Erro ao buscar estatísticas:', err);
             return null;
         }
     }, [user?.id]);
@@ -71,7 +69,7 @@ export const usePolicyTimeline = () => {
 
         // Escutar evento personalizado para atualizar timeline
         const handlePolicyAdded = () => {
-            console.log('🔄 Atualizando timeline após nova apólice');
+
             fetchTimeline();
         };
 

@@ -31,7 +31,6 @@ export const fixCampaignStatus = async (campaignId: string): Promise<CampaignSta
       .single();
 
     if (campaignError || !campaign) {
-      console.error('❌ Erro ao buscar campanha:', campaignError);
       return null;
     }
 
@@ -71,7 +70,6 @@ export const fixCampaignStatus = async (campaignId: string): Promise<CampaignSta
         try {
           parsedCriteria = JSON.parse(campaign.criteria);
         } catch (error) {
-          console.error('Erro ao parsear critérios:', error);
         }
       } else if (Array.isArray(campaign.criteria)) {
         parsedCriteria = campaign.criteria;
@@ -152,7 +150,6 @@ export const fixCampaignStatus = async (campaignId: string): Promise<CampaignSta
     };
 
   } catch (error) {
-    console.error('❌ Erro ao corrigir status da campanha:', error);
     return null;
   }
 };
@@ -171,7 +168,6 @@ export const fixAllUserCampaignsStatus = async (userId: string): Promise<Campaig
       .eq('is_active', true);
 
     if (error) {
-      console.error('❌ Erro ao buscar campanhas do usuário:', error);
       return [];
     }
 
@@ -190,7 +186,6 @@ export const fixAllUserCampaignsStatus = async (userId: string): Promise<Campaig
     return results;
 
   } catch (error) {
-    console.error('❌ Erro ao corrigir campanhas do usuário:', error);
     return [];
   }
 };
@@ -209,34 +204,27 @@ export const fixAllCampaignsStatus = async (): Promise<CampaignStatusFix[]> => {
       .eq('status', 'completed'); // Só verificar campanhas marcadas como completed
 
     if (error) {
-      console.error('❌ Erro ao buscar campanhas:', error);
       return [];
     }
 
     const results: CampaignStatusFix[] = [];
 
     if (campaigns && campaigns.length > 0) {
-      console.log(`🔍 Verificando ${campaigns.length} campanhas marcadas como concluídas...`);
-      
       // Corrigir cada campanha
       for (const campaign of campaigns) {
         const result = await fixCampaignStatus(campaign.id);
         if (result) {
           results.push(result);
           if (result.wasFixed) {
-            console.log(`✅ Corrigida: ${result.campaignTitle} (${result.oldStatus} → ${result.newStatus})`);
           }
         }
       }
     }
 
     const fixedCount = results.filter(r => r.wasFixed).length;
-    console.log(`🎯 Correção concluída: ${fixedCount} campanhas corrigidas de ${results.length} verificadas`);
-
     return results;
 
   } catch (error) {
-    console.error('❌ Erro ao corrigir todas as campanhas:', error);
     return [];
   }
 };

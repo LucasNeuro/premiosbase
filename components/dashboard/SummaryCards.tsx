@@ -35,7 +35,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ selectedPeriod = 'geral' })
         
         // Debug: verificar se o componente está sendo montado
         useEffect(() => {
-            console.log('🔄 SummaryCards montado - policies:', policies?.length || 0, 'loading:', loading);
+
         }, [policies, loading]);
         
         // Função para filtrar políticas por período
@@ -74,16 +74,6 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ selectedPeriod = 'geral' })
         const residencialSum = residentialPolicies.reduce((sum, p) => sum + p.premium_value, 0);
 
         // Debug logs
-        console.log('📊 SummaryCards Debug:', {
-            loading,
-            selectedPeriod,
-            totalPolicies: policies?.length || 0,
-            filteredPolicies: filteredPolicies.length,
-            autoCount,
-            autoSum,
-            residencialCount,
-            residencialSum
-        });
 
         // Mostrar loading se ainda estiver carregando
         if (loading) {
@@ -148,7 +138,6 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ selectedPeriod = 'geral' })
             </div>
         );
     } catch (error) {
-        console.error('Erro no SummaryCards:', error);
         return (
             <div className="bg-gray-100 border border-gray-300 rounded-lg p-6">
                 <h2 className="text-lg font-semibold text-gray-700 mb-2">Resumo Geral</h2>

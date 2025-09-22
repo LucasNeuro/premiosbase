@@ -48,13 +48,11 @@ export const useConqueredPrizes = () => {
             setError(null);
 
             if (!user) {
-                console.log('⚠️ [PRÊMIOS] Usuário não autenticado - pulando busca de prêmios');
+
                 setConqueredPrizes([]);
                 setAvailablePrizes([]);
                 return;
             }
-
-            console.log(`🎁 [PRÊMIOS] Buscando prêmios conquistados para: ${user.id}`);
 
             const { data: prizesData, error: prizesError } = await supabase
                 .from('premios_conquistados')
@@ -63,7 +61,6 @@ export const useConqueredPrizes = () => {
                 .order('data_conquista', { ascending: false });
 
             if (prizesError) {
-                console.error('❌ [PRÊMIOS] Erro ao buscar prêmios conquistados:', prizesError);
                 throw prizesError;
             }
 
@@ -78,22 +75,11 @@ export const useConqueredPrizes = () => {
                 return acc;
             }, new Map()).values();
             
-            const uniquePrizesArray = Array.from(uniquePrizes);
+            const uniquePrizesArray = Array.from(uniquePrizes) as ConqueredPrize[];
             const available = uniquePrizesArray.filter(prize => prize.status === 'disponivel');
 
             setConqueredPrizes(uniquePrizesArray);
             setAvailablePrizes(available);
-            
-            console.log(`✅ [PRÊMIOS] Prêmios originais: ${allPrizes.length}, Únicos: ${uniquePrizesArray.length}, Disponíveis: ${available.length}`);
-            
-            console.log(`✅ [PRÊMIOS] Prêmios carregados: ${allPrizes.length} total, ${available.length} disponíveis`);
-            console.log(`✅ [PRÊMIOS] Dados dos prêmios:`, allPrizes.map(p => ({
-                nome: p.premio_nome,
-                valor_estimado: p.premio_valor_estimado,
-                valor_total_conquistado: p.valor_total_conquistado,
-                status: p.status
-            })));
-            console.log(`✅ [PRÊMIOS] Total conquistados: ${allPrizes.length}, Disponíveis: ${available.length}`);
 
             // Calcular total conquistado usando os prêmios únicos
             const totalConquistado = uniquePrizesArray.reduce((sum, prize) => {
@@ -101,16 +87,6 @@ export const useConqueredPrizes = () => {
                 const valor = prize.valor_total_conquistado || (prize.premio_valor_estimado * prize.quantidade_conquistada);
                 return sum + (valor || 0);
             }, 0);
-            
-            console.log(`💰 [SALDO] Total conquistado calculado: R$ ${totalConquistado.toFixed(2)}`);
-            console.log(`💰 [SALDO] Prêmios disponíveis: ${available.length}`);
-            console.log(`💰 [SALDO] Detalhes do cálculo:`, uniquePrizesArray.map(p => ({
-                nome: p.premio_nome,
-                valor_estimado: p.premio_valor_estimado,
-                quantidade: p.quantidade_conquistada,
-                valor_total_conquistado: p.valor_total_conquistado,
-                calculado: p.valor_total_conquistado || (p.premio_valor_estimado * p.quantidade_conquistada)
-            })));
 
             // Atualizar o saldo imediatamente
             setBalance({
@@ -120,7 +96,6 @@ export const useConqueredPrizes = () => {
             });
 
         } catch (err: any) {
-            console.error('❌ [PRÊMIOS] Erro ao buscar prêmios conquistados:', err);
             setError(err.message || 'Erro ao carregar prêmios');
         } finally {
             setLoading(false);
@@ -131,7 +106,7 @@ export const useConqueredPrizes = () => {
     const calculateBalance = useCallback(async () => {
         try {
             if (!user) {
-                console.log('⚠️ [SALDO] Usuário não autenticado - pulando cálculo de saldo');
+
                 setBalance({
                     total_conquistado: 0,
                     total_pedidos_pendentes: 0,
@@ -143,7 +118,6 @@ export const useConqueredPrizes = () => {
             // Saldo já foi calculado acima quando carregamos os prêmios
 
         } catch (err: any) {
-            console.error('❌ [SALDO] Erro ao calcular saldo:', err);
             setError(err.message || 'Erro ao calcular saldo');
         }
     }, []);
@@ -184,15 +158,12 @@ export const useConqueredPrizes = () => {
                 });
 
             if (saldoError) {
-                console.error('❌ [PEDIDO] Erro ao verificar saldo:', saldoError);
                 throw saldoError;
             }
 
             if (!saldoSuficiente) {
                 throw new Error('Saldo insuficiente para este pedido');
             }
-
-            console.log(`🛒 [PEDIDO] Criando pedido de resgate:`, orderData);
 
             // Criar pedido na tabela pedidos_premios
             const { data: newOrder, error: createError } = await supabase
@@ -212,7 +183,6 @@ export const useConqueredPrizes = () => {
                 .single();
 
             if (createError) {
-                console.error('❌ [PEDIDO] Erro ao criar pedido:', createError);
                 throw createError;
             }
 
@@ -224,11 +194,8 @@ export const useConqueredPrizes = () => {
                 });
 
             if (markError) {
-                console.error('❌ [PEDIDO] Erro ao marcar prêmio como resgatado:', markError);
                 // Não lançar erro aqui, pois o pedido já foi criado
             }
-
-            console.log(`✅ [PEDIDO] Pedido de resgate criado com sucesso:`, newOrder);
 
             // Atualizar listas
             await fetchConqueredPrizes();
@@ -237,7 +204,6 @@ export const useConqueredPrizes = () => {
             return newOrder;
 
         } catch (err: any) {
-            console.error('❌ [PEDIDO] Erro ao criar pedido de resgate:', err);
             setError(err.message || 'Erro ao criar pedido');
             throw err;
         } finally {

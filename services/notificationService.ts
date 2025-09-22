@@ -28,7 +28,6 @@ export class NotificationService {
             if (error) throw error;
             return data || [];
         } catch (error) {
-            console.error('Erro ao buscar notificações:', error);
             return [];
         }
     }
@@ -46,7 +45,6 @@ export class NotificationService {
             if (error) throw error;
             return data || [];
         } catch (error) {
-            console.error('Erro ao buscar todas as notificações:', error);
             return [];
         }
     }
@@ -60,7 +58,6 @@ export class NotificationService {
             if (error) throw error;
             return true;
         } catch (error) {
-            console.error('Erro ao marcar notificação como lida:', error);
             return false;
         }
     }
@@ -80,7 +77,6 @@ export class NotificationService {
             if (error) throw error;
             return true;
         } catch (error) {
-            console.error('Erro ao marcar todas as notificações como lidas:', error);
             return false;
         }
     }
@@ -97,7 +93,6 @@ export class NotificationService {
             if (error) throw error;
             return count || 0;
         } catch (error) {
-            console.error('Erro ao contar notificações não lidas:', error);
             return 0;
         }
     }
@@ -123,7 +118,6 @@ export class NotificationService {
             if (error) throw error;
             return result;
         } catch (error) {
-            console.error('Erro ao criar notificação:', error);
             return null;
         }
     }
@@ -141,7 +135,6 @@ export class NotificationService {
                     filter: `user_id=eq.${userId}`
                 },
                 (payload) => {
-                    console.log('🔔 Nova notificação recebida:', payload.new);
                     callback(payload.new as Notification);
                 }
             )

@@ -38,7 +38,6 @@ const SalesReportGenerator: React.FC<SalesReportGeneratorProps> = ({ onClose }) 
 
             return policiesData || [];
         } catch (error) {
-            console.error('Erro ao buscar dados de vendas:', error);
             throw error;
         }
     };
@@ -46,9 +45,7 @@ const SalesReportGenerator: React.FC<SalesReportGeneratorProps> = ({ onClose }) 
     const handleDownloadCSV = async () => {
         try {
             setIsGenerating(true);
-            
-            console.log('🚀 Gerando CSV de vendas...');
-            
+
             const data = await fetchAllSalesData();
             
             // Cabeçalhos CSV
@@ -109,7 +106,6 @@ const SalesReportGenerator: React.FC<SalesReportGeneratorProps> = ({ onClose }) 
             document.body.removeChild(link);
 
         } catch (error) {
-            console.error('❌ Erro ao gerar CSV de vendas:', error);
             alert(`Erro ao gerar relatório: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
         } finally {
             setIsGenerating(false);
@@ -119,9 +115,7 @@ const SalesReportGenerator: React.FC<SalesReportGeneratorProps> = ({ onClose }) 
     const handleDownloadXLS = async () => {
         try {
             setIsGenerating(true);
-            
-            console.log('🚀 Gerando XLS de vendas...');
-            
+
             const data = await fetchAllSalesData();
             
             // Para XLS, vamos criar um CSV com extensão .xls
@@ -180,7 +174,6 @@ const SalesReportGenerator: React.FC<SalesReportGeneratorProps> = ({ onClose }) 
             document.body.removeChild(link);
 
         } catch (error) {
-            console.error('❌ Erro ao gerar XLS de vendas:', error);
             alert(`Erro ao gerar relatório: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
         } finally {
             setIsGenerating(false);
@@ -190,9 +183,7 @@ const SalesReportGenerator: React.FC<SalesReportGeneratorProps> = ({ onClose }) 
     const handleDownloadMarkdown = async () => {
         try {
             setIsGenerating(true);
-            
-            console.log('🚀 Gerando Markdown de vendas...');
-            
+
             const data = await fetchAllSalesData();
             
             const totalPolicies = data.length;
@@ -263,7 +254,6 @@ const SalesReportGenerator: React.FC<SalesReportGeneratorProps> = ({ onClose }) 
             document.body.removeChild(link);
 
         } catch (error) {
-            console.error('❌ Erro ao gerar Markdown de vendas:', error);
             alert(`Erro ao gerar relatório: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
         } finally {
             setIsGenerating(false);

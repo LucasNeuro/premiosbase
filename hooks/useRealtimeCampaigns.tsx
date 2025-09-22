@@ -19,8 +19,7 @@ export const useRealtimeCampaigns = (userId?: string) => {
   // Função para recalcular progresso de uma campanha específica
   const recalculateCampaignProgress = useCallback(async (campaignId: string) => {
     try {
-      console.log(`🔄 [REALTIME] Recalculando progresso para campanha: ${campaignId}`);
-      
+
       // Buscar dados da campanha
       const { data: campaign, error: campaignError } = await supabase
         .from('goals')
@@ -30,7 +29,6 @@ export const useRealtimeCampaigns = (userId?: string) => {
         .single();
 
       if (campaignError || !campaign) {
-        console.error('❌ [REALTIME] Erro ao buscar campanha:', campaignError);
         return;
       }
 
@@ -56,10 +54,8 @@ export const useRealtimeCampaigns = (userId?: string) => {
           }
         });
 
-        console.log(`✅ [REALTIME] Progresso atualizado para:`, updatedCampaign);
       }
     } catch (err: any) {
-      console.error('❌ [REALTIME] Erro ao recalcular progresso:', err);
       setError(err.message);
     }
   }, []);
@@ -69,8 +65,7 @@ export const useRealtimeCampaigns = (userId?: string) => {
     if (!userId) return;
 
     try {
-      console.log(`🔍 [REALTIME] Buscando campanhas para usuário: ${userId}`);
-      
+
       const { data: campaignsData, error: campaignsError } = await supabase
         .from('goals')
         .select('*')
@@ -80,7 +75,6 @@ export const useRealtimeCampaigns = (userId?: string) => {
         .order('created_at', { ascending: false });
 
       if (campaignsError) {
-        console.error('❌ [REALTIME] Erro ao buscar campanhas:', campaignsError);
         return;
       }
 
@@ -101,17 +95,14 @@ export const useRealtimeCampaigns = (userId?: string) => {
       }
 
       setCampaigns(campaignsList);
-      console.log(`✅ [REALTIME] Campanhas carregadas:`, campaignsList.length);
+
     } catch (err: any) {
-      console.error('❌ [REALTIME] Erro ao buscar campanhas:', err);
       setError(err.message);
     }
   }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
-
-    console.log(`🔌 [REALTIME] Conectando ao tempo real para usuário: ${userId}`);
 
     // Buscar campanhas iniciais
     fetchUserCampaigns();
@@ -127,8 +118,7 @@ export const useRealtimeCampaigns = (userId?: string) => {
           table: 'policy_campaign_links'
         },
         (payload) => {
-          console.log(`🔄 [REALTIME] Mudança em policy_campaign_links:`, payload);
-          
+
           // Se a mudança afeta uma campanha do usuário, recalcular
           if (payload.new && (payload.new as any).campaign_id) {
             recalculateCampaignProgress((payload.new as any).campaign_id);
@@ -136,7 +126,7 @@ export const useRealtimeCampaigns = (userId?: string) => {
         }
       )
       .subscribe((status) => {
-        console.log(`📡 [REALTIME] Status da conexão policy_links:`, status);
+
         if (status === 'SUBSCRIBED') {
           setIsConnected(true);
           setError(null);
@@ -154,15 +144,14 @@ export const useRealtimeCampaigns = (userId?: string) => {
           filter: `user_id=eq.${userId}`
         },
         (payload) => {
-          console.log(`🔄 [REALTIME] Mudança em goals:`, payload);
-          
+
           if (payload.new && (payload.new as any).id) {
             recalculateCampaignProgress((payload.new as any).id);
           }
         }
       )
       .subscribe((status) => {
-        console.log(`📡 [REALTIME] Status da conexão goals:`, status);
+
       });
 
     const policiesChannel = supabase
@@ -176,19 +165,18 @@ export const useRealtimeCampaigns = (userId?: string) => {
           filter: `user_id=eq.${userId}`
         },
         (payload) => {
-          console.log(`🔄 [REALTIME] Mudança em policies:`, payload);
-          
+
           // Quando uma apólice é criada/atualizada, recalcular todas as campanhas
           fetchUserCampaigns();
         }
       )
       .subscribe((status) => {
-        console.log(`📡 [REALTIME] Status da conexão policies:`, status);
+
       });
 
     // Cleanup
     return () => {
-      console.log(`🔌 [REALTIME] Desconectando canais para usuário: ${userId}`);
+
       supabase.removeChannel(policyLinksChannel);
       supabase.removeChannel(goalsChannel);
       supabase.removeChannel(policiesChannel);

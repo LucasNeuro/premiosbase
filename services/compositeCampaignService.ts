@@ -96,7 +96,6 @@ export class CompositeCampaignService {
             return result;
 
         } catch (error) {
-            console.error('Erro ao calcular progresso da campanha composta:', error);
             return {
                 goalId,
                 totalTarget: 0,
@@ -170,7 +169,6 @@ export class CompositeCampaignService {
             };
 
         } catch (error) {
-            console.error('Erro ao calcular progresso do critério:', error);
             return {
                 policy_type: criterion.policy_type,
                 target_value: criterion.target_value,
@@ -201,12 +199,10 @@ export class CompositeCampaignService {
                 .eq('id', goalId);
 
             if (error) {
-                console.error('Erro ao atualizar progresso da campanha:', error);
                 throw error;
             }
 
         } catch (error) {
-            console.error('Erro ao atualizar progresso da campanha:', error);
             throw error;
         }
     }
@@ -225,7 +221,6 @@ export class CompositeCampaignService {
                 .eq('is_active', true);
 
             if (error) {
-                console.error('Erro ao buscar campanhas do usuário:', error);
                 return;
             }
 
@@ -252,13 +247,11 @@ export class CompositeCampaignService {
                         await this.updateCompositeCampaignProgress(goal.id, progress);
 
                     } catch (error) {
-                        console.error(`Erro ao recalcular campanha ${goal.id}:`, error);
                     }
                 }
             }
 
             } catch (error) {
-            console.error('Erro ao recalcular campanhas compostas:', error);
         }
     }
 }

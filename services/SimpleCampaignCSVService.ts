@@ -30,8 +30,7 @@ export class SimpleCampaignCSVService {
    */
   static async generateSimpleCSV(): Promise<string> {
     try {
-      console.log('🚀 Iniciando geração de CSV simples...');
-      
+
       // 1. Buscar todas as campanhas
       const { data: campaigns, error: campaignsError } = await supabase
         .from('goals')
@@ -55,14 +54,11 @@ export class SimpleCampaignCSVService {
         throw new Error(`Erro ao buscar campanhas: ${campaignsError.message}`);
       }
 
-      console.log(`📊 Encontradas ${campaigns?.length || 0} campanhas`);
-
       // 2. Para cada campanha, buscar apólices vinculadas
       const allData: SimpleCampaignData[] = [];
 
       for (const campaign of campaigns || []) {
-        console.log(`🔄 Processando campanha: ${campaign.title}`);
-        
+
         // Buscar apólices vinculadas
         const { data: policies, error: policiesError } = await supabase
           .from('policy_campaign_links')
@@ -81,7 +77,6 @@ export class SimpleCampaignCSVService {
           .eq('is_active', true);
 
         if (policiesError) {
-          console.error(`Erro ao buscar apólices para ${campaign.title}:`, policiesError);
           continue;
         }
 
@@ -96,7 +91,6 @@ export class SimpleCampaignCSVService {
             .in('id', userIds);
           
           if (usersError) {
-            console.error(`Erro ao buscar usuários:`, usersError);
           } else {
             usersData = users || [];
           }
@@ -174,8 +168,6 @@ export class SimpleCampaignCSVService {
         }
       }
 
-      console.log(`✅ CSV simples gerado com ${allData.length} linhas`);
-      
       // 3. Gerar CSV
       const headers = [
         'ID Campanha',
@@ -227,7 +219,6 @@ export class SimpleCampaignCSVService {
       return csvContent;
 
     } catch (error) {
-      console.error('❌ Erro ao gerar CSV simples:', error);
       throw error;
     }
   }
@@ -237,8 +228,7 @@ export class SimpleCampaignCSVService {
    */
   static async downloadSimpleCSV(): Promise<void> {
     try {
-      console.log('🚀 Iniciando download do CSV simples...');
-      
+
       const csvContent = await this.generateSimpleCSV();
       
       // Criar e baixar arquivo
@@ -251,11 +241,8 @@ export class SimpleCampaignCSVService {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
-      console.log('✅ CSV simples baixado com sucesso!');
-      
+
     } catch (error) {
-      console.error('❌ Erro ao baixar CSV simples:', error);
       throw error;
     }
   }

@@ -42,7 +42,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
                 .order('vinculada_em', { ascending: false });
 
             if (error) {
-                console.error('Error fetching policies:', error);
                 return;
             }
 
@@ -68,7 +67,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
             setLastUpdate(new Date());
 
         } catch (error) {
-            console.error('Error fetching policies:', error);
         } finally {
             setLoading(false);
         }
@@ -92,7 +90,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
                 .gte('end_date', new Date().toISOString().split('T')[0]);
 
             if (campaignsError) {
-                console.error('Error fetching campaigns:', campaignsError);
                 // Mesmo com erro nas campanhas, salva a apólice como histórico
             }
 
@@ -136,7 +133,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
                 .single();
 
             if (historicError) {
-                console.error('Error saving historic policy:', historicError);
                 return { success: false, message: 'Erro ao registrar apólice: ' + historicError.message };
             }
 
@@ -203,7 +199,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
 
                         campaignMessage += `✅ Vinculada à campanha "${campaign.title}"\n`;
                     } catch (linkError) {
-                        console.error('Error linking to campaign:', campaign.title, linkError);
                         campaignMessage += `⚠️ Erro ao vincular à campanha "${campaign.title}"\n`;
                     }
                 }
@@ -227,7 +222,6 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
             };
 
         } catch (error: any) {
-            console.error('Error adding policy:', error);
             return { success: false, message: 'Erro interno do sistema: ' + error.message };
         }
     }, [userId, fetchPolicies]);

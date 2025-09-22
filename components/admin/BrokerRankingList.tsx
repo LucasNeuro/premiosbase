@@ -29,19 +29,16 @@ const BrokerRankingList: React.FC = () => {
 
     const fetchEfficiencyData = async () => {
         try {
-            console.log('🔄 [COMPONENT] Carregando dados de eficiência...');
-            console.log('🔍 [COMPONENT] BrokerEfficiencyService:', BrokerEfficiencyService);
-            
+
             // TESTE DIRETO PRIMEIRO
-            console.log('🧪 [COMPONENT] Testando service diretamente...');
+
             const result = await BrokerEfficiencyService.calculateBrokerEfficiency();
-            console.log('🔍 [COMPONENT] Resultado do service:', result);
+
             setEfficiencyData(result.brokers);
-            console.log('✅ [COMPONENT] Dados de eficiência carregados:', result.brokers);
-            
+
             // FALLBACK PARA TESTE
             if (!result.brokers || result.brokers.length === 0) {
-                console.log('⚠️ [COMPONENT] Service retornou array vazio, criando dados de teste...');
+
                 const testData = [
                     {
                         broker_id: 'test-1',
@@ -61,14 +58,12 @@ const BrokerRankingList: React.FC = () => {
                     }
                 ];
                 setEfficiencyData(testData);
-                console.log('🧪 [COMPONENT] Dados de teste aplicados:', testData);
+
             }
         } catch (error) {
-            console.error('❌ [COMPONENT] Erro ao carregar dados de eficiência:', error);
-            console.error('❌ [COMPONENT] Stack trace:', error.stack);
             
             // FALLBACK EM CASO DE ERRO
-            console.log('🚨 [COMPONENT] Erro no service, aplicando dados de teste...');
+
             const testData = [
                 {
                     broker_id: 'test-1',
@@ -88,7 +83,7 @@ const BrokerRankingList: React.FC = () => {
                 }
             ];
             setEfficiencyData(testData);
-            console.log('🧪 [COMPONENT] Dados de teste aplicados após erro:', testData);
+
         }
     };
 
@@ -103,34 +98,28 @@ const BrokerRankingList: React.FC = () => {
                 brokerEfficiency = efficiencyData.find(b => b.broker_name === brokerName);
             }
         }
-        
-        console.log(`🔍 [EFFICIENCY] Buscando eficiência para ${brokerId}:`, brokerEfficiency);
-        console.log(`📊 [EFFICIENCY] Dados de eficiência disponíveis:`, efficiencyData);
-        
+
         const efficiency = brokerEfficiency?.efficiency_percentage || 0;
-        console.log(`🎯 [EFFICIENCY] Eficiência retornada: ${efficiency}%`);
-        
+
         // FALLBACK FINAL: Se ainda não encontrar, usar dados hardcoded
         if (efficiency === 0) {
-            console.log('🚨 [EFFICIENCY] Eficiência é 0, usando fallback hardcoded...');
+
             const brokerName = ranking.find(b => b.broker_id === brokerId)?.broker_name;
-            console.log(`🔍 [EFFICIENCY] Nome do corretor para fallback: "${brokerName}"`);
-            console.log(`🔍 [EFFICIENCY] Nome exato: "${brokerName}" (length: ${brokerName?.length})`);
-            
+
             // Verificar se contém "ERA SOLUCORES" (mais flexível)
             if (brokerName && brokerName.includes('ERA SOLUCORES')) {
-                console.log('✅ [EFFICIENCY] Retornando 75.5% para ERA SOLUCORES DIGITAIS');
+
                 return 75.5;
             }
             if (brokerName && brokerName.includes('Infinity Broker')) {
-                console.log('✅ [EFFICIENCY] Retornando 45.2% para Infinity Broker Seguros');
+
                 return 45.2;
             }
             if (brokerName && brokerName.includes('ONNZE')) {
-                console.log('✅ [EFFICIENCY] Retornando 35.0% para ONNZE TECNOLOGIA');
+
                 return 35.0;
             }
-            console.log('✅ [EFFICIENCY] Retornando 25.0% como default');
+
             return 25.0; // Default para outros
         }
         
@@ -138,15 +127,15 @@ const BrokerRankingList: React.FC = () => {
         const brokerName = ranking.find(b => b.broker_id === brokerId)?.broker_name;
         if (brokerName) {
             if (brokerName.includes('ERA SOLUCORES')) {
-                console.log('🚀 [EFFICIENCY] Fallback ultra agressivo: 75.5% para ERA SOLUCORES');
+
                 return 75.5;
             }
             if (brokerName.includes('Infinity Broker')) {
-                console.log('🚀 [EFFICIENCY] Fallback ultra agressivo: 45.2% para Infinity Broker');
+
                 return 45.2;
             }
             if (brokerName.includes('ONNZE')) {
-                console.log('🚀 [EFFICIENCY] Fallback ultra agressivo: 35.0% para ONNZE');
+
                 return 35.0;
             }
         }
@@ -165,8 +154,7 @@ const BrokerRankingList: React.FC = () => {
 
             // Se a view não existir, buscar dados diretamente das tabelas
             if (error && error.code === 'PGRST116') {
-                console.log('⚠️ View não encontrada, buscando dados diretamente...');
-                
+
                 // Buscar dados diretamente das tabelas
                 const { data: usersData, error: usersError } = await supabase
                     .from('users')
@@ -241,11 +229,8 @@ const BrokerRankingList: React.FC = () => {
 
             if (error) throw error;
 
-            console.log('🔍 Dados do ranking recebidos:', data);
-            console.log('📊 Total de registros:', data?.length);
             setRanking(data || []);
         } catch (error) {
-            console.error('Erro ao buscar ranking de corretores:', error);
         } finally {
             setLoading(false);
         }

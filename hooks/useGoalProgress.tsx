@@ -63,7 +63,6 @@ export const useGoalProgress = (userId: string, goals: any[]) => {
                 .eq('user_id', userId);
 
             if (policiesError) {
-                console.error('Error fetching policies:', policiesError);
                 return;
             }
 
@@ -142,12 +141,10 @@ export const useGoalProgress = (userId: string, goals: any[]) => {
             setProgressData(progressCalculations);
 
         } catch (error) {
-            console.error('Error calculating goal progress:', error);
         } finally {
             setLoading(false);
         }
     };
-
 
     // Função removida - agora o trigger automático cuida da atualização
 

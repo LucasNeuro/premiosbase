@@ -89,7 +89,6 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
     //     };
     // }, []);
 
-
     // Definir CPD padrão quando CPDs carregarem
     useEffect(() => {
         if (cpds.length > 0 && !selectedCpd) {
@@ -189,7 +188,6 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                 //     analysis += `Impacto estimado: ${recommendations.map(r => `${r.campaign.title} (+${r.impact}%)`).join(', ')}.`;
                 // }
             } catch (error) {
-                console.error('Erro na análise AI:', error);
                 if (finalCampaigns.length > 0) {
                     analysis = `✅ Esta apólice será vinculada automaticamente a ${finalCampaigns.length} campanha(s) compatível(is).`;
                 } else {
@@ -274,7 +272,6 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
             return aiRecommendations;
 
         } catch (error) {
-            console.error('Erro ao obter recomendações de campanhas:', error);
             // Fallback para lógica tradicional
             const { campaigns } = await analyzeCompatibleCampaigns(policyType, contractType, premiumValue);
             return campaigns;
@@ -403,7 +400,6 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
         }
     };
 
-
     return (
         <div className="bg-white border border-gray-200 rounded-xl shadow-lg animate-fade-in" data-policy-form>
             <div className="p-8">
@@ -512,7 +508,6 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                             </div>
                         )}
 
-
                         {/* Valor do Prêmio */}
                         <div className="form-group">
                             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
@@ -530,7 +525,6 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                             />
                         </div>
                     </div>
-
 
                     {/* Seção de campanhas removida - sistema automático */}
                     {false && (
@@ -753,8 +747,7 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                                     <Clock className="w-6 h-6 text-[#1e293b]" />
                                     <h2 className="text-xl font-bold text-[#1e293b]">Timeline de Apólices</h2>
                                 </div>
-                                
-                                
+
                                 <button
                                     onClick={() => setShowTimelineSidepanel(false)}
                                     className="p-2 hover:bg-gray-100 rounded-lg transition-colors"

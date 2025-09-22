@@ -116,7 +116,6 @@ const PremiosPage: React.FC = () => {
 
             setPremiosConquistados(premios);
         } catch (error) {
-            console.error('Erro ao buscar prêmios conquistados:', error);
         } finally {
             setLoading(false);
         }
@@ -153,11 +152,10 @@ const PremiosPage: React.FC = () => {
     const finalizarPedido = async () => {
         try {
             // Aqui você implementaria a lógica de finalização do pedido
-            console.log('Finalizando pedido:', { carrinho, endereco, frete, prazo });
+
             alert('Pedido finalizado com sucesso!');
             setCarrinho([]);
         } catch (error) {
-            console.error('Erro ao finalizar pedido:', error);
         }
     };
 

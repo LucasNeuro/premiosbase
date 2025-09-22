@@ -28,11 +28,8 @@ export class BackgroundAuditService {
      */
     static startBackgroundAudit(): void {
         if (this.isRunning) {
-            console.log('🔄 Serviço de auditoria em background já está rodando');
             return;
         }
-
-        console.log('🚀 Iniciando serviço de auditoria em background...');
         this.isRunning = true;
 
         // Executar imediatamente
@@ -48,7 +45,6 @@ export class BackgroundAuditService {
      * Para o serviço de auditoria em background
      */
     static stopBackgroundAudit(): void {
-        console.log('⏹️ Parando serviço de auditoria em background...');
         this.isRunning = false;
         
         if (this.intervalId) {
@@ -111,7 +107,6 @@ export class BackgroundAuditService {
             await this.saveAuditResult(result);
 
         } catch (error: any) {
-            console.error('❌ Erro na auditoria em background:', error);
             result.success = false;
             result.errors.push(error.message);
         }
@@ -224,9 +219,6 @@ export class BackgroundAuditService {
         Object.keys(criteria).forEach((key, index) => {
             const criterion = criteria[key];
             if (!criterion) return;
-
-            console.log(`🔍 Processando critério ${index + 1}:`, criterion);
-
             let progress = 0;
             let current = 0;
             let target = 0;
@@ -262,13 +254,11 @@ export class BackgroundAuditService {
                 current = matchingPolicies.length;
                 target = criterion.target_value || 0; // Para quantidade, o valor está em target_value
                 progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-                console.log(`📊 Critério ${index + 1} (QUANTIDADE): ${current}/${target} = ${progress.toFixed(1)}%`);
             } else if (criterion.target_type === 'value') {
                 // Critério por valor
                 current = matchingPolicies.reduce((sum, link) => sum + (link.policies?.premium_value || 0), 0);
                 target = criterion.target_value || 0;
                 progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-                console.log(`💰 Critério ${index + 1} (VALOR): R$ ${current}/${target} = ${progress.toFixed(1)}%`);
             } else {
                 // Fallback para compatibilidade com estruturas antigas
                 if (criterion.target_count || criterion.target_quantity) {
@@ -276,21 +266,16 @@ export class BackgroundAuditService {
                     current = matchingPolicies.length;
                     target = criterion.target_count || criterion.target_quantity || 0;
                     progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-                    console.log(`📊 Critério ${index + 1} (QUANTIDADE - fallback): ${current}/${target} = ${progress.toFixed(1)}%`);
                 } else if (criterion.target_value) {
                     // Critério por valor (estrutura antiga)
                     current = matchingPolicies.reduce((sum, link) => sum + (link.policies?.premium_value || 0), 0);
                     target = criterion.target_value;
                     progress = target > 0 ? Math.min((current / target) * 100, 100) : 0;
-                    console.log(`💰 Critério ${index + 1} (VALOR - fallback): R$ ${current}/${target} = ${progress.toFixed(1)}%`);
                 } else {
-                    console.log(`⚠️ Critério ${index + 1}: Sem target_type, target_value ou target_quantity definido`);
                 }
             }
 
             isCompleted = progress >= 100;
-            console.log(`✅ Critério ${index + 1} concluído: ${isCompleted ? 'SIM' : 'NÃO'} (${progress.toFixed(1)}%)`);
-
             results.push({
                 criterionId: key,
                 criterionName: `Critério ${index + 1}`,
@@ -320,10 +305,8 @@ export class BackgroundAuditService {
                 });
 
             if (error) {
-                console.error('Erro ao salvar resultado da auditoria:', error);
             }
         } catch (error) {
-            console.error('Erro ao salvar resultado da auditoria:', error);
         }
     }
 

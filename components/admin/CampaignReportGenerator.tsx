@@ -12,15 +12,10 @@ export default function CampaignReportGenerator({ onClose }: CampaignReportGener
   const handleDownloadCSV = async () => {
     try {
       setIsGenerating(true);
-      
-      console.log('🚀 Gerando CSV completo...');
-      
+
       await CompleteDataExportService.downloadCompleteCSV();
-      
-      console.log('✅ CSV completo gerado e baixado com sucesso!');
-      
+
     } catch (error) {
-      console.error('❌ Erro ao gerar CSV completo:', error);
       alert(`Erro ao gerar relatório: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     } finally {
       setIsGenerating(false);
@@ -30,15 +25,10 @@ export default function CampaignReportGenerator({ onClose }: CampaignReportGener
   const handleDownloadXLS = async () => {
     try {
       setIsGenerating(true);
-      
-      console.log('🚀 Gerando XLS completo...');
-      
+
       await CompleteDataExportService.downloadXLSReport();
-      
-      console.log('✅ XLS completo gerado e baixado com sucesso!');
-      
+
     } catch (error) {
-      console.error('❌ Erro ao gerar XLS completo:', error);
       alert(`Erro ao gerar relatório: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     } finally {
       setIsGenerating(false);
@@ -48,21 +38,15 @@ export default function CampaignReportGenerator({ onClose }: CampaignReportGener
   const handleDownloadMarkdown = async () => {
     try {
       setIsGenerating(true);
-      
-      console.log('🚀 Gerando Markdown completo...');
-      
+
       await CompleteDataExportService.downloadMarkdownReport();
-      
-      console.log('✅ Markdown completo gerado e baixado com sucesso!');
-      
+
     } catch (error) {
-      console.error('❌ Erro ao gerar Markdown completo:', error);
       alert(`Erro ao gerar relatório: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     } finally {
       setIsGenerating(false);
     }
   };
-
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">

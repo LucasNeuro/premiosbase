@@ -56,7 +56,6 @@ const PrizeRedemptionTab: React.FC = () => {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [submitting, setSubmitting] = useState(false);
 
-
     // Verificar se campanha tem múltiplos prêmios
     const isMultiPrizeCampaign = (campaignId: string) => {
         const prizesFromSameCampaign = availablePrizes.filter(p => p.campaign_id === campaignId);
@@ -170,7 +169,6 @@ const PrizeRedemptionTab: React.FC = () => {
             alert('Pedido realizado com sucesso!');
 
         } catch (err: any) {
-            console.error('❌ [PEDIDO] Erro ao finalizar pedido:', err);
             alert('Erro ao finalizar pedido: ' + err.message);
         } finally {
             setSubmitting(false);

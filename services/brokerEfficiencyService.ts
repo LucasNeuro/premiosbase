@@ -27,11 +27,9 @@ export class BrokerEfficiencyService {
      */
     static async calculateBrokerEfficiency(): Promise<BrokerEfficiencyResult> {
         try {
-            console.log('🔄 [SERVICE] Iniciando cálculo de eficiência...');
-            
+
             // TESTE SIMPLES PRIMEIRO
-            console.log('🧪 [SERVICE] Testando conexão com Supabase...');
-            
+
             // Buscar dados dos corretores com suas vendas
             const { data: brokersData, error } = await supabase
                 .from('users')
@@ -46,20 +44,14 @@ export class BrokerEfficiencyService {
                 .eq('role', 'broker')
                 .eq('is_active', true);
 
-            console.log('🔍 [SERVICE] Resultado da query:', { brokersData, error });
-            
             if (error) {
-                console.error('❌ [SERVICE] Erro ao buscar dados dos corretores:', error);
                 throw error;
             }
 
             if (!brokersData || brokersData.length === 0) {
-                console.log('⚠️ [SERVICE] Nenhum corretor encontrado');
+
                 return { brokers: [], total_revenue: 0, total_policies: 0 };
             }
-
-            console.log(`📊 [SERVICE] Encontrados ${brokersData.length} corretores`);
-            console.log('🔍 [SERVICE] Dados brutos dos corretores:', brokersData);
 
             // Processar dados de cada corretor
             const brokersWithData = brokersData.map(broker => {
@@ -70,8 +62,6 @@ export class BrokerEfficiencyService {
                     return sum + valor;
                 }, 0);
 
-                console.log(`📋 ${broker.name}: ${totalPolicies} apólices, R$ ${totalRevenue.toLocaleString()}`);
-
                 return {
                     broker_id: broker.id,
                     broker_name: broker.name,
@@ -81,16 +71,13 @@ export class BrokerEfficiencyService {
             }).filter(broker => broker.total_policies > 0); // Apenas corretores com apólices
 
             if (brokersWithData.length === 0) {
-                console.log('⚠️ Nenhum corretor com apólices encontrado');
+
                 return { brokers: [], total_revenue: 0, total_policies: 0 };
             }
 
             // Calcular totais
             const totalRevenue = brokersWithData.reduce((sum, broker) => sum + broker.total_revenue, 0);
             const totalPolicies = brokersWithData.reduce((sum, broker) => sum + broker.total_policies, 0);
-
-            console.log(`💰 Receita total: R$ ${totalRevenue.toLocaleString()}`);
-            console.log(`📋 Total de apólices: ${totalPolicies.toLocaleString()}`);
 
             // Ordenar por receita (critério principal) e depois por apólices
             brokersWithData.sort((a, b) => {
@@ -112,12 +99,6 @@ export class BrokerEfficiencyService {
                 
                 const efficiencyPercentage = Math.round((positionScore + revenueScore + policiesScore) * 10) / 10;
 
-                console.log(`📈 ${broker.broker_name}:`);
-                console.log(`   Posição: ${rankingPosition} (score: ${positionScore.toFixed(1)})`);
-                console.log(`   Receita: R$ ${broker.total_revenue.toLocaleString()} (score: ${revenueScore.toFixed(1)})`);
-                console.log(`   Apólices: ${broker.total_policies} (score: ${policiesScore.toFixed(1)})`);
-                console.log(`   Eficiência: ${efficiencyPercentage}%`);
-
                 return {
                     ...broker,
                     ranking_position: rankingPosition,
@@ -125,9 +106,6 @@ export class BrokerEfficiencyService {
                 };
             });
 
-            console.log('✅ Cálculo de eficiência concluído!');
-            console.log('🎯 Resultado final:', brokersWithEfficiency);
-            
             return {
                 brokers: brokersWithEfficiency,
                 total_revenue: totalRevenue,
@@ -135,7 +113,6 @@ export class BrokerEfficiencyService {
             };
 
         } catch (error) {
-            console.error('❌ Erro ao calcular eficiência dos corretores:', error);
             throw error;
         }
     }
@@ -148,7 +125,6 @@ export class BrokerEfficiencyService {
             const result = await this.calculateBrokerEfficiency();
             return result.brokers.find(broker => broker.broker_id === brokerId) || null;
         } catch (error) {
-            console.error('❌ Erro ao calcular eficiência do corretor:', error);
             return null;
         }
     }

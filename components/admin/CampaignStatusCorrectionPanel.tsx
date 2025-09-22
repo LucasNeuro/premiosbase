@@ -10,12 +10,9 @@ export const CampaignStatusCorrectionPanel: React.FC = () => {
         setResult(null);
 
         try {
-            console.log('🔄 Iniciando correção forçada do status das campanhas...');
             const correctionResult = await CampaignStatusCorrectionService.forceCorrectAllCampaignStatus();
             setResult(correctionResult);
-            console.log('✅ Correção concluída:', correctionResult);
         } catch (error) {
-            console.error('❌ Erro na correção:', error);
             setResult({
                 corrected: 0,
                 errors: [`Erro geral: ${error}`]

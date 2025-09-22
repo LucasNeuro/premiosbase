@@ -58,13 +58,11 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                 .order('nome');
 
             if (error) {
-                console.error('Error fetching categories:', error);
                 return;
             }
 
             setCategories(data || []);
         } catch (error) {
-            console.error('Error:', error);
         } finally {
             setLoading(false);
         }
@@ -86,7 +84,6 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                 .single();
 
             if (error) {
-                console.error('Error creating category:', error);
                 return;
             }
 
@@ -98,7 +95,6 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                 onNewCategory(data);
             }
         } catch (error) {
-            console.error('Error:', error);
         }
     };
 
@@ -117,7 +113,6 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                 .eq('id', editingCategory.id);
 
             if (error) {
-                console.error('Error updating category:', error);
                 return;
             }
 
@@ -128,7 +123,6 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
             );
             setEditingCategory(null);
         } catch (error) {
-            console.error('Error:', error);
         }
     };
 
@@ -142,13 +136,11 @@ const CategoryManager: React.FC<CategoryManagerProps> = ({
                 .eq('id', id);
 
             if (error) {
-                console.error('Error deleting category:', error);
                 return;
             }
 
             setCategories(prev => prev.filter(cat => cat.id !== id));
         } catch (error) {
-            console.error('Error:', error);
         }
     };
 
