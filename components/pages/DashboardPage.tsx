@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { PoliciesAuxiliarProvider } from '../../hooks/usePoliciesAuxiliar';
 import { GoalsProvider } from '../../hooks/useGoalsNew';
@@ -14,6 +14,7 @@ import { Home, Target } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
     const { user } = useAuth();
+    const [selectedPeriod, setSelectedPeriod] = useState<'30' | '60' | 'geral'>('geral');
     
     
     // DESABILITADO: Sistema de eventos em tempo real (causando loops)
@@ -28,28 +29,37 @@ const DashboardPage: React.FC = () => {
     // Definir userId para uso nos componentes
     const userId = user?.id || user?.email || '';
     
+    // Debug log
+    console.log('🏠 DashboardPage - User ID:', userId, 'User:', user);
+    
     const tabs = [
         { 
             id: 'dashboard', 
             label: 'Dashboard', 
             icon: <Home className="w-5 h-5" />,
-            component: () => (
-                <div className="space-y-6">
-                    <SummaryCards />
-                    <PoliciesTable />
-                </div>
-            )
+            component: () => {
+                console.log('🏠 Dashboard tab renderizando com selectedPeriod:', selectedPeriod);
+                return (
+                    <div className="space-y-6">
+                        <SummaryCards selectedPeriod={selectedPeriod} />
+                        <DynamicPolicyForm selectedPeriod={selectedPeriod} onPeriodChange={setSelectedPeriod} />
+                        <PoliciesTable />
+                    </div>
+                );
+            }
         },
         { 
             id: 'campanhas', 
             label: 'Campanhas', 
             icon: <Target className="w-5 h-5" />,
-            component: () => (
-                <div className="space-y-6">
-                    <DynamicPolicyForm />
-                    <CampaignsKanban />
-                </div>
-            )
+            component: () => {
+                console.log('🎯 Campanhas tab renderizando');
+                return (
+                    <div className="space-y-6">
+                        <CampaignsKanban />
+                    </div>
+                );
+            }
         }
     ];
     

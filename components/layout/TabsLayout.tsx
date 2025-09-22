@@ -8,7 +8,7 @@ interface Tab {
     id: string;
     label: string;
     icon: React.ReactNode;
-    component: React.ComponentType;
+    component: React.ComponentType | (() => React.ReactNode);
 }
 
 interface TabsLayoutProps {
@@ -25,6 +25,14 @@ const TabsLayout: React.FC<TabsLayoutProps> = ({ isAdmin = false, tabs, defaultT
         const activeTabConfig = tabs.find(tab => tab.id === activeTab);
         if (!activeTabConfig) return null;
         
+        console.log('🔄 TabsLayout renderizando tab:', activeTab, 'component:', activeTabConfig.component);
+        
+        // Se component é uma função, chamá-la
+        if (typeof activeTabConfig.component === 'function') {
+            return activeTabConfig.component();
+        }
+        
+        // Se component é um componente React, renderizá-lo
         const Component = activeTabConfig.component;
         return <Component />;
     };

@@ -56,6 +56,16 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
     periodData 
 }) => {
     if (!isOpen || !goal) return null;
+    
+    // Verificar se todos os critérios estão 100% (se houver critérios)
+    const allCriteriaCompleted = !goal.criteria || goal.criteria.length === 0 || 
+        goal.criteria.every((criterio: any) => {
+            const criterionProgress = ((criterio.current_value || 0) / (criterio.target_value || 1) * 100);
+            return criterionProgress >= 100;
+        });
+    
+    // Só mostrar "Meta Conquistada" se todos os critérios estiverem 100%
+    const shouldShowMetaConquistada = progress >= 100 && allCriteriaCompleted;
 
     const formatCurrency = (value: number) => {
         return currencyMask(value.toString());
@@ -149,7 +159,7 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
     };
 
     const getMotivationalMessage = (progress: number) => {
-        if (progress >= 100) return "🎉 Parabéns! Meta conquistada!";
+        if (shouldShowMetaConquistada) return "🎉 Parabéns! Meta conquistada!";
         if (progress >= 75) return "🔥 Você está quase lá! Continue assim!";
         if (progress >= 50) return "💪 Metade do caminho percorrido!";
         if (progress >= 25) return "🚀 Bom começo! Mantenha o foco!";
@@ -194,11 +204,11 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
                                 {/* Badge de Status - Baseado no progresso da campanha */}
                                 <div className="absolute top-3 right-3">
                                     <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-                                        progress >= 100 
+                                        shouldShowMetaConquistada 
                                             ? 'bg-green-500 text-white' 
                                             : 'bg-blue-500 text-white'
                                     }`}>
-                                        {progress >= 100 ? 'Conquistado' : 'Em Andamento'}
+                                        {shouldShowMetaConquistada ? 'Conquistado' : 'Em Andamento'}
                                     </div>
                                 </div>
                             </div>
@@ -257,7 +267,7 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
                         
                         {/* Status da Campanha - CORRIGIDO */}
                         <div className="flex items-center gap-2 mb-3">
-                            {progress >= 100 ? (
+                            {shouldShowMetaConquistada ? (
                                 <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
                                     Meta Atingida
                                 </span>
@@ -273,24 +283,24 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
                         
                         {/* DADOS DE ATINGIMENTO - Sempre visível */}
                         <div className={`mb-3 p-3 rounded-lg border ${
-                            progress >= 100 
+                            shouldShowMetaConquistada 
                                 ? 'bg-green-50 border-green-200' 
                                 : 'bg-blue-50 border-blue-200'
                         }`}>
                             <div className="flex items-center gap-2 mb-2">
                                 <Award className={`w-4 h-4 ${
-                                    progress >= 100 ? 'text-green-600' : 'text-blue-600'
+                                    shouldShowMetaConquistada ? 'text-green-600' : 'text-blue-600'
                                 }`} />
                                 <span className={`text-sm font-medium ${
-                                    progress >= 100 ? 'text-green-800' : 'text-blue-800'
+                                    shouldShowMetaConquistada ? 'text-green-800' : 'text-blue-800'
                                 }`}>
-                                    {progress >= 100 ? 'Meta Conquistada!' : 'Meta em Andamento'}
+                                    {shouldShowMetaConquistada ? 'Meta Conquistada!' : 'Meta em Andamento'}
                                 </span>
                             </div>
                             <div className={`text-xs ${
-                                progress >= 100 ? 'text-green-700' : 'text-blue-700'
+                                shouldShowMetaConquistada ? 'text-green-700' : 'text-blue-700'
                             }`}>
-                                {progress >= 100 ? (
+                                {shouldShowMetaConquistada ? (
                                     <>
                                         Parabéns! Você atingiu <strong>{progress.toFixed(1)}%</strong> da meta
                                         {progress > 100 && (
@@ -314,7 +324,7 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
                         <div className="w-full bg-gray-200 rounded-full h-2 mb-3">
                             <div 
                                 className={`h-2 rounded-full transition-all duration-500 ${
-                                    progress >= 100 ? 'bg-green-500' : 'bg-blue-500'
+                                    shouldShowMetaConquistada ? 'bg-green-500' : 'bg-blue-500'
                                 }`}
                                 style={{ width: `${Math.min(progress, 100)}%` }}
                             ></div>
@@ -338,7 +348,7 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
                             </div>
                             
                             {/* DIFERENÇA - Quando meta foi superada */}
-                            {progress >= 100 && goal.type === 'valor' && (
+                            {shouldShowMetaConquistada && goal.type === 'valor' && (
                                 <div className="text-xs text-green-600 font-medium">
                                     +{formatCurrency((goal.current_value || 0) - (goal.target || 0))} acima da meta
                                 </div>
@@ -427,7 +437,7 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
                     )}
 
                     {/* BADGE DE CONQUISTA - Só se meta atingida */}
-                    {progress >= 100 && (
+                    {shouldShowMetaConquistada && (
                         <div className="p-4 bg-green-50 border-b border-green-200">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-green-100 rounded-full">

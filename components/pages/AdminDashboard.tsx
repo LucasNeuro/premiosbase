@@ -6,7 +6,8 @@ import AdminPoliciesTable from '../admin/AdminPoliciesTable';
 import AdminUsersManager from '../admin/AdminUsersManager';
 import AdminStatsOverview from '../admin/AdminStatsOverview';
 import AdminPremiosManager from '../admin/AdminPremiosManager';
-import { Target, Users, FileText, BarChart3, Settings, Trophy } from 'lucide-react';
+import AdminPrizeOrdersManager from '../admin/AdminPrizeOrdersManager';
+import { Target, Users, FileText, BarChart3, Settings, Trophy, Package } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -41,6 +42,12 @@ const AdminDashboard: React.FC = () => {
             label: 'Gerenciar Corretores', 
             icon: <Users className="w-5 h-5" />,
             component: AdminUsersManager
+        },
+        { 
+            id: 'prize-orders', 
+            label: 'Gestão de Retirada', 
+            icon: <Package className="w-5 h-5" />,
+            component: AdminPrizeOrdersManager
         },
     ];
 

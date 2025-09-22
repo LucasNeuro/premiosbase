@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useGoalsNew } from '../../hooks/useGoalsNew';
 import { useRealtimeListener } from '../../hooks/useRealtimeEvents';
 import { calculateDaysRemaining } from '../../utils/dateUtils';
@@ -8,6 +8,7 @@ import Badge from '../ui/Badge';
 import Spinner from '../ui/Spinner';
 import Alert from '../ui/Alert';
 import CampaignDetailsSidepanel from './CampaignDetailsSidepanel';
+import PrizeRedemptionTab from './PrizeRedemptionTab';
 import { 
     CheckCircle, 
     XCircle, 
@@ -18,8 +19,10 @@ import {
     Calendar,
     TrendingUp,
     Users,
-    Award
+    Award,
+    ShoppingCart
 } from 'lucide-react';
+import PremioHeroHeader from '../ui/PremioHeroHeader';
 import { currencyMaskFree } from '../../utils/masks';
 import { Goal } from '../../types';
 
@@ -27,6 +30,8 @@ const CampaignsKanban: React.FC = () => {
     const { campaigns, pendingCampaigns, acceptCampaign, rejectCampaign, loading, error, refreshCampaigns, fetchCampaigns } = useGoalsNew();
     const [selectedCampaign, setSelectedCampaign] = useState<Goal | null>(null);
     const [isSidepanelOpen, setIsSidepanelOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState<'campaigns' | 'prizes'>('campaigns');
+
 
     // Listener para atualizações em tempo real das campanhas
     useRealtimeListener('campaigns', useCallback(() => {
@@ -120,61 +125,89 @@ const CampaignsKanban: React.FC = () => {
     }> = ({ campaign, showActions = false, showProgress = false, columnType }) => {
         const progressPercentage = campaign.progress_percentage || 0;
         const isLoading = actionLoading === campaign.id;
+        
+        // Destaque especial para campanhas ativas
+        const isActive = columnType === 'active';
+        const cardBgClass = isActive ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200' : 'bg-white border-gray-200';
+        const titleClass = isActive ? 'text-blue-900' : 'text-gray-900';
 
         return (
-            <Card className="p-4 mb-4 hover:shadow-lg transition-shadow">
-                <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-semibold text-gray-900 flex-1 mr-2">{campaign.title}</h3>
-                    {campaign.parent_campaign_id && (
-                        <Badge color="purple" size="sm">
-                            <Users className="w-3 h-3 mr-1" />
-                            Grupo
-                        </Badge>
-                    )}
-                </div>
-
-                {campaign.description && (
-                    <p className="text-sm text-gray-600 mb-3">{campaign.description}</p>
+            <Card className={`mb-4 hover:shadow-lg transition-all duration-300 ${cardBgClass} border-2 overflow-hidden`}>
+                {/* Hero Header com Prêmios */}
+                {campaign.campanhas_premios && campaign.campanhas_premios.length > 0 && (
+                    <PremioHeroHeader
+                        premios={campaign.campanhas_premios.map(cp => ({
+                            premio: {
+                                id: cp.premio.id,
+                                nome: cp.premio.nome,
+                                imagem_miniatura_url: cp.premio.imagem_miniatura_url,
+                                valor_estimado: cp.premio.valor_estimado || 0
+                            },
+                            quantidade: cp.quantidade
+                        }))}
+                        showIndicators={campaign.campanhas_premios.length > 1}
+                        autoPlay={campaign.campanhas_premios.length > 1}
+                        autoPlayInterval={4000}
+                    />
                 )}
 
-                <div className="space-y-2 text-sm">
-                    <div className="flex items-center text-gray-700">
-                        <Target className="w-4 h-4 mr-2 text-[#1E293B]" />
-                        <span>Meta: <strong>{formatTarget(campaign)}</strong></span>
-                    </div>
-                    
-                    <div className="flex items-center text-gray-700">
-                        <Calendar className="w-4 h-4 mr-2 text-orange-500" />
-                        <span>{formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}</span>
-                    </div>
-
-                    {/* Dias restantes */}
-                    <div className="flex items-center">
-                        <Clock className="w-4 h-4 mr-2" />
-                        <span className={`text-sm font-medium ${
-                            calculateDaysRemaining(campaign.end_date).urgencyLevel === 'expired' 
-                                ? 'text-red-600' 
-                                : calculateDaysRemaining(campaign.end_date).urgencyLevel === 'critical'
-                                ? 'text-red-500'
-                                : calculateDaysRemaining(campaign.end_date).urgencyLevel === 'warning'
-                                ? 'text-yellow-600'
-                                : 'text-green-600'
-                        }`}>
-                            {calculateDaysRemaining(campaign.end_date).label}
-                        </span>
+                {/* Content */}
+                <div className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                        <h3 className={`font-semibold flex-1 mr-2 ${titleClass}`}>{campaign.title}</h3>
+                        {(campaign as any).parent_campaign_id && (
+                            <Badge className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full">
+                                <Users className="w-3 h-3 mr-1" />
+                                Grupo
+                            </Badge>
+                        )}
                     </div>
 
-                    {campaign.campanhas_premios && campaign.campanhas_premios.length > 0 && (
-                        <div className="flex items-center text-gray-700">
-                            <Gift className="w-4 h-4 mr-2 text-[#49de80]" />
-                            <span>{campaign.campanhas_premios.length} prêmio(s)</span>
-                        </div>
+                    {campaign.description && (
+                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{campaign.description}</p>
                     )}
+
+                    {/* Grid de informações */}
+                    <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                        <div className="flex items-center text-gray-700">
+                            <Target className="w-4 h-4 mr-2 text-[#1E293B]" />
+                            <span className="truncate">Meta: <strong>{formatTarget(campaign)}</strong></span>
+                        </div>
+                        
+                        <div className="flex items-center text-gray-700">
+                            <Calendar className="w-4 h-4 mr-2 text-orange-500" />
+                            <span className="truncate">{formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}</span>
+                        </div>
+
+                        {/* Dias restantes */}
+                        <div className="flex items-center">
+                            <Clock className="w-4 h-4 mr-2" />
+                            <span className={`text-sm font-medium ${
+                                calculateDaysRemaining(campaign.end_date).urgencyLevel === 'expired' 
+                                    ? 'text-red-600' 
+                                    : calculateDaysRemaining(campaign.end_date).urgencyLevel === 'critical'
+                                    ? 'text-red-500'
+                                    : calculateDaysRemaining(campaign.end_date).urgencyLevel === 'warning'
+                                    ? 'text-yellow-600'
+                                    : 'text-green-600'
+                            }`}>
+                                {calculateDaysRemaining(campaign.end_date).label}
+                            </span>
+                        </div>
+
+                        {/* Prêmios com imagem */}
+                        {campaign.campanhas_premios && campaign.campanhas_premios.length > 0 && (
+                            <div className="flex items-center text-gray-700">
+                                <Gift className="w-4 h-4 mr-2 text-[#49de80]" />
+                                <span>{campaign.campanhas_premios.length} prêmio(s)</span>
+                            </div>
+                        )}
+                    </div>
 
                     {showProgress && (
                         <div className="mt-3">
                             {/* Verificar se tem critérios específicos */}
-                            {campaign.criteria && (Array.isArray(campaign.criteria) || (typeof campaign.criteria === 'string' && campaign.criteria.trim() !== '')) ? (
+                            {campaign.criteria && (Array.isArray(campaign.criteria) || (typeof campaign.criteria === 'string' && (campaign.criteria as string).trim() !== '')) ? (
                                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
                                     <div className="flex items-center gap-1 mb-1">
                                         <Target className="w-3 h-3 text-blue-600" />
@@ -207,39 +240,36 @@ const CampaignsKanban: React.FC = () => {
                             )}
                         </div>
                     )}
-                </div>
 
-                <div className="flex gap-2 mt-4">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openDetails(campaign)}
-                        className="flex-1 border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
-                    >
-                        <Eye className="w-4 h-4 mr-1" />
-                        Detalhes
-                    </Button>
+                    <div className="flex gap-2 mt-4">
+                        <Button
+                            variant="secondary"
+                            onClick={() => openDetails(campaign)}
+                            className="flex-1 border-gray-300 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                        >
+                            <Eye className="w-4 h-4 mr-1" />
+                            Detalhes
+                        </Button>
 
-                    {showActions && (
-                        <>
-                            <Button
-                                onClick={() => handleAccept(campaign.id)}
-                                disabled={isLoading}
-                                size="sm"
-                                className="bg-[#49de80] hover:bg-[#22c55e] text-white"
-                            >
-                                {isLoading ? <Spinner size="sm" /> : <CheckCircle className="w-4 h-4" />}
-                            </Button>
-                            <Button
-                                onClick={() => handleReject(campaign.id)}
-                                disabled={isLoading}
-                                size="sm"
-                                className="bg-[#1E293B] hover:bg-[#334155] text-white"
-                            >
-                                {isLoading ? <Spinner size="sm" /> : <XCircle className="w-4 h-4" />}
-                            </Button>
-                        </>
-                    )}
+                        {showActions && (
+                            <>
+                                <Button
+                                    onClick={() => handleAccept(campaign.id)}
+                                    disabled={isLoading}
+                                    className="bg-[#49de80] hover:bg-[#22c55e] text-white px-3 py-2"
+                                >
+                                    {isLoading ? <Spinner size="sm" /> : <CheckCircle className="w-4 h-4" />}
+                                </Button>
+                                <Button
+                                    onClick={() => handleReject(campaign.id)}
+                                    disabled={isLoading}
+                                    className="bg-[#1E293B] hover:bg-[#334155] text-white px-3 py-2"
+                                >
+                                    {isLoading ? <Spinner size="sm" /> : <XCircle className="w-4 h-4" />}
+                                </Button>
+                            </>
+                        )}
+                    </div>
                 </div>
             </Card>
         );
@@ -252,39 +282,70 @@ const CampaignsKanban: React.FC = () => {
         emptyMessage: string;
         columnType: 'new' | 'active' | 'rejected' | 'completed';
         color: string;
-    }> = ({ title, icon, campaigns, emptyMessage, columnType, color }) => (
-        <div className="flex-1 min-w-80">
-            <div className={`bg-${color}-50 border-${color}-200 border rounded-lg p-4 mb-4`}>
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                        {icon}
-                        <h2 className="text-lg font-semibold ml-2">{title}</h2>
+    }> = ({ title, icon, campaigns, emptyMessage, columnType, color }) => {
+        // Cores modernas para cada tipo
+        const colorClasses = {
+            yellow: 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-200',
+            blue: 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200',
+            red: 'bg-gradient-to-r from-red-50 to-rose-50 border-red-200',
+            green: 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200'
+        };
+
+        return (
+            <div className="flex-1 min-w-96">
+                {/* Header moderno */}
+                <div className={`${colorClasses[color as keyof typeof colorClasses]} border-2 rounded-xl p-4 mb-6 shadow-sm`}>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="p-2 bg-white rounded-lg shadow-sm">
+                                {icon}
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-900">{title}</h2>
+                                <p className="text-sm text-gray-600">
+                                    {campaigns.length === 0 ? 'Nenhuma campanha' : `${campaigns.length} campanha${campaigns.length > 1 ? 's' : ''}`}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Badge className={`px-3 py-1 rounded-full text-sm font-bold ${
+                                color === 'yellow' ? 'bg-yellow-100 text-yellow-800' :
+                                color === 'blue' ? 'bg-blue-100 text-blue-800' :
+                                color === 'red' ? 'bg-red-100 text-red-800' :
+                                'bg-green-100 text-green-800'
+                            }`}>
+                                {campaigns.length}
+                            </Badge>
+                        </div>
                     </div>
-                    <Badge color={color as any} size="sm">
-                        {campaigns.length}
-                    </Badge>
+                </div>
+                
+                {/* Cards em scroll horizontal */}
+                <div className="max-h-[600px] overflow-y-auto pr-2">
+                    {campaigns.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500">
+                            <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                                {icon}
+                            </div>
+                            <p className="text-sm font-medium">{emptyMessage}</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {campaigns.map(campaign => (
+                                <CampaignCard
+                                    key={campaign.id}
+                                    campaign={campaign}
+                                    showActions={columnType === 'new'}
+                                    showProgress={columnType === 'active' || columnType === 'completed'}
+                                    columnType={columnType}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
-            
-            <div className="max-h-96 overflow-y-auto">
-                {campaigns.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 text-sm">
-                        {emptyMessage}
-                    </div>
-                ) : (
-                    campaigns.map(campaign => (
-                        <CampaignCard
-                            key={campaign.id}
-                            campaign={campaign}
-                            showActions={columnType === 'new'}
-                            showProgress={columnType === 'active' || columnType === 'completed'}
-                            columnType={columnType}
-                        />
-                    ))
-                )}
-            </div>
-        </div>
-    );
+        );
+    };
 
     if (loading) {
         return (
@@ -300,51 +361,196 @@ const CampaignsKanban: React.FC = () => {
 
     return (
         <div className="animate-fade-in">
+            {/* Header moderno */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">Gestão de Campanhas</h1>
-                <p className="text-gray-600">
-                    Gerencie suas campanhas através do quadro visual. Aceite, acompanhe o progresso e veja os resultados.
-                </p>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h1 className="text-3xl font-bold text-[#1e293b]">Dashboard do Corretor</h1>
+                        <p className="text-gray-600 mt-1">Gerencie suas campanhas e resgate seus prêmios</p>
+                    </div>
+                </div>
+
+                {/* Abas */}
+                <div className="mt-6">
+                    <div className="border-b border-gray-200">
+                        <nav className="-mb-px flex space-x-8">
+                            <button
+                                onClick={() => setActiveTab('campaigns')}
+                                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                    activeTab === 'campaigns'
+                                        ? 'border-[#1e293b] text-[#1e293b]'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                }`}
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <Target className="w-4 h-4" />
+                                    <span>Campanhas</span>
+                                </div>
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('prizes')}
+                                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                                    activeTab === 'prizes'
+                                        ? 'border-[#1e293b] text-[#1e293b]'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                }`}
+                            >
+                                <div className="flex items-center space-x-2">
+                                    <ShoppingCart className="w-4 h-4" />
+                                    <span>Resgatar Prêmios</span>
+                                </div>
+                            </button>
+                        </nav>
+                    </div>
+                </div>
             </div>
 
-            {/* Kanban Board */}
-            <div className="flex gap-6 overflow-x-auto pb-4">
-                <KanbanColumn
-                    title="Novas"
-                    icon={<Clock className="w-5 h-5 text-yellow-600" />}
-                    campaigns={newCampaigns}
-                    emptyMessage="Nenhuma campanha nova no momento"
-                    columnType="new"
-                    color="yellow"
-                />
+            {/* Conteúdo das Abas */}
+            {activeTab === 'campaigns' ? (
+                <div className="space-y-8">
+                    {/* SEÇÃO PRINCIPAL: CAMPANHAS ATIVAS EM DESTAQUE */}
+                    {activeCampaigns.length > 0 && (
+                    <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-[#1e293b] rounded-xl">
+                                <TrendingUp className="w-8 h-8 text-white" />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-bold text-[#1e293b]">Campanhas Ativas</h2>
+                                <p className="text-gray-600">Suas campanhas em andamento - acompanhe o progresso</p>
+                            </div>
+                            <div className="ml-auto">
+                                <div className="px-4 py-2 bg-[#49de80] text-white rounded-full font-bold">
+                                    {activeCampaigns.length} ativa{activeCampaigns.length > 1 ? 's' : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                            {activeCampaigns.map((campaign) => (
+                                <CampaignCard
+                                    key={campaign.id}
+                                    campaign={campaign}
+                                    showActions={false}
+                                    showProgress={true}
+                                    columnType="active"
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
 
-                <KanbanColumn
-                    title="Ativas"
-                    icon={<TrendingUp className="w-5 h-5 text-[#1E293B]" />}
-                    campaigns={activeCampaigns}
-                    emptyMessage="Nenhuma campanha ativa"
-                    columnType="active"
-                    color="blue"
-                />
+                {/* SEÇÃO: CAMPANHAS NOVAS */}
+                {newCampaigns.length > 0 && (
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-[#49de80] rounded-xl">
+                                <Clock className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-[#1e293b]">Campanhas Novas</h3>
+                                <p className="text-gray-600">Aceite as campanhas para começar a trabalhar</p>
+                            </div>
+                            <div className="ml-auto">
+                                <div className="px-3 py-1 bg-green-100 text-[#1e293b] rounded-full text-sm font-medium">
+                                    {newCampaigns.length} nova{newCampaigns.length > 1 ? 's' : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                            {newCampaigns.map((campaign) => (
+                                <CampaignCard
+                                    key={campaign.id}
+                                    campaign={campaign}
+                                    showActions={true}
+                                    showProgress={false}
+                                    columnType="new"
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
 
-                <KanbanColumn
-                    title="Não Atingidas"
-                    icon={<XCircle className="w-5 h-5 text-red-600" />}
-                    campaigns={rejectedCampaigns}
-                    emptyMessage="Nenhuma campanha não atingida"
-                    columnType="rejected"
-                    color="red"
-                />
+                {/* SEÇÃO: CAMPANHAS NÃO ATINGIDAS */}
+                {rejectedCampaigns.length > 0 && (
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-[#1e293b] rounded-xl">
+                                <XCircle className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-[#1e293b]">Campanhas Não Atingidas</h3>
+                                <p className="text-gray-600">Campanhas que não foram concluídas no prazo</p>
+                            </div>
+                            <div className="ml-auto">
+                                <div className="px-3 py-1 bg-slate-100 text-[#1e293b] rounded-full text-sm font-medium">
+                                    {rejectedCampaigns.length} não atingida{rejectedCampaigns.length > 1 ? 's' : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                            {rejectedCampaigns.map((campaign) => (
+                                <CampaignCard
+                                    key={campaign.id}
+                                    campaign={campaign}
+                                    showActions={false}
+                                    showProgress={false}
+                                    columnType="rejected"
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
 
-                <KanbanColumn
-                    title="Concluídas"
-                    icon={<Award className="w-5 h-5 text-[#49de80]" />}
-                    campaigns={completedCampaigns}
-                    emptyMessage="Nenhuma campanha concluída"
-                    columnType="completed"
-                    color="green"
-                />
-            </div>
+                {/* SEÇÃO: CAMPANHAS CONCLUÍDAS */}
+                {completedCampaigns.length > 0 && (
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-[#49de80] rounded-xl">
+                                <Award className="w-6 h-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-[#1e293b]">Campanhas Concluídas</h3>
+                                <p className="text-gray-600">Parabéns! Campanhas finalizadas com sucesso</p>
+                            </div>
+                            <div className="ml-auto">
+                                <div className="px-3 py-1 bg-green-100 text-[#1e293b] rounded-full text-sm font-medium">
+                                    {completedCampaigns.length} concluída{completedCampaigns.length > 1 ? 's' : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                            {completedCampaigns.map((campaign) => (
+                                <CampaignCard
+                                    key={campaign.id}
+                                    campaign={campaign}
+                                    showActions={false}
+                                    showProgress={false}
+                                    columnType="completed"
+                                />
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                    {/* MENSAGEM QUANDO NÃO HÁ CAMPANHAS */}
+                    {allCampaignsForDisplay.length === 0 && (
+                        <div className="text-center py-12">
+                            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Target className="w-12 h-12 text-[#1e293b]" />
+                            </div>
+                            <h3 className="text-xl font-semibold text-[#1e293b] mb-2">Nenhuma campanha encontrada</h3>
+                            <p className="text-gray-600">Você ainda não possui campanhas atribuídas.</p>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                /* ABA: RESGATAR PRÊMIOS */
+                <PrizeRedemptionTab />
+            )}
 
             {/* Sidepanel de Detalhes */}
             <CampaignDetailsSidepanel

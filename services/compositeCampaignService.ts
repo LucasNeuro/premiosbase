@@ -62,10 +62,18 @@ export class CompositeCampaignService {
             // NOVA LÓGICA: Campanha completa = TODOS os critérios atingidos
             const isCompleted = criteriaProgress.every(c => c.progress >= 100);
             
-            // Progresso geral = média dos progressos individuais
-            const totalProgress = criteriaProgress.length > 0 
-                ? criteriaProgress.reduce((sum, c) => sum + c.progress, 0) / criteriaProgress.length 
-                : 0;
+            // CORREÇÃO: Progresso geral = 100% APENAS se TODOS os critérios = 100%
+            // Se qualquer critério < 100%, progresso geral < 100%
+            let totalProgress = 0;
+            if (criteriaProgress.length > 0) {
+                if (isCompleted) {
+                    // Se todos os critérios estão 100%, progresso geral = 100%
+                    totalProgress = 100;
+                } else {
+                    // Se nem todos estão 100%, progresso geral = média dos critérios
+                    totalProgress = criteriaProgress.reduce((sum, c) => sum + c.progress, 0) / criteriaProgress.length;
+                }
+            }
 
             // Para exibição: usar apenas critérios de VALOR para target total
             const valueCriteria = criteriaProgress.filter(c => {
@@ -197,7 +205,7 @@ export class CompositeCampaignService {
                 throw error;
             }
 
-            } catch (error) {
+        } catch (error) {
             console.error('Erro ao atualizar progresso da campanha:', error);
             throw error;
         }

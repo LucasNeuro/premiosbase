@@ -36,10 +36,10 @@ const AdminTabsLayout: React.FC<AdminTabsLayoutProps> = ({ tabs, defaultTab }) =
             <AdminHeader />
             
             {/* Main Content */}
-            <main className="pt-16">
-                {/* Tabs Navigation - Estilo igual ao corretor - FIXA */}
-                <div className="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm">
-                    <div className="px-6 py-4">
+            <main className="pt-0">
+                {/* Tabs Navigation - Colada no header */}
+                <div className="sticky top-16 z-40 bg-white border-b border-gray-200 shadow-sm -mt-px">
+                    <div className="px-6 py-3">
                         <div className="flex space-x-1">
                             {tabs.map((tab) => (
                                 <button
@@ -47,8 +47,8 @@ const AdminTabsLayout: React.FC<AdminTabsLayoutProps> = ({ tabs, defaultTab }) =
                                     onClick={() => setActiveTab(tab.id)}
                                     className={`flex items-center space-x-2 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
                                         activeTab === tab.id
-                                            ? 'bg-black text-white'
-                                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                                            ? 'bg-[#1E293B] text-white'
+                                            : 'text-gray-600 hover:text-[#49de80] hover:bg-green-50'
                                     }`}
                                 >
                                     {tab.icon}
@@ -60,7 +60,7 @@ const AdminTabsLayout: React.FC<AdminTabsLayoutProps> = ({ tabs, defaultTab }) =
                 </div>
 
                 {/* Tab Content */}
-                <div className="p-6">
+                <div className="px-6 pt-14 pb-14">
                     {renderContent()}
                 </div>
             </main>

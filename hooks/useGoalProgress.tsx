@@ -118,7 +118,7 @@ export const useGoalProgress = (userId: string, goals: any[]) => {
 
             // Usar dados do cache para progresso das metas (com fallback)
             const progressCalculations: GoalProgress[] = goals.map(goal => {
-                const cacheData = progressCache?.find(cache => cache.goal_id === goal.id);
+                const cacheData = progressCache?.find(cache => cache.id === goal.id);
                 
                 // Se não há cache, usar dados diretos da meta
                 const currentValue = cacheData?.current_value || goal.current_value || 0;

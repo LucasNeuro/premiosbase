@@ -3,6 +3,7 @@ import { X, Target, Calendar, Gift, Users, TrendingUp, Award, Clock } from 'luci
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import Spinner from '../ui/Spinner';
+import PremioSidepanelHero from '../ui/PremioSidepanelHero';
 import { Goal } from '../../types';
 import { currencyMaskFree } from '../../utils/masks';
 // Removido imports de debug
@@ -75,6 +76,10 @@ const CampaignDetailsSidepanel: React.FC<CampaignDetailsSidepanelProps> = ({
     const isCompleted = campaign.status === 'completed';
     const isPending = campaign.acceptance_status === 'pending';
     const isRejected = campaign.acceptance_status === 'rejected';
+    
+    // Verificar se todos os critérios estão 100% (se houver critérios)
+    const allCriteriaCompleted = criteriaDetails.length === 0 || criteriaDetails.every(criterion => criterion.progress >= 100);
+    const shouldShowMetaSuperada = progressPercentage > 100 && allCriteriaCompleted;
 
     const getStatusBadge = () => {
         if (isCompleted) {
@@ -126,61 +131,78 @@ const CampaignDetailsSidepanel: React.FC<CampaignDetailsSidepanelProps> = ({
 
                     {/* Content */}
                     <div className="flex-1 overflow-y-auto">
-                        {/* Foto do Prêmio (Hero Image Maior) */}
-                        {campaign.campanhas_premios && campaign.campanhas_premios.length > 0 ? (
-                            <div className="relative h-64 w-full">
-                                {campaign.campanhas_premios[0].premio?.imagem_url ? (
-                                    <img 
-                                        src={campaign.campanhas_premios[0].premio.imagem_url} 
-                                        alt={campaign.campanhas_premios[0].premio.nome}
-                                        className="w-full h-full object-cover rounded-none"
-                                    />
-                                ) : (
-                                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                                        <Gift className="w-20 h-20 text-white" />
+                        {/* Hero de Prêmios */}
+                        <div className="relative h-64 w-full">
+                            {campaign.campanhas_premios && campaign.campanhas_premios.length > 0 ? (
+                                <PremioSidepanelHero
+                                    premios={campaign.campanhas_premios}
+                                    showIndicators={campaign.campanhas_premios.length > 1}
+                                    autoPlay={campaign.campanhas_premios.length > 1}
+                                    autoPlayInterval={5000}
+                                />
+                            ) : (
+                                <div className="h-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
+                                    <div className="text-center text-white">
+                                        <Gift className="w-16 h-16 mx-auto mb-2" />
+                                        <p className="text-sm">Nenhum prêmio configurado</p>
                                     </div>
-                                )}
-                                {/* Badge de Status sobreposto */}
-                                <div className="absolute top-3 right-3">
-                                    {getStatusBadge()}
                                 </div>
+                            )}
+                            
+                            {/* Badge de Status sobreposto */}
+                            <div className="absolute top-3 right-3 z-20">
+                                {getStatusBadge()}
                             </div>
-                        ) : (
-                            <div className="relative h-48 w-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center">
-                                <div className="text-center text-white">
-                                    <Gift className="w-16 h-16 mx-auto mb-2" />
-                                    <p className="text-sm">Nenhum prêmio configurado</p>
-                                </div>
-                                {/* Badge de Status sobreposto */}
-                                <div className="absolute top-3 right-3">
-                                    {getStatusBadge()}
-                                </div>
-                            </div>
-                        )}
+                        </div>
 
                         <div className="p-4 space-y-4">
-                            {/* Nome do Prêmio */}
+                            {/* Informações dos Prêmios */}
                             <div>
                                 <h1 className="text-xl font-bold text-gray-900 mb-1">
-                                    {campaign.campanhas_premios && campaign.campanhas_premios.length > 0 && campaign.campanhas_premios[0].premio?.nome 
-                                        ? campaign.campanhas_premios[0].premio.nome 
+                                    {campaign.campanhas_premios && campaign.campanhas_premios.length > 0 
+                                        ? `${campaign.campanhas_premios.length} Prêmio${campaign.campanhas_premios.length > 1 ? 's' : ''} da Campanha`
                                         : 'Prêmio da Campanha'
                                     }
                                 </h1>
-                                {campaign.campanhas_premios && campaign.campanhas_premios.length > 0 && campaign.campanhas_premios[0].premio?.valor_estimado && (
-                                    <div className="text-lg font-semibold text-green-600 mb-1">
-                                        {currencyMaskFree(campaign.campanhas_premios[0].premio.valor_estimado.toString())}
+                                
+                                {campaign.campanhas_premios && campaign.campanhas_premios.length > 0 && (
+                                    <div className="space-y-3">
+                                        {/* Total dos Prêmios */}
+                                        <div className="text-lg font-semibold text-green-600 mb-2">
+                                            Total: R$ {campaign.campanhas_premios.reduce((total, premioData) => 
+                                                total + (premioData.premio.valor_estimado * premioData.quantidade), 0
+                                            ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                        </div>
+                                        
+                                        {/* Lista de Prêmios */}
+                                        <div className="space-y-2">
+                                            {campaign.campanhas_premios.map((premioData, index) => (
+                                                <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex-1">
+                                                            <h3 className="font-medium text-gray-900">{premioData.premio.nome}</h3>
+                                                            <p className="text-sm text-gray-600">
+                                                                Quantidade: {premioData.quantidade} • 
+                                                                Valor unitário: R$ {premioData.premio.valor_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <div className="font-semibold text-green-600">
+                                                                R$ {(premioData.premio.valor_estimado * premioData.quantidade).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
-                                <div className="text-sm text-gray-600 mb-2">
-                                    {campaign.campanhas_premios && campaign.campanhas_premios.length > 0 ? (
-                                        <>
-                                            {campaign.campanhas_premios[0].premio?.descricao || 'Descrição do prêmio'} • Quantidade: {campaign.campanhas_premios[0].quantidade}
-                                        </>
-                                    ) : (
-                                        'Informações do prêmio serão exibidas quando configurado'
-                                    )}
-                                </div>
+                                
+                                {(!campaign.campanhas_premios || campaign.campanhas_premios.length === 0) && (
+                                    <div className="text-sm text-gray-600 mb-2">
+                                        Informações do prêmio serão exibidas quando configurado
+                                    </div>
+                                )}
                             </div>
 
                             {/* Nome da Campanha */}
@@ -196,7 +218,7 @@ const CampaignDetailsSidepanel: React.FC<CampaignDetailsSidepanelProps> = ({
                                 </div>
                             )}
 
-                            {progressPercentage > 100 && (
+                            {shouldShowMetaSuperada && (
                                 <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                                     <div className="flex items-center">
                                         <TrendingUp className="w-4 h-4 text-green-600 mr-2" />
@@ -263,17 +285,42 @@ const CampaignDetailsSidepanel: React.FC<CampaignDetailsSidepanelProps> = ({
                                     </div>
                                     
                                     {/* SEMPRE mostrar critérios básicos primeiro (para decisão de aceitar) */}
-                                    {isPending && (
-                                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <Target className="w-4 h-4 text-yellow-600" />
-                                                <span className="text-sm font-medium text-yellow-800">O que você precisa fazer para ganhar:</span>
+                                    <div className="space-y-3">
+                                        {Array.isArray(campaign.criteria) && campaign.criteria.map((criterion: any, index: number) => (
+                                            <div key={index} className={`${isPending ? 'bg-yellow-50 border-yellow-200' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}>
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Target className={`w-4 h-4 ${isPending ? 'text-yellow-600' : 'text-blue-600'}`} />
+                                                    <span className={`text-sm font-medium ${isPending ? 'text-yellow-800' : 'text-gray-800'}`}>
+                                                        Critério {index + 1}:
+                                                    </span>
+                                                </div>
+                                                <div className={`text-sm ${isPending ? 'text-yellow-700' : 'text-gray-700'}`}>
+                                                    • <strong>Tipo de Apólice:</strong> {criterion.policy_type === 'auto' ? 'Seguro Auto' : 'Seguro Residencial'}
+                                                    {criterion.contract_type && (
+                                                        <><br />• <strong>Tipo de Contrato:</strong> {criterion.contract_type === 'novo' ? 'Novo' : 'Renovação'}</>
+                                                    )}
+                                                    {criterion.min_value_per_policy && (
+                                                        <><br />• <strong>Valor Mínimo por Apólice:</strong> {currencyMaskFree(criterion.min_value_per_policy.toString())}</>
+                                                    )}
+                                                    {criterion.min_policies_quantity && (
+                                                        <><br />• <strong>Quantidade Mínima:</strong> {criterion.min_policies_quantity} apólices</>
+                                                    )}
+                                                    {criterion.target_value && (
+                                                        <><br />• <strong>Meta Total:</strong> {
+                                                            criterion.target_type === 'quantity' 
+                                                                ? `${criterion.target_value} apólices`
+                                                                : currencyMaskFree(criterion.target_value.toString())
+                                                        }</>
+                                                    )}
+                                                </div>
+                                                {isPending && (
+                                                    <div className="mt-2 text-xs text-yellow-600 italic">
+                                                        💡 Aceite a campanha para acompanhar seu progresso
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="text-sm text-yellow-700">
-                                                Critérios definidos pelo administrador - aceite para ver os detalhes
-                                            </div>
-                                        </div>
-                                    )}
+                                        ))}
+                                    </div>
                                     
                                     {/* Progresso detalhado APÓS aceitar */}
                                     {!isPending && criteriaDetails.length > 0 && (

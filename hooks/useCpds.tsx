@@ -37,8 +37,14 @@ export const useCpds = (userId: string | null) => {
                     try {
                         cpdData = JSON.parse(cpdData);
                     } catch (e) {
-                        console.error('Erro ao fazer parse do JSON:', e);
-                        setCpds([]);
+                        // Se não conseguir fazer parse, tratar como string simples (CPD único)
+                        const simpleCpd = {
+                            id: '1',
+                            number: cpdData,
+                            name: `CPD ${cpdData}`,
+                            isActive: true
+                        };
+                        setCpds([simpleCpd]);
                         return;
                     }
                 }

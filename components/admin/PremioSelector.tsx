@@ -9,6 +9,8 @@ interface PremioSelectorProps {
   quantidade?: number;
   onQuantidadeChange?: (quantidade: number) => void;
   disabled?: boolean;
+  allowMultiple?: boolean;
+  selectedPremios?: Array<{premio: Premio, quantidade: number}>;
 }
 
 const PremioSelector: React.FC<PremioSelectorProps> = ({
@@ -16,7 +18,9 @@ const PremioSelector: React.FC<PremioSelectorProps> = ({
   onPremioSelect,
   quantidade = 1,
   onQuantidadeChange,
-  disabled = false
+  disabled = false,
+  allowMultiple = false,
+  selectedPremios = []
 }) => {
   const { premios, loading, error, fetchPremios } = usePremios();
   const [searchTerm, setSearchTerm] = useState('');
@@ -87,7 +91,7 @@ const PremioSelector: React.FC<PremioSelectorProps> = ({
   return (
     <div className="space-y-4">
       {/* Prêmio Selecionado */}
-      {selectedPremio ? (
+      {selectedPremio && !allowMultiple ? (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -149,7 +153,7 @@ const PremioSelector: React.FC<PremioSelectorProps> = ({
           )}
         </div>
       ) : (
-         /* Seleção de Prêmio */
+         /* Seleção de Prêmio - Sempre visível quando allowMultiple é true */
          <div className="relative">
            <div className="relative">
              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -173,13 +177,16 @@ const PremioSelector: React.FC<PremioSelectorProps> = ({
                 </div>
               ) : (
                 <div className="py-1">
-                  {filteredPremios.map((premio) => (
-                    <button
-                      key={premio.id}
-                      type="button"
-                      onClick={() => handlePremioSelect(premio)}
-                      className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none"
-                    >
+                                                        {filteredPremios.map((premio) => {
+                                                            const isAlreadySelected = allowMultiple && selectedPremios.some(p => p.premio.id === premio.id);
+                                                            return (
+                                                                <button
+                                                                    key={premio.id}
+                                                                    type="button"
+                                                                    onClick={() => handlePremioSelect(premio)}
+                                                                    disabled={isAlreadySelected}
+                                                                    className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                >
                       <div className="flex items-center space-x-3">
                         {premio.imagem_miniatura_url ? (
                           <img
@@ -197,13 +204,17 @@ const PremioSelector: React.FC<PremioSelectorProps> = ({
                           <p className="text-sm text-gray-600 truncate">
                             {premio.categoria?.nome} • {premio.tipo?.nome}
                           </p>
-                          <p className="text-sm text-green-600 font-medium">
-                            R$ {premio.valor_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
+                                                                        <p className="text-sm text-green-600 font-medium">
+                                                                            R$ {premio.valor_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                                                        </p>
+                                                                        {isAlreadySelected && (
+                                                                            <p className="text-xs text-orange-600">Já adicionado</p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            </button>
+                                                            );
+                                                        })}
                 </div>
               )}
             </div>

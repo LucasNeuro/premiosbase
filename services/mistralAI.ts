@@ -158,6 +158,45 @@ class MistralAIService {
                 : `Meta de ${goalType} para ${period} com foco em resultados e crescimento.`;
         }
     }
+
+    // Função compatível com interface esperada pelo CampaignRecommendationService
+    async chat(options: {
+        model?: string;
+        messages: Array<{role: string; content: string}>;
+        temperature?: number;
+        max_tokens?: number;
+    }): Promise<{choices: Array<{message: {content: string}}>}> {
+        try {
+            // Verificar se a chave API está configurada
+            if (!AI_CONFIG.MISTRAL_API_KEY) {
+                throw new Error('Chave da API Mistral não configurada. Verifique a variável VITE_MISTRAL_KEY no arquivo .env.local');
+            }
+
+            const response = await fetch(AI_CONFIG.MISTRAL_API_URL, {
+                method: 'POST',
+                headers: getAIHeaders(),
+                body: JSON.stringify({
+                    model: options.model || AI_CONFIG.MODEL,
+                    messages: options.messages,
+                    max_tokens: options.max_tokens || AI_CONFIG.MAX_TOKENS,
+                    temperature: options.temperature || AI_CONFIG.TEMPERATURE
+                })
+            });
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Erro detalhado da API:', errorText);
+                throw new Error(`Erro na API Mistral: ${response.status} - ${response.statusText}. Detalhes: ${errorText}`);
+            }
+
+            const data: MistralResponse = await response.json();
+            return data;
+        } catch (error) {
+            console.error('❌ Erro ao chamar Mistral API via chat:', error);
+            throw error;
+        }
+    }
 }
 
 export const mistralAI = new MistralAIService();
+export { MistralAIService };

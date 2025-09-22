@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Users, FileText, TrendingUp, Award, Target, DollarSign, Calendar } from 'lucide-react';
+import BrokerSalesDonutChart from './charts/BrokerSalesDonutChart';
+import PolicyDistributionChart from './charts/PolicyDistributionChart';
+import BrokerRankingList from './BrokerRankingList';
+import SalesByCategoryList from './SalesByCategoryList';
 
 interface AdminStats {
     totalUsers: number;
@@ -44,61 +48,62 @@ const AdminStatsOverview: React.FC = () => {
 
     const fetchAdminStats = async () => {
         try {
-            // Buscar estatísticas gerais
-            const [usersResult, policiesResult, goalsResult, topPerformersResult, recentPoliciesResult] = await Promise.all([
-                supabase.from('users').select('id', { count: 'exact' }),
-                supabase.from('policies').select('premium_value, created_at', { count: 'exact' }),
-                supabase.from('admin_goals').select('id', { count: 'exact' }).eq('is_active', true),
-                supabase.rpc('get_top_performers'),
+            setLoading(true);
+            
+            // Buscar dados em tempo real usando queries diretas
+            const [usersResult, policiesResult, goalsResult] = await Promise.all([
+                supabase
+                    .from('users')
+                    .select('id')
+                    .eq('is_admin', false),
                 supabase
                     .from('policies')
-                    .select(`
-                        id,
-                        policy_number,
-                        type,
-                        premium_value,
-                        created_at,
-                        users!inner(name)
-                    `)
-                    .order('created_at', { ascending: false })
-                    .limit(10)
+                    .select('premium_value, created_at'),
+                supabase
+                    .from('goals')
+                    .select('status')
+                    .eq('record_type', 'campaign')
             ]);
 
-            // Calcular receita total
+            if (usersResult.error) throw usersResult.error;
+            if (policiesResult.error) throw policiesResult.error;
+            if (goalsResult.error) throw goalsResult.error;
+
             const totalRevenue = policiesResult.data?.reduce((sum, policy) => sum + Number(policy.premium_value), 0) || 0;
+            const activeGoals = goalsResult.data?.filter(goal => goal.status === 'active').length || 0;
+            const completedGoals = goalsResult.data?.filter(goal => goal.status === 'completed').length || 0;
 
             // Calcular crescimento mensal
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-            const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-            const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+            const currentMonth = new Date();
+            const previousMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+            const currentMonthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
 
-            const currentMonthPolicies = policiesResult.data?.filter(p => {
-                const date = new Date(p.created_at);
-                return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-            }) || [];
+            const [currentMonthResult, previousMonthResult] = await Promise.all([
+                supabase
+                    .from('policies')
+                    .select('premium_value')
+                    .gte('created_at', currentMonthStart.toISOString())
+                    .lt('created_at', new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1).toISOString()),
+                supabase
+                    .from('policies')
+                    .select('premium_value')
+                    .gte('created_at', previousMonth.toISOString())
+                    .lt('created_at', currentMonthStart.toISOString())
+            ]);
 
-            const lastMonthPolicies = policiesResult.data?.filter(p => {
-                const date = new Date(p.created_at);
-                return date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear;
-            }) || [];
-
-            const monthlyGrowth = lastMonthPolicies.length > 0 
-                ? ((currentMonthPolicies.length - lastMonthPolicies.length) / lastMonthPolicies.length) * 100 
-                : 0;
+            const currentMonthRevenue = currentMonthResult.data?.reduce((sum, policy) => sum + Number(policy.premium_value), 0) || 0;
+            const previousMonthRevenue = previousMonthResult.data?.reduce((sum, policy) => sum + Number(policy.premium_value), 0) || 0;
+            const monthlyGrowth = previousMonthRevenue > 0 ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100 : 0;
 
             setStats({
-                totalUsers: usersResult.count || 0,
-                totalPolicies: policiesResult.count || 0,
-                totalRevenue,
-                monthlyGrowth,
-                activeGoals: goalsResult.count || 0,
-                completedGoals: 0, // Será calculado separadamente
-                topPerformers: topPerformersResult.data || [],
-                recentPolicies: recentPoliciesResult.data?.map(p => ({
-                    ...p,
-                    user_name: p.users?.name || 'N/A'
-                })) || []
+                totalUsers: usersResult.data?.length || 0,
+                totalPolicies: policiesResult.data?.length || 0,
+                totalRevenue: totalRevenue,
+                monthlyGrowth: Math.round(monthlyGrowth * 10) / 10,
+                activeGoals: activeGoals,
+                completedGoals: completedGoals,
+                topPerformers: [],
+                recentPolicies: []
             });
         } catch (error) {
             console.error('Error fetching admin stats:', error);
@@ -111,11 +116,89 @@ const AdminStatsOverview: React.FC = () => {
         return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     };
 
+    // Componente de Skeleton para os minicards
+    const SkeletonCard = () => (
+        <div className="bg-[#1E293B] border border-slate-700 rounded-lg shadow-lg animate-pulse">
+            <div className="p-5">
+                <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 h-12 w-12 rounded-full bg-slate-600"></div>
+                    <div className="flex-1 space-y-2">
+                        <div className="h-3 bg-slate-600 rounded w-3/4"></div>
+                        <div className="h-6 bg-slate-600 rounded w-1/2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+
     if (loading) {
         return (
-            <div className="p-6">
-                <div className="flex items-center justify-center h-64">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <div className="p-6 space-y-6">
+                {/* Header com título e ações */}
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-800">Resumo Geral</h2>
+                        <p className="text-gray-600 mt-2">Visão geral completa do sistema</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="text-sm text-gray-500">
+                            Carregando...
+                        </div>
+                    </div>
+                </div>
+
+                {/* Minicards com Skeleton */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                    <SkeletonCard />
+                    <SkeletonCard />
+                    <SkeletonCard />
+                    <SkeletonCard />
+                    <SkeletonCard />
+                    <SkeletonCard />
+                </div>
+
+                {/* Gráficos com Skeleton */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+                        <div className="h-64 bg-gray-200 rounded"></div>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+                        <div className="h-64 bg-gray-200 rounded"></div>
+                    </div>
+                </div>
+
+                {/* Listas com Skeleton */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+                        <div className="space-y-3">
+                            {[...Array(5)].map((_, i) => (
+                                <div key={i} className="flex items-center space-x-3">
+                                    <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="bg-white rounded-xl shadow-lg p-6 animate-pulse">
+                        <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
+                        <div className="space-y-3">
+                            {[...Array(5)].map((_, i) => (
+                                <div key={i} className="flex items-center space-x-3">
+                                    <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -123,133 +206,163 @@ const AdminStatsOverview: React.FC = () => {
 
     return (
         <div className="p-6 space-y-6">
-            {/* Cards de Estatísticas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            {/* Header com título e ações */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <p className="text-gray-600 mt-2">Visão geral completa do sistema</p>
+                </div>
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <Users className="w-5 h-5 text-blue-600" />
+                    <div className="text-sm text-gray-500">
+                        Última atualização: {new Date().toLocaleString('pt-BR')}
+                    </div>
+                    <button 
+                        onClick={fetchAdminStats}
+                        className="px-4 py-2 bg-[#1e293b] text-white rounded-lg hover:bg-[#334155] transition-colors"
+                    >
+                        Atualizar
+                    </button>
+                </div>
+            </div>
+
+            {/* Minicards - Design igual ao corretor */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+                {/* Total de Corretores */}
+                <div className="bg-[#1E293B] border border-slate-700 rounded-lg shadow-lg">
+                    <div className="p-5">
+                        <div className="flex items-start space-x-4">
+                            <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-full bg-[#49de80] text-white shadow-lg">
+                                <Users className="h-6 w-6" />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Total de Corretores</p>
-                            <p className="text-2xl font-bold text-gray-800">{stats.totalUsers}</p>
+                                <p className="text-sm font-medium text-slate-300 truncate">Total de Corretores</p>
+                                <p className="mt-2 text-xl font-semibold text-white">{stats.totalUsers}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                            <FileText className="w-5 h-5 text-green-600" />
+                {/* Total de Apólices */}
+                <div className="bg-[#1E293B] border border-slate-700 rounded-lg shadow-lg">
+                    <div className="p-5">
+                        <div className="flex items-start space-x-4">
+                            <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-full bg-[#49de80] text-white shadow-lg">
+                                <FileText className="h-6 w-6" />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Total de Apólices</p>
-                            <p className="text-2xl font-bold text-gray-800">{stats.totalPolicies}</p>
+                                <p className="text-sm font-medium text-slate-300 truncate">Total de Apólices</p>
+                                <p className="mt-2 text-xl font-semibold text-white">{stats.totalPolicies}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                            <DollarSign className="w-5 h-5 text-purple-600" />
+                {/* Receita Total */}
+                <div className="bg-[#1E293B] border border-slate-700 rounded-lg shadow-lg">
+                    <div className="p-5">
+                        <div className="flex items-start space-x-4">
+                            <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-full bg-[#49de80] text-white shadow-lg">
+                                <DollarSign className="h-6 w-6" />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Receita Total</p>
-                            <p className="text-2xl font-bold text-gray-800">{formatCurrency(stats.totalRevenue)}</p>
+                                <p className="text-sm font-medium text-slate-300 truncate">Receita Total</p>
+                                <p className="mt-2 text-xl font-semibold text-[#49de80]">{formatCurrency(stats.totalRevenue)}</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
-                            <TrendingUp className="w-5 h-5 text-orange-600" />
+                {/* Crescimento Mensal */}
+                <div className="bg-[#1E293B] border border-slate-700 rounded-lg shadow-lg">
+                    <div className="p-5">
+                        <div className="flex items-start space-x-4">
+                            <div className="flex-shrink-0 h-12 w-12 flex items-center justify-center rounded-full bg-[#49de80] text-white shadow-lg">
+                                <TrendingUp className="h-6 w-6" />
                         </div>
                         <div>
-                            <p className="text-sm text-gray-500">Crescimento Mensal</p>
-                            <p className="text-2xl font-bold text-gray-800">{stats.monthlyGrowth.toFixed(1)}%</p>
+                                <p className="text-sm font-medium text-slate-300 truncate">Crescimento Mensal</p>
+                                <p className={`mt-2 text-xl font-semibold ${
+                                    stats.monthlyGrowth >= 0 ? 'text-[#49de80]' : 'text-red-400'
+                                }`}>
+                                    {stats.monthlyGrowth >= 0 ? '+' : ''}{stats.monthlyGrowth.toFixed(1)}%
+                                </p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Top Performers e Apólices Recentes */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Top Performers */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Award className="w-5 h-5 text-yellow-500" />
-                        <h3 className="text-lg font-semibold text-gray-800">Top Performers</h3>
-                    </div>
-                    <div className="space-y-3">
-                        {stats.topPerformers.slice(0, 5).map((performer, index) => (
-                            <div key={performer.user_id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 bg-[#1E293B] text-white rounded-full flex items-center justify-center text-sm font-bold">
-                                        {index + 1}
+                {/* Metas Ativas */}
+                <div className="bg-[#1E293B] border border-slate-700 rounded-lg shadow-lg">
+                    <div className="p-4">
+                        <div className="flex items-start space-x-3">
+                            <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-[#49de80] text-white shadow-lg">
+                                <Target className="h-5 w-5" />
                                     </div>
                                     <div>
-                                        <p className="font-medium text-gray-800">{performer.name}</p>
-                                        <p className="text-sm text-gray-500">{performer.policies_count} apólices</p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-semibold text-gray-800">{formatCurrency(performer.total_revenue)}</p>
-                                </div>
+                                <p className="text-xs font-medium text-slate-300 truncate">Metas Ativas</p>
+                                <p className="mt-1 text-lg font-semibold text-white">{stats.activeGoals}</p>
                             </div>
-                        ))}
+                        </div>
                     </div>
                 </div>
 
-                {/* Apólices Recentes */}
-                <div className="bg-white border border-gray-200 rounded-lg p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                        <Calendar className="w-5 h-5 text-blue-500" />
-                        <h3 className="text-lg font-semibold text-gray-800">Apólices Recentes</h3>
+                {/* Metas Concluídas */}
+                <div className="bg-[#1E293B] border border-slate-700 rounded-lg shadow-lg">
+                    <div className="p-4">
+                        <div className="flex items-start space-x-3">
+                            <div className="flex-shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-[#49de80] text-white shadow-lg">
+                                <Award className="h-5 w-5" />
                     </div>
-                    <div className="space-y-3">
-                        {stats.recentPolicies.slice(0, 5).map((policy) => (
-                            <div key={policy.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                 <div>
-                                    <p className="font-medium text-gray-800">{policy.policy_number}</p>
-                                    <p className="text-sm text-gray-500">{policy.user_name}</p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-semibold text-gray-800">{formatCurrency(policy.premium_value)}</p>
-                                    <p className="text-sm text-gray-500">{policy.type}</p>
-                                </div>
+                                <p className="text-xs font-medium text-slate-300 truncate">Metas Concluídas</p>
+                                <p className="mt-1 text-lg font-semibold text-white">{stats.completedGoals}</p>
                             </div>
-                        ))}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Resumo de Metas */}
-            <div className="bg-gradient-to-r from-[#1E293B] to-slate-700 rounded-lg p-6 text-white">
-                <div className="flex items-center gap-2 mb-4">
-                    <Target className="w-6 h-6" />
-                    <h3 className="text-xl font-semibold">Resumo das Metas</h3>
+            {/* Gráficos - Primeira Linha */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Gráfico de Vendas por Corretor */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-gradient-to-br from-[#1e293b] to-[#334155] rounded-xl flex items-center justify-center">
+                            <Users className="w-5 h-5 text-white" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-gray-800">Vendas por Corretor</h3>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center">
-                        <p className="text-3xl font-bold">{stats.activeGoals}</p>
-                        <p className="text-slate-300">Metas Ativas</p>
+                    <div className="h-80">
+                        <BrokerSalesDonutChart />
                     </div>
-                    <div className="text-center">
-                        <p className="text-3xl font-bold">{stats.completedGoals}</p>
-                        <p className="text-slate-300">Metas Concluídas</p>
+                </div>
+
+                {/* Gráfico de Distribuição de Apólices */}
+                <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-gradient-to-br from-[#49de80] to-[#22c55e] rounded-xl flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-white" />
+                        </div>
+                        <h3 className="text-xl font-semibold text-gray-800">Distribuição de Apólices</h3>
                     </div>
-                    <div className="text-center">
-                        <p className="text-3xl font-bold">
-                            {stats.activeGoals > 0 ? ((stats.completedGoals / stats.activeGoals) * 100).toFixed(1) : 0}%
-                        </p>
-                        <p className="text-slate-300">Taxa de Conclusão</p>
+                    <div className="h-80">
+                        <PolicyDistributionChart />
                     </div>
                 </div>
             </div>
+
+            {/* Cards - Segunda Linha */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Ranking de Corretores */}
+                <BrokerRankingList />
+
+                {/* Vendas por Categoria de Corretores */}
+                <SalesByCategoryList />
+            </div>
+
+
         </div>
     );
 };
 
 export default AdminStatsOverview;
+

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { CompositeCampaignService, CompositeCampaignProgress } from '../services/compositeCampaignService';
+import { UnifiedCampaignProgressService, UnifiedCampaignProgress } from '../services/unifiedCampaignProgressService';
 
 export const useCompositeCampaignProgress = (userId: string) => {
     const [loading, setLoading] = useState(false);
@@ -15,7 +15,7 @@ export const useCompositeCampaignProgress = (userId: string) => {
         setError(null);
 
         try {
-            await CompositeCampaignService.recalculateUserCompositeCampaigns(userId);
+            await UnifiedCampaignProgressService.recalculateUserCampaigns(userId);
         } catch (err: any) {
             console.error('Erro ao recalcular progresso:', err);
             setError(err.message);
@@ -28,21 +28,12 @@ export const useCompositeCampaignProgress = (userId: string) => {
      * Calcula o progresso de uma campanha específica
      */
     const calculateCampaignProgress = useCallback(async (
-        goalId: string,
-        startDate: string,
-        endDate: string,
-        criteria: any[]
-    ): Promise<CompositeCampaignProgress | null> => {
+        goalId: string
+    ): Promise<UnifiedCampaignProgress | null> => {
         if (!userId) return null;
 
         try {
-            return await CompositeCampaignService.calculateCompositeCampaignProgress(
-                goalId,
-                userId,
-                startDate,
-                endDate,
-                criteria
-            );
+            return await UnifiedCampaignProgressService.calculateCampaignProgress(goalId);
         } catch (err: any) {
             console.error('Erro ao calcular progresso da campanha:', err);
             setError(err.message);

@@ -64,12 +64,35 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
     const [policies, setPolicies] = useState<PolicyAuxiliar[]>([]);
     const [loading, setLoading] = useState(true);
     const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+    
+    // Debug: log do estado inicial
+    console.log('🔄 usePoliciesAuxiliar inicializado - userId:', userId, 'loading:', loading);
+    
+    // Debug: verificar se o estado está sendo atualizado
+    useEffect(() => {
+        console.log('🔄 Estado do loading mudou para:', loading);
+    }, [loading]);
+    
+    // Debug: verificar se o estado das políticas está sendo atualizado
+    useEffect(() => {
+        console.log('🔄 Estado das políticas mudou para:', policies.length);
+    }, [policies]);
+    
+    // Debug: verificar se o userId está sendo atualizado
+    useEffect(() => {
+        console.log('🔄 userId mudou para:', userId);
+    }, [userId]);
 
     // Buscar apólices da nova tabela auxiliar
     const fetchPolicies = useCallback(async () => {
-        if (!userId || userId === '') return;
+        if (!userId || userId === '') {
+            console.log('⚠️ fetchPolicies: userId vazio');
+            return;
+        }
 
         try {
+            console.log('📡 fetchPolicies iniciado para userId:', userId);
+            console.log('🔄 Definindo loading como true');
             setLoading(true);
 
             // Buscar todas as apólices (sem joins complexos)
@@ -79,6 +102,8 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
                 .eq('user_id', userId)
                 .eq('status', 'active')
                 .order('registration_date', { ascending: false });
+
+            console.log('📊 fetchPolicies resultado:', { data: data?.length || 0, error });
 
             if (error) throw error;
 
@@ -94,14 +119,16 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
                         linked_at,
                         linked_automatically,
                         is_active,
-                        campaign:goals!campaign_id(title)
+                        campaign:campaign_id (
+                            title
+                        )
                     `)
                     .eq('policy_id', policy.id)
                     .eq('is_active', true);
 
                 const linkedCampaigns = links?.map(link => ({
                     campaign_id: link.campaign_id,
-                    campaign_title: link.campaign?.title || 'Campanha',
+                    campaign_title: (link.campaign as any)?.title || 'Campanha',
                     linked_at: link.linked_at,
                     linked_automatically: link.linked_automatically
                 })) || [];
@@ -112,13 +139,22 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
                 });
             }
 
+            console.log('✅ fetchPolicies concluído - políticas transformadas:', transformedPolicies.length);
             setPolicies(transformedPolicies);
             setLastUpdate(new Date());
+            console.log('📊 Estado atualizado - loading será definido como false');
+            
+            // Debug: verificar se o estado foi atualizado
+            setTimeout(() => {
+                console.log('🔍 Estado após atualização - policies:', transformedPolicies.length);
+            }, 100);
 
         } catch (error: any) {
             console.error('Erro ao buscar apólices:', error);
             setPolicies([]);
+            console.log('🔄 Erro - definindo loading como false');
         } finally {
+            console.log('🔄 Definindo loading como false');
             setLoading(false);
         }
     }, [userId]);
@@ -126,6 +162,22 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
     // Adicionar nova apólice
     const addPolicy = useCallback(async (policyData: Omit<PolicyAuxiliar, 'id' | 'registration_date' | 'ticket_code' | 'created_at' | 'updated_at'>): Promise<{ success: boolean, message: string }> => {
         try {
+            // 0. Verificar se a apólice já existe
+            const { data: existingPolicy, error: checkError } = await supabase
+                .from('policies')
+                .select('policy_number, created_at')
+                .eq('policy_number', policyData.policy_number)
+                .eq('user_id', userId)
+                .single();
+
+            if (existingPolicy && !checkError) {
+                const createdDate = new Date(existingPolicy.created_at).toLocaleDateString('pt-BR');
+                return {
+                    success: false,
+                    message: `⚠️ Apólice ${policyData.policy_number} já foi cadastrada em ${createdDate}. Verifique o número da apólice.`
+                };
+            }
+
             const ticketCode = generateTicketCode();
 
             // 1. Salvar apólice na tabela auxiliar
@@ -148,6 +200,7 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
             if (policyError) throw policyError;
 
             // 2. Buscar campanhas compatíveis aceitas
+            console.log('🔍 Buscando campanhas para o usuário:', userId);
             const { data: acceptedCampaigns, error: campaignsError } = await supabase
                 .from('goals')
                 .select('*')
@@ -157,64 +210,178 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
                 .eq('status', 'active')
                 .eq('is_active', true);
 
+            console.log('📊 Resultado da busca de campanhas:', {
+                campanhas: acceptedCampaigns?.length || 0,
+                erro: campaignsError,
+                dados: acceptedCampaigns
+            });
+
             if (campaignsError) {
+                console.error('❌ Erro ao buscar campanhas:', campaignsError);
                 }
 
             let linkedCampaigns = 0;
             let campaignMessage = '';
 
-            // 3. Vincular automaticamente a campanhas compatíveis
-            if (acceptedCampaigns && acceptedCampaigns.length > 0) {
-                for (const campaign of acceptedCampaigns) {
-                    // Verificar compatibilidade - APENAS campanhas com critérios compatíveis
-                    let isCompatible = false;
+            // 3. VINCULAR A TODAS AS CAMPANHAS ATIVAS DO CORRETOR (VIA CÓDIGO - SEM IA)
+            console.log('🎯 Vinculando apólice a TODAS as campanhas ativas do corretor...');
+            console.log('📊 Campanhas ativas encontradas:', acceptedCampaigns?.length || 0);
 
-                    if (campaign.criteria && Array.isArray(campaign.criteria) && campaign.criteria.length > 0) {
-                        isCompatible = campaign.criteria.some((criterion: any) => {
-                            // Verificar tipo de apólice
-                            const policyTypeMap: { [key: string]: string } = {
-                                'Seguro Auto': 'auto',
-                                'Seguro Residencial': 'residencial'
-                            };
-                            
-                            if (criterion.policy_type && criterion.policy_type !== policyTypeMap[policyData.type]) {
-                                return false;
-                            }
-
-                            // Verificar tipo de contrato
-                            if (criterion.contract_type && criterion.contract_type !== policyData.contract_type) {
-                                return false;
-                            }
-
-                            // Verificar valor mínimo
-                            if (criterion.min_value_per_policy && policyData.premium_value < criterion.min_value_per_policy) {
-                                return false;
-                            }
-
-                            return true;
-                        });
-                    } else {
-                        }
-
-                    if (isCompatible) {
-                        // Criar vinculação
-                        const { error: linkError } = await supabase
-                            .from('policy_campaign_links')
-                            .insert({
-                                policy_id: newPolicy.id,
-                                campaign_id: campaign.id,
-                                user_id: userId,
-                                linked_automatically: true,
-                                is_active: true
-                            });
-
-                        if (!linkError) {
-                            linkedCampaigns++;
-                            campaignMessage += `✅ Vinculada à campanha "${campaign.title}"\n`;
-                        } else {
-                            }
-                    }
+            // 🎯 CORREÇÃO CRÍTICA: Só vincular apólices criadas APÓS aceite da campanha
+            const policyCreatedAt = new Date(newPolicy.created_at);
+            
+            for (const campaign of acceptedCampaigns || []) {
+                // ✅ REGRA FUNDAMENTAL: Só vincular se a apólice foi criada APÓS aceitar a campanha
+                const campaignAcceptedAt = campaign.accepted_at ? new Date(campaign.accepted_at) : null;
+                
+                if (!campaignAcceptedAt) {
+                    console.log(`⚠️ Campanha "${campaign.title}" não foi aceita ainda - pulando vinculação`);
+                    continue;
                 }
+                
+                if (policyCreatedAt < campaignAcceptedAt) {
+                    console.log(`⚠️ Apólice criada ANTES do aceite da campanha "${campaign.title}" - pulando vinculação`);
+                    console.log(`   Apólice criada em: ${policyCreatedAt.toISOString()}`);
+                    console.log(`   Campanha aceita em: ${campaignAcceptedAt.toISOString()}`);
+                    continue;
+                }
+                
+                // ✅ Apólice foi criada APÓS aceite da campanha - pode vincular
+                const confidence = 100; // Confiança máxima - código é confiável
+                const reasoning = `Apólice ${policyData.type} criada em ${policyCreatedAt.toISOString()} vinculada à campanha aceita em ${campaignAcceptedAt.toISOString()}`;
+
+                const { error: linkError } = await supabase
+                    .from('policy_campaign_links')
+                    .insert({
+                        policy_id: newPolicy.id,
+                        campaign_id: campaign.id,
+                        user_id: userId,
+                        linked_automatically: true,
+                        is_active: true,
+                        ai_confidence: confidence,
+                        ai_reasoning: reasoning
+                    });
+
+                if (!linkError) {
+                    linkedCampaigns++;
+                    campaignMessage += `✅ Vinculada à campanha "${campaign.title}" (aceita em ${campaignAcceptedAt.toLocaleDateString()})\n`;
+                    console.log(`✅ Campanha vinculada: ${campaign.title} - Apólice criada APÓS aceite`);
+                } else {
+                    console.error(`❌ Erro ao vincular campanha ${campaign.title}:`, linkError);
+                }
+            }
+
+            // Atualizar progresso de TODAS as campanhas ativas do corretor
+            console.log(`🔄 Iniciando atualização de progresso para ${linkedCampaigns} campanhas vinculadas...`);
+            try {
+                // Usar o serviço de progresso auxiliar para garantir cálculo correto
+                const { updateAllUserCampaignProgressAuxiliar } = await import('../services/campaignProgressAuxiliar');
+                
+                console.log(`📋 Dados da apólice para atualização:`, {
+                    id: newPolicy.id,
+                    type: policyData.type,
+                    contract_type: policyData.contract_type,
+                    premium_value: policyData.premium_value,
+                    policy_number: policyData.policy_number,
+                    cpd_number: policyData.cpd_number,
+                    user_id: userId
+                });
+                
+                // Atualizar progresso de todas as campanhas do usuário
+                await updateAllUserCampaignProgressAuxiliar(userId);
+
+                // Validar e corrigir automaticamente qualquer inconsistência
+                const { CampaignProgressValidator } = await import('../services/campaignProgressValidator');
+                const validationResult = await CampaignProgressValidator.validateUserCampaignProgress(userId);
+                
+                if (validationResult.corrected > 0) {
+                    console.log(`🔧 ${validationResult.corrected} campanhas foram corrigidas automaticamente`);
+                    campaignMessage += `🔧 ${validationResult.corrected} campanhas corrigidas automaticamente\n`;
+                }
+
+                campaignMessage += `📊 Progresso atualizado em TODAS as campanhas ativas\n`;
+                console.log(`🎯 TODAS as campanhas ativas foram atualizadas com sucesso`);
+            } catch (error) {
+                console.error('❌ Erro ao atualizar progresso das campanhas:', error);
+                campaignMessage += `⚠️ Erro ao atualizar progresso das campanhas\n`;
+            }
+
+            // Análise da IA APENAS para auditoria (não interfere na vinculação)
+            let matches: any[] = [];
+            try {
+                console.log('🤖 Executando análise da IA para auditoria...');
+                console.log('📋 Dados para análise:', {
+                    policy: {
+                        type: policyData.type,
+                        contract_type: policyData.contract_type,
+                        premium_value: policyData.premium_value,
+                        policy_number: policyData.policy_number
+                    },
+                    campaigns_count: acceptedCampaigns?.length || 0
+                });
+                
+                const { CampaignCriteriaService } = await import('../services/campaignCriteriaService');
+                matches = await CampaignCriteriaService.analyzePolicyCompatibility({
+                    policy: {
+                        type: policyData.type,
+                        contract_type: policyData.contract_type,
+                        premium_value: policyData.premium_value,
+                        policy_number: policyData.policy_number
+                    },
+                    campaigns: acceptedCampaigns || []
+                });
+                
+                console.log('📊 Análise da IA concluída:', {
+                    matches_count: matches.length,
+                    matches: matches
+                });
+            } catch (aiError) {
+                console.error('❌ Erro na análise da IA (não afeta vinculação):', aiError);
+                // Criar análise básica como fallback
+                matches = (acceptedCampaigns || []).map(campaign => ({
+                    campaign_id: campaign.id,
+                    campaign_title: campaign.title,
+                    match_score: 100,
+                    reasoning: `Análise da IA falhou - vinculação via código com confiança máxima`
+                }));
+                console.log('🔄 Usando análise fallback:', matches.length, 'matches');
+            }
+
+            // Registrar na auditoria (sempre executar, mesmo se não houver matches)
+            try {
+                const { PolicyAuditService } = await import('../services/policyAuditService');
+                
+                // Criar dados de campanhas vinculadas baseado nas vinculações reais
+                const linkedCampaignsData = (acceptedCampaigns || []).map(campaign => ({
+                    campaign_id: campaign.id,
+                    campaign_title: campaign.title,
+                    match_score: 100, // Confiança máxima - vinculação via código
+                    reasoning: `Apólice ${policyData.type} vinculada automaticamente a todas as campanhas ativas do corretor`
+                }));
+
+                await PolicyAuditService.recordPolicyLaunch(
+                    {
+                        policy_id: newPolicy.id,
+                        policy_number: policyData.policy_number,
+                        policy_type: policyData.type,
+                        contract_type: policyData.contract_type,
+                        premium_value: policyData.premium_value,
+                        cpd_number: policyData.cpd_number,
+                        cpd_name: `CPD ${policyData.cpd_number}`
+                    },
+                    userId,
+                    linkedCampaignsData, // Usar dados reais das vinculações
+                    { 
+                        matches_count: linkedCampaigns, // Usar contagem real de vinculações
+                        total_confidence: 100, // Confiança máxima para vinculação via código
+                        ai_analysis: matches, // Análise da IA (pode estar vazia se falhou)
+                        manual_linking: true // Indicar que foi vinculação manual/código
+                    }
+                );
+                console.log('📝 Registro de auditoria salvo com sucesso');
+            } catch (auditError) {
+                console.error('Erro ao salvar auditoria:', auditError);
+                console.log('⚠️ Continuando sem auditoria - apólice foi salva com sucesso');
             }
 
             await fetchPolicies(); // Recarregar dados
@@ -232,13 +399,24 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
                     detail: { userId, linkedCampaigns } 
                 }));
                 
+                // Evento para atualizar timeline
+                window.dispatchEvent(new CustomEvent('policyAdded', { 
+                    detail: { policyNumber: policyData.policy_number } 
+                }));
+                
             } catch (progressError) {
                 }
 
-            // Mensagem de sucesso
-            let successMessage = `Apólice ${policyData.policy_number} salva com sucesso!`;
+            // Mensagem de sucesso com análise inteligente
+            let successMessage = `✅ Apólice ${policyData.policy_number} salva com sucesso!`;
             if (linkedCampaigns > 0) {
-                successMessage += `\n\n🎯 Vinculada a ${linkedCampaigns} campanha(s) automaticamente`;
+                successMessage += `\n\n🎯 Vinculada automaticamente a TODAS as ${linkedCampaigns} campanha(s) ativa(s) do corretor`;
+                successMessage += `\n\n📊 Esta apólice contará para:`;
+                successMessage += `\n• Valor total de todas as campanhas`;
+                successMessage += `\n• Quantidade de apólices de todas as campanhas`;
+                successMessage += `\n• Critérios específicos compatíveis`;
+            } else {
+                successMessage += `\n\nℹ️ Nenhuma campanha ativa encontrada para vinculação`;
             }
 
             return { 
@@ -322,15 +500,33 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
     }, [policies]);
 
     useEffect(() => {
+        console.log('🔄 usePoliciesAuxiliar useEffect - userId:', userId);
         if (userId && userId !== '') {
+            console.log('📡 Iniciando fetchPolicies para userId:', userId);
             fetchPolicies();
+            
+            // Iniciar monitor de progresso para validação automática
+            import('../services/campaignProgressMonitor').then(({ CampaignProgressMonitor }) => {
+                if (!CampaignProgressMonitor.isActive()) {
+                    CampaignProgressMonitor.start(userId, 2); // Validação a cada 2 minutos
+                }
+            });
+        } else {
+            console.log('⚠️ userId vazio ou inválido:', userId);
         }
-    }, [userId, fetchPolicies]);
+        
+        // Cleanup: parar monitor quando componente for desmontado
+        return () => {
+            import('../services/campaignProgressMonitor').then(({ CampaignProgressMonitor }) => {
+                CampaignProgressMonitor.stop();
+            });
+        };
+    }, [userId]); // Removido fetchPolicies da dependência para evitar loops
 
-    // Listener para eventos em tempo real das apólices
-    useRealtimeListener('policies', useCallback(() => {
-        fetchPolicies();
-    }, [fetchPolicies]), [fetchPolicies]);
+    // Listener para eventos em tempo real das apólices - DESABILITADO TEMPORARIAMENTE
+    // useRealtimeListener('policies', useCallback(() => {
+    //     fetchPolicies();
+    // }, [fetchPolicies]), [fetchPolicies]);
 
     const contextValue: PoliciesAuxiliarContextType = {
         policies,

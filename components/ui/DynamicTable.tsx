@@ -23,6 +23,7 @@ interface DynamicTableProps<T> {
   renderExpandedRow?: (item: T) => React.ReactNode;
   getRowId?: (item: T) => string;
   expandedRowId?: string | null;
+  hideSearch?: boolean;
 }
 
 function DynamicTable<T>({
@@ -34,7 +35,8 @@ function DynamicTable<T>({
   loading = false,
   renderExpandedRow,
   getRowId,
-  expandedRowId
+  expandedRowId,
+  hideSearch = false
 }: DynamicTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -85,23 +87,25 @@ function DynamicTable<T>({
     <div className="table-container">
       {/* Header */}
       <div className="table-header">
-        <h2 className="table-title">{title}</h2>
-        <div className="table-filters">
-          <div className="table-search">
-            <Search className="table-search-icon" />
-            <input
-              type="text"
-              placeholder={searchPlaceholder}
-              value={globalFilter}
-              onChange={(e) => setGlobalFilter(e.target.value)}
-            />
+        {title && <h2 className="table-title">{title}</h2>}
+        {!hideSearch && (
+          <div className="table-filters">
+            <div className="table-search">
+              <Search className="table-search-icon" />
+              <input
+                type="text"
+                placeholder={searchPlaceholder}
+                value={globalFilter}
+                onChange={(e) => setGlobalFilter(e.target.value)}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Table */}
       <div className="table-scroll-container">
-        <table className="table">
+        <table className="table" style={{ minWidth: '1200px' }}>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { CampaignCriteria } from '../../hooks/useGoals';
 import { User } from '../../types';
-import { Plus, X, Car, Home, Target, DollarSign, Hash, Users, Package } from 'lucide-react';
+import { Plus, X, Car, Home, Target, DollarSign, Hash, Users, Package, Search } from 'lucide-react';
 import Button from '../ui/Button';
 import Alert from '../ui/Alert';
 import AIDescriptionField from '../ui/AIDescriptionField';
@@ -26,7 +26,7 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
     const [users, setUsers] = useState<User[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+    const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' | 'warning' } | null>(null);
     
     const [formData, setFormData] = useState({
         target_type: 'individual' as 'individual' | 'group',
@@ -40,8 +40,9 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
     });
 
     const [maskedValues, setMaskedValues] = useState<Record<string, string>>({});
-    const [selectedPremio, setSelectedPremio] = useState<Premio | null>(null);
-    const [premioQuantidade, setPremioQuantidade] = useState(1);
+    const [selectedPremios, setSelectedPremios] = useState<Array<{premio: Premio, quantidade: number}>>([]);
+    const [currentPremio, setCurrentPremio] = useState<Premio | null>(null);
+    const [currentQuantidade, setCurrentQuantidade] = useState(1);
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -62,8 +63,12 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
             });
             setErrors({});
             setMessage(null);
+            setSelectedPremios([]);
+            setCurrentPremio(null);
+            setCurrentQuantidade(1);
         }
     }, [isOpen]);
+
 
     const fetchUsers = async () => {
         try {
@@ -221,6 +226,14 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
         if (formData.criteria.length === 0) {
             newErrors.criteria = 'Adicione pelo menos um critério';
         }
+
+        if (selectedPremios.length === 0) {
+            newErrors.premio = 'Selecione pelo menos um prêmio para a campanha';
+        }
+        
+        if (selectedPremios.length > 4) {
+            newErrors.premio = 'Máximo de 4 prêmios por campanha';
+        }
         
         formData.criteria.forEach((criteria, index) => {
             // Validar meta
@@ -252,6 +265,31 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
     const { createCampaign } = useCampaigns();
     const { vincularPremioCampanha } = usePremios();
 
+    // Funções para gerenciar múltiplos prêmios
+    const addPremio = () => {
+        if (currentPremio && currentQuantidade > 0) {
+            // Verificar limite de 4 prêmios
+            if (selectedPremios.length >= 4) {
+                alert('Limite máximo de 4 prêmios por campanha!');
+                return;
+            }
+            
+            // Verificar se o prêmio já foi adicionado
+            const alreadyExists = selectedPremios.some(p => p.premio.id === currentPremio.id);
+            if (!alreadyExists) {
+                setSelectedPremios(prev => [...prev, { premio: currentPremio, quantidade: currentQuantidade }]);
+                setCurrentPremio(null);
+                setCurrentQuantidade(1);
+            } else {
+                alert('Este prêmio já foi adicionado à campanha!');
+            }
+        }
+    };
+
+    const removePremio = (premioId: string) => {
+        setSelectedPremios(prev => prev.filter(p => p.premio.id !== premioId));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setMessage(null);
@@ -281,8 +319,10 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                     min_value_per_policy: criterion.min_value || 0,
                     order_index: 0
                 })),
-                selectedPremio: selectedPremio,
-                premioQuantidade: premioQuantidade
+                selectedPremios: selectedPremios.map(p => ({
+                    premio: { id: p.premio.id, nome: p.premio.nome },
+                    quantidade: p.quantidade
+                }))
             };
 
             const createdCampaign = await createCampaign(campaignData);
@@ -310,8 +350,10 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
 
             // Prêmios já foram vinculados dentro do createCampaign para campanhas de grupo
             // Para campanhas individuais, vincular aqui
-            if (formData.target_type === 'individual' && selectedPremio && createdCampaign?.id) {
-                await vincularPremioCampanha(createdCampaign.id, selectedPremio.id, premioQuantidade);
+            if (formData.target_type === 'individual' && selectedPremios.length > 0 && createdCampaign?.id) {
+                for (const premioData of selectedPremios) {
+                    await vincularPremioCampanha(createdCampaign.id, premioData.premio.id, premioData.quantidade);
+                }
                 }
 
             if (formData.target_type === 'individual') {
@@ -521,26 +563,91 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <h3 className="font-medium text-blue-900 mb-3 flex items-center gap-2">
                                 <Package className="w-5 h-5" />
-                                Prêmio da Campanha
+                                Prêmios da Campanha
                             </h3>
                             <p className="text-sm text-blue-700 mb-4">
-                                Selecione o prêmio que será entregue aos corretores que atingirem os critérios desta campanha.
+                                Selecione os prêmios que serão entregues aos corretores que atingirem os critérios desta campanha.
                             </p>
                             
-                            <PremioSelector
-                                selectedPremioId={selectedPremio?.id}
-                                onPremioSelect={setSelectedPremio}
-                                quantidade={premioQuantidade}
-                                onQuantidadeChange={setPremioQuantidade}
-                            />
+                            {/* Indicador de Progresso */}
+                            <div className="mb-4">
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-sm font-medium text-blue-900">Prêmios Selecionados</span>
+                                    <span className="text-sm text-blue-700">{selectedPremios.length}/4</span>
+                                </div>
+                                <div className="w-full bg-blue-200 rounded-full h-2">
+                                    <div 
+                                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                        style={{ width: `${(selectedPremios.length / 4) * 100}%` }}
+                                    />
+                                </div>
+                            </div>
                             
-                            {selectedPremio && (
+                            {/* Seletor de Prêmio Atual */}
+                            {selectedPremios.length < 4 ? (
+                                <div className="space-y-3">
+                                    <PremioSelector
+                                        selectedPremioId={currentPremio?.id}
+                                        onPremioSelect={setCurrentPremio}
+                                        quantidade={currentQuantidade}
+                                        onQuantidadeChange={setCurrentQuantidade}
+                                        allowMultiple={true}
+                                        selectedPremios={selectedPremios}
+                                    />
+                                    
+                                    <button
+                                        type="button"
+                                        onClick={addPremio}
+                                        disabled={!currentPremio || currentQuantidade <= 0}
+                                        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <Plus className="w-4 h-4 inline mr-2" />
+                                        Adicionar Prêmio
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
+                                    <div className="text-green-800 font-medium mb-1">✅ Limite de prêmios atingido!</div>
+                                    <div className="text-sm text-green-600">Você já selecionou 4 prêmios para esta campanha.</div>
+                                </div>
+                            )}
+                            
+                            {/* Lista de Prêmios Selecionados */}
+                            {selectedPremios.length > 0 && (
+                                <div className="mt-4">
+                                    <h4 className="font-medium text-blue-900 mb-2">Prêmios Selecionados:</h4>
+                                    <div className="space-y-2">
+                                        {selectedPremios.map((premioData, index) => (
+                                            <div key={premioData.premio.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-200">
+                                                <div className="flex-1">
+                                                    <div className="font-medium text-gray-900">{premioData.premio.nome}</div>
+                                                    <div className="text-sm text-gray-600">
+                                                        Quantidade: {premioData.quantidade} | 
+                                                        Valor unitário: R$ {premioData.premio.valor_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} | 
+                                                        <strong> Total: R$ {(premioData.premio.valor_estimado * premioData.quantidade).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</strong>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removePremio(premioData.premio.id)}
+                                                    className="ml-3 p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    
+                                    {/* Total Geral */}
                                 <div className="mt-3 p-3 bg-white rounded-lg border border-blue-200">
                                     <div className="text-sm text-blue-800">
-                                        <strong>Total do Prêmio:</strong> R$ {(selectedPremio.valor_estimado * premioQuantidade).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                            <strong>Total Geral dos Prêmios:</strong> R$ {selectedPremios.reduce((total, premioData) => total + (premioData.premio.valor_estimado * premioData.quantidade), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                        </div>
                                     </div>
                                 </div>
                             )}
+                            
+                            {errors.premio && <p className="text-red-500 text-sm mt-2">{errors.premio}</p>}
                         </div>
 
                         {/* Critérios da Campanha */}
@@ -589,6 +696,27 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                                         <Plus className="w-4 h-4" />
                                         Adicionar Critério
                                     </Button>
+                                </div>
+                            </div>
+                            
+                            {/* Aviso sobre critérios de valor */}
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                <div className="flex items-start gap-3">
+                                    <div className="flex-shrink-0">
+                                        <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
+                                            <span className="text-amber-600 text-sm font-bold">!</span>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="font-medium text-amber-800 mb-1">⚠️ Importante: Critérios de Valor</h4>
+                                        <p className="text-sm text-amber-700">
+                                            <strong>Campanhas com critérios apenas de quantidade podem não contabilizar corretamente.</strong><br/>
+                                            Para garantir o funcionamento adequado, recomenda-se sempre incluir um critério de valor mínimo por apólice.
+                                        </p>
+                                        <div className="mt-2 text-xs text-amber-600">
+                                            <strong>Exemplo:</strong> "3 apólices de Seguro Auto com valor mínimo de R$ 3.000,00 cada"
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

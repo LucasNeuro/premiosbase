@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { X, Save, User, Mail, Phone, Building, Shield } from 'lucide-react';
+import { X, Save, User, Mail, Phone, Building, Shield, Plus, Trash2 } from 'lucide-react';
 
 interface User {
     id: string;
@@ -12,6 +12,13 @@ interface User {
     is_admin: boolean;
     created_at: string;
     updated_at: string;
+}
+
+interface CpdInfo {
+    id: string;
+    number: string;
+    name: string;
+    isActive: boolean;
 }
 
 interface AdminUsersSidepanelProps {
@@ -30,11 +37,61 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
         email: user?.email || '',
         phone: user?.phone || '',
         cnpj: user?.cnpj || '',
-        cpd: user?.cpd || '',
         is_admin: user?.is_admin || false
     });
 
+    const [cpds, setCpds] = useState<CpdInfo[]>([]);
+    const [newCpdNumber, setNewCpdNumber] = useState('');
+    const [newCpdName, setNewCpdName] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Processar CPDs quando o usuário for carregado
+    useEffect(() => {
+        console.log('🔍 [Sidepanel] Processando CPDs para usuário:', user?.name, 'CPD data:', user?.cpd);
+        
+        if (user?.cpd) {
+            try {
+                let cpdData = user.cpd;
+                console.log('📊 [Sidepanel] CPD Data inicial:', cpdData, 'Tipo:', typeof cpdData);
+                
+                if (typeof cpdData === 'string') {
+                    try {
+                        cpdData = JSON.parse(cpdData);
+                        console.log('✅ [Sidepanel] Parse JSON bem-sucedido:', cpdData);
+                    } catch (e) {
+                        console.log('⚠️ [Sidepanel] Não é JSON válido, tratando como string simples');
+                        // Se não conseguir fazer parse, tratar como string simples (CPD único)
+                        const simpleCpd = [{
+                            id: '1',
+                            number: cpdData,
+                            name: `CPD ${cpdData}`,
+                            isActive: true
+                        }];
+                        console.log('📝 [Sidepanel] CPD simples criado:', simpleCpd);
+                        setCpds(simpleCpd);
+                        return;
+                    }
+                }
+
+                if (cpdData && typeof cpdData === 'object' && cpdData.cpds && Array.isArray(cpdData.cpds)) {
+                    console.log('📋 [Sidepanel] CPDs encontrados no objeto:', cpdData.cpds);
+                    setCpds(cpdData.cpds);
+                } else if (cpdData && typeof cpdData === 'object' && Array.isArray(cpdData)) {
+                    console.log('📋 [Sidepanel] CPDs em array direto:', cpdData);
+                    setCpds(cpdData);
+                } else {
+                    console.log('❌ [Sidepanel] Nenhum CPD válido encontrado');
+                    setCpds([]);
+                }
+            } catch (error) {
+                console.error('❌ [Sidepanel] Erro ao processar CPDs:', error);
+                setCpds([]);
+            }
+        } else {
+            console.log('❌ [Sidepanel] Usuário sem CPD');
+            setCpds([]);
+        }
+    }, [user]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
@@ -42,6 +99,41 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value
         }));
+    };
+
+    const addCpd = () => {
+        if (!newCpdNumber.trim()) {
+            alert('Número do CPD é obrigatório');
+            return;
+        }
+
+        // Verificar se CPD já existe
+        const cpdExists = cpds.some(cpd => cpd.number === newCpdNumber.trim());
+        if (cpdExists) {
+            alert('CPD já cadastrado');
+            return;
+        }
+
+        const newCpd: CpdInfo = {
+            id: crypto.randomUUID(),
+            number: newCpdNumber.trim(),
+            name: newCpdName.trim() || `CPD ${newCpdNumber.trim()}`,
+            isActive: true
+        };
+
+        setCpds(prev => [...prev, newCpd]);
+        setNewCpdNumber('');
+        setNewCpdName('');
+    };
+
+    const removeCpd = (cpdId: string) => {
+        setCpds(prev => prev.filter(cpd => cpd.id !== cpdId));
+    };
+
+    const toggleCpdStatus = (cpdId: string) => {
+        setCpds(prev => prev.map(cpd => 
+            cpd.id === cpdId ? { ...cpd, isActive: !cpd.isActive } : cpd
+        ));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -55,12 +147,15 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
         setLoading(true);
 
         try {
+            // Preparar dados dos CPDs
+            const cpdData = cpds.length > 0 ? { cpds } : null;
+            
             const userData = {
                 name: formData.name.trim(),
                 email: formData.email.trim(),
                 phone: formData.phone.trim(),
                 cnpj: formData.cnpj.trim(),
-                cpd: formData.cpd.trim(),
+                cpd: cpdData,
                 is_admin: formData.is_admin,
                 updated_at: new Date().toISOString()
             };
@@ -193,21 +288,99 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
                         </div>
                     </div>
 
-                    {/* CPD */}
+                    {/* CPDs */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            CPD
+                            CPDs Cadastrados ({cpds.length})
                         </label>
-                        <div className="relative">
-                            <Shield className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                name="cpd"
-                                value={formData.cpd}
-                                onChange={handleInputChange}
-                                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="Número do CPD"
-                            />
+                        
+                        {/* Estado quando não há CPDs */}
+                        {cpds.length === 0 && (
+                            <div className="p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 text-center mb-4">
+                                <Shield className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                <p className="text-sm text-gray-500">
+                                    Nenhum CPD cadastrado para este corretor
+                                </p>
+                            </div>
+                        )}
+                        
+                        {/* Lista de CPDs */}
+                        {cpds.length > 0 && (
+                            <div className="space-y-2 mb-4">
+                                {cpds.map((cpd) => (
+                                    <div key={cpd.id} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg shadow-sm">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                                cpd.isActive ? 'bg-blue-100' : 'bg-gray-100'
+                                            }`}>
+                                                <Shield className={`w-5 h-5 ${
+                                                    cpd.isActive ? 'text-blue-600' : 'text-gray-400'
+                                                }`} />
+                                            </div>
+                                            <div>
+                                                <div className="font-medium text-gray-900">{cpd.number}</div>
+                                                <div className="text-sm text-gray-500">{cpd.name}</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleCpdStatus(cpd.id)}
+                                                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                                                    cpd.isActive 
+                                                        ? 'bg-green-100 text-green-800 hover:bg-green-200' 
+                                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                                                }`}
+                                            >
+                                                {cpd.isActive ? 'Ativo' : 'Inativo'}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeCpd(cpd.id)}
+                                                className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition-colors"
+                                                title="Remover CPD"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Adicionar novo CPD */}
+                        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <h4 className="text-sm font-medium text-gray-700 mb-3">Adicionar Novo CPD</h4>
+                            <div className="space-y-3">
+                                <div className="relative">
+                                    <Shield className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        value={newCpdNumber}
+                                        onChange={(e) => setNewCpdNumber(e.target.value)}
+                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="Número do CPD"
+                                    />
+                                </div>
+                                <div className="relative">
+                                    <User className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        value={newCpdName}
+                                        onChange={(e) => setNewCpdName(e.target.value)}
+                                        className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        placeholder="Nome do CPD (opcional)"
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={addCpd}
+                                    className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md flex items-center justify-center gap-2 transition-colors duration-200"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Adicionar CPD
+                                </button>
+                            </div>
                         </div>
                     </div>
 

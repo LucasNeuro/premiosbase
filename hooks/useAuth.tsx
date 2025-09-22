@@ -29,8 +29,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 const savedUser = localStorage.getItem('user');
                 if (savedUser) {
                     const userData = JSON.parse(savedUser);
+                    console.log('🔐 useAuth - Usuário carregado do localStorage:', userData);
                     setUser(userData);
                 } else {
+                    console.log('🔐 useAuth - Nenhum usuário encontrado no localStorage');
                     }
             } catch (error) {
                 console.error('Error checking user session:', error);

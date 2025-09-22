@@ -372,9 +372,18 @@ export const calculateCompositeCampaignProgress = async (campaignId: string): Pr
       }
     }
 
-    // Progresso geral é a média dos critérios
-    const overallProgress = criteria.length > 0 ? totalProgress / criteria.length : 0;
+    // CORREÇÃO: Progresso geral = 100% APENAS se TODOS os critérios = 100%
+    // Se qualquer critério < 100%, progresso geral < 100%
+    let overallProgress = 0;
     const isCompleted = completedCriteria === criteria.length && criteria.length > 0;
+    
+    if (isCompleted) {
+        // Se todos os critérios estão 100%, progresso geral = 100%
+        overallProgress = 100;
+    } else {
+        // Se nem todos estão 100%, progresso geral = média dos critérios
+        overallProgress = criteria.length > 0 ? totalProgress / criteria.length : 0;
+    }
 
     return {
       campaignId,

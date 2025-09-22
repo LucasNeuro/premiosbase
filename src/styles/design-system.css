@@ -613,7 +613,7 @@ body {
 
 .table-scroll-container {
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   flex: 1;
   min-height: 400px;
   max-height: 500px;
@@ -621,6 +621,7 @@ body {
 
 .table-scroll-container::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 .table-scroll-container::-webkit-scrollbar-track {
@@ -634,6 +635,20 @@ body {
 }
 
 .table-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
+}
+
+/* Scroll horizontal específico */
+.table-scroll-container::-webkit-scrollbar:horizontal {
+  height: 8px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb:horizontal {
+  background: var(--gray-400);
+  border-radius: 4px;
+}
+
+.table-scroll-container::-webkit-scrollbar-thumb:horizontal:hover {
   background: var(--gray-500);
 }
 

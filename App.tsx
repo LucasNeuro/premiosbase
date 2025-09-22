@@ -7,6 +7,7 @@ import AuthPage from './components/pages/AuthPage';
 import DashboardPage from './components/pages/DashboardPage';
 import GoalsPage from './components/pages/GoalsPage';
 import AdminDashboard from './components/pages/AdminDashboard';
+import PremiosPage from './components/pages/PremiosPage';
 import AdminRedirect from './components/auth/AdminRedirect';
 import { PoliciesProvider } from './hooks/usePolicies';
 
@@ -55,6 +56,16 @@ const AppContent: React.FC = () => {
                         <PoliciesProvider userId={user.id || user.email}>
                             <GoalsPage />
                         </PoliciesProvider>
+                    ) : (
+                        <Navigate to="/login" replace />
+                    )
+                } 
+            />
+            <Route 
+                path="/premios" 
+                element={
+                    user ? (
+                        <PremiosPage />
                     ) : (
                         <Navigate to="/login" replace />
                     )

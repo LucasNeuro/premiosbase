@@ -1,8 +1,12 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePoliciesAuxiliar } from '../../hooks/usePoliciesAuxiliar';
 import Card from '../ui/Card';
 import { PolicyType } from '../../types';
+
+interface SummaryCardsProps {
+    selectedPeriod?: '30' | '60' | 'geral';
+}
 
 const formatCurrency = (value: number) => {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -25,10 +29,86 @@ const SummaryCard: React.FC<{ title: string; count: number; sum: number; icon: R
     </div>
 );
 
-const SummaryCards: React.FC = () => {
+const SummaryCards: React.FC<SummaryCardsProps> = ({ selectedPeriod = 'geral' }) => {
     try {
-        const { getSummary } = usePoliciesAuxiliar();
-        const { autoCount, autoSum, residencialCount, residencialSum } = getSummary();
+        const { getSummary, policies, loading, refreshPolicies } = usePoliciesAuxiliar();
+        
+        // Debug: verificar se o componente está sendo montado
+        useEffect(() => {
+            console.log('🔄 SummaryCards montado - policies:', policies?.length || 0, 'loading:', loading);
+        }, [policies, loading]);
+        
+        // Função para filtrar políticas por período
+        const getFilteredPolicies = () => {
+            if (!policies || policies.length === 0) return [];
+            
+            const now = new Date();
+            let startDate: Date;
+            
+            switch (selectedPeriod) {
+                case '30':
+                    startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    break;
+                case '60':
+                    startDate = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'geral':
+                default:
+                    return policies; // Retorna todas as políticas
+            }
+            
+            return policies.filter(policy => {
+                const policyDate = new Date(policy.registration_date);
+                return policyDate >= startDate && policyDate <= now;
+            });
+        };
+
+        // Calcular métricas filtradas
+        const filteredPolicies = getFilteredPolicies();
+        const autoPolicies = filteredPolicies.filter(p => p.type === 'Seguro Auto');
+        const residentialPolicies = filteredPolicies.filter(p => p.type === 'Seguro Residencial');
+        
+        const autoCount = autoPolicies.length;
+        const autoSum = autoPolicies.reduce((sum, p) => sum + p.premium_value, 0);
+        const residencialCount = residentialPolicies.length;
+        const residencialSum = residentialPolicies.reduce((sum, p) => sum + p.premium_value, 0);
+
+        // Debug logs
+        console.log('📊 SummaryCards Debug:', {
+            loading,
+            selectedPeriod,
+            totalPolicies: policies?.length || 0,
+            filteredPolicies: filteredPolicies.length,
+            autoCount,
+            autoSum,
+            residencialCount,
+            residencialSum
+        });
+
+        // Mostrar loading se ainda estiver carregando
+        if (loading) {
+            return (
+                <div>
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6">Resumo Geral</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+                        {[...Array(5)].map((_, index) => (
+                            <div key={index} className="bg-[#1E293B] border border-slate-700 rounded-lg shadow-lg animate-pulse">
+                                <div className="p-6">
+                                    <div className="flex items-start space-x-4">
+                                        <div className="flex-shrink-0 h-12 w-12 bg-slate-600 rounded-full"></div>
+                                        <div className="flex-1">
+                                            <div className="h-4 bg-slate-600 rounded mb-2"></div>
+                                            <div className="h-6 bg-slate-600 rounded mb-1"></div>
+                                            <div className="h-4 bg-slate-600 rounded w-2/3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
 
         return (
             <div>
