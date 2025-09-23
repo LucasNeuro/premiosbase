@@ -11,7 +11,12 @@ const schema = yup.object({
   phone: yup.string().required('Telefone é obrigatório'),
   email: yup.string().email('Email inválido').required('Email é obrigatório'),
   cnpj: yup.string().required('CNPJ é obrigatório'),
-  additionalCpds: yup.array().min(1, 'Adicione pelo menos um CPD').max(5, 'Máximo de 5 CPDs permitidos'),
+  additionalCpds: yup.array().of(
+    yup.object({
+      id: yup.string().required(),
+      number: yup.string().required()
+    })
+  ).min(1, 'Adicione pelo menos um CPD').max(5, 'Máximo de 5 CPDs permitidos'),
   password: yup.string().min(6, 'Senha deve ter pelo menos 6 caracteres').required('Senha é obrigatória'),
   confirmPassword: yup.string().oneOf([yup.ref('password')], 'Senhas não coincidem').required('Confirmação de senha é obrigatória'),
 }).required();
@@ -46,7 +51,7 @@ const SimpleRegisterForm: React.FC = () => {
   const [phoneValue, setPhoneValue] = useState('');
   
   // Estados para CPDs
-  const [additionalCpds, setAdditionalCpds] = useState<Array<{id: string, number: string, name: string}>>([]);
+  const [additionalCpds, setAdditionalCpds] = useState<Array<{id: string, number: string}>>([]);
 
   const {
     register,
@@ -79,8 +84,7 @@ const SimpleRegisterForm: React.FC = () => {
     
     const newCpd = {
       id: Date.now().toString(),
-      number: '',
-      name: ''
+      number: ''
     };
     setAdditionalCpds([...additionalCpds, newCpd]);
   };
@@ -89,9 +93,9 @@ const SimpleRegisterForm: React.FC = () => {
     setAdditionalCpds(additionalCpds.filter(cpd => cpd.id !== id));
   };
 
-  const updateAdditionalCpd = (id: string, field: 'number' | 'name', value: string) => {
+  const updateAdditionalCpd = (id: string, value: string) => {
     setAdditionalCpds(additionalCpds.map(cpd => 
-      cpd.id === id ? { ...cpd, [field]: value } : cpd
+      cpd.id === id ? { ...cpd, number: value } : cpd
     ));
   };
 
@@ -328,7 +332,7 @@ const SimpleRegisterForm: React.FC = () => {
                 </div>
                 
                 {additionalCpds.map((cpd, index) => (
-                  <div key={cpd.id} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 bg-white rounded-lg border border-blue-200">
+                  <div key={cpd.id} className="grid grid-cols-1 md:grid-cols-2 gap-3 p-3 bg-white rounded-lg border border-blue-200">
                     <div>
                       <label className="block text-xs font-medium text-gray-700 mb-1">
                         Número do CPD
@@ -336,20 +340,8 @@ const SimpleRegisterForm: React.FC = () => {
                       <input
                         type="text"
                         value={cpd.number}
-                        onChange={(e) => updateAdditionalCpd(cpd.id, 'number', formatCPD(e.target.value))}
+                        onChange={(e) => updateAdditionalCpd(cpd.id, formatCPD(e.target.value))}
                         placeholder="00000000000000"
-                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-700 mb-1">
-                        Nome do CPD (opcional)
-                      </label>
-                      <input
-                        type="text"
-                        value={cpd.name}
-                        onChange={(e) => updateAdditionalCpd(cpd.id, 'name', e.target.value)}
-                        placeholder="Ex: CPD Filial SP"
                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>

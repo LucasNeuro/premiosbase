@@ -12,7 +12,7 @@ interface AuthContextType {
     register: (userData: Omit<User, 'id'> & { 
         password: string;
         hasMultipleCpds?: boolean;
-        additionalCpds?: Array<{id: string, number: string, name: string}>;
+        additionalCpds?: Array<{id: string, number: string}>;
     }) => Promise<{ success: boolean; message: string }>;
 }
 
@@ -94,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
            const register = async (userData: Omit<User, 'id'> & { 
                password: string;
                hasMultipleCpds?: boolean;
-               additionalCpds?: Array<{id: string, number: string, name: string}>;
+               additionalCpds?: Array<{id: string, number: string}>;
            }) => {
         try {
             // Check if user already exists
@@ -153,7 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     cpds: userData.additionalCpds.map(cpd => ({
                         id: cpd.id,
                         number: cpd.number,
-                        name: cpd.name || `CPD ${cpd.number}`,
+                        name: `CPD ${cpd.number}`,
                         isActive: true
                     }))
                 };
