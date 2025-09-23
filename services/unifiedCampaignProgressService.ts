@@ -26,6 +26,8 @@ export class UnifiedCampaignProgressService {
      */
     static async calculateCampaignProgress(campaignId: string): Promise<UnifiedCampaignProgress | null> {
         try {
+            console.log(`🔄 Calculando progresso em tempo real para campanha: ${campaignId}`);
+
             // 1. Buscar dados da campanha
             const { data: campaign, error: campaignError } = await supabase
                 .from('goals')
@@ -36,6 +38,7 @@ export class UnifiedCampaignProgressService {
                 .single();
 
             if (campaignError || !campaign) {
+                console.error('❌ Erro ao buscar campanha:', campaignError);
                 return null;
             }
 
@@ -56,10 +59,13 @@ export class UnifiedCampaignProgressService {
                 .eq('is_active', true);
 
             if (policiesError) {
+                console.error('❌ Erro ao buscar apólices vinculadas:', policiesError);
                 return null;
             }
 
             const policies = linkedPolicies || [];
+            console.log(`📊 Encontradas ${policies.length} apólices vinculadas`);
+
             // 3. Calcular progresso baseado no tipo da campanha
             if (campaign.campaign_type === 'composite' && campaign.criteria) {
                 return await this.calculateCompositeCampaignProgress(campaign, policies);
@@ -68,6 +74,7 @@ export class UnifiedCampaignProgressService {
             }
 
         } catch (error) {
+            console.error('❌ Erro ao calcular progresso da campanha:', error);
             return null;
         }
     }
@@ -105,12 +112,15 @@ export class UnifiedCampaignProgressService {
             }
 
             // LÓGICA CORRETA: Progresso geral = 100% APENAS se TODOS os critérios = 100%
+            // Se nem todos estão 100%, progresso geral = menor progresso entre os critérios
             let finalProgress = 0;
             if (criteria.length > 0) {
                 if (completedCriteria === criteria.length) {
                     finalProgress = 100; // Todos os critérios completos
                 } else {
-                    finalProgress = totalProgress / criteria.length; // Média dos critérios
+                    // Progresso geral = menor progresso entre os critérios
+                    // Isso garante que a campanha só é considerada completa quando TODOS os critérios são atingidos
+                    finalProgress = Math.min(...criteriaProgress.map(c => c.progress));
                 }
             }
 
@@ -129,6 +139,7 @@ export class UnifiedCampaignProgressService {
             };
 
         } catch (error) {
+            console.error('❌ Erro ao calcular progresso composto:', error);
             return {
                 campaignId: campaign.id,
                 currentValue: 0,
@@ -176,6 +187,7 @@ export class UnifiedCampaignProgressService {
             };
 
         } catch (error) {
+            console.error('❌ Erro ao calcular progresso simples:', error);
             return {
                 campaignId: campaign.id,
                 currentValue: 0,
@@ -241,6 +253,7 @@ export class UnifiedCampaignProgressService {
             };
 
         } catch (error) {
+            console.error('❌ Erro ao calcular progresso do critério:', error);
             return {
                 policy_type: criterion.policy_type || 'geral',
                 target_type: criterion.target_type,
@@ -257,6 +270,8 @@ export class UnifiedCampaignProgressService {
      */
     static async recalculateUserCampaigns(userId: string): Promise<void> {
         try {
+            console.log(`🔄 Recalculando campanhas do usuário: ${userId}`);
+
             const { data: campaigns, error } = await supabase
                 .from('goals')
                 .select('id')
@@ -265,13 +280,18 @@ export class UnifiedCampaignProgressService {
                 .eq('is_active', true);
 
             if (error) {
+                console.error('❌ Erro ao buscar campanhas do usuário:', error);
                 return;
             }
 
             for (const campaign of campaigns || []) {
                 await this.calculateCampaignProgress(campaign.id);
             }
+
+            console.log(`✅ Recalculadas ${campaigns?.length || 0} campanhas`);
+
         } catch (error) {
+            console.error('❌ Erro ao recalcular campanhas do usuário:', error);
         }
     }
 
@@ -280,6 +300,8 @@ export class UnifiedCampaignProgressService {
      */
     static async recalculateAllCampaigns(): Promise<void> {
         try {
+            console.log('🔄 Recalculando todas as campanhas ativas...');
+
             const { data: campaigns, error } = await supabase
                 .from('goals')
                 .select('id')
@@ -287,13 +309,18 @@ export class UnifiedCampaignProgressService {
                 .eq('is_active', true);
 
             if (error) {
+                console.error('❌ Erro ao buscar campanhas:', error);
                 return;
             }
 
             for (const campaign of campaigns || []) {
                 await this.calculateCampaignProgress(campaign.id);
             }
+
+            console.log(`✅ Recalculadas ${campaigns?.length || 0} campanhas`);
+
         } catch (error) {
+            console.error('❌ Erro ao recalcular todas as campanhas:', error);
         }
     }
 }
