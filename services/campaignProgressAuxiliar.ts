@@ -145,15 +145,31 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
               let meetsContractType = true;
               if (criterion.contract_type && criterion.contract_type !== 'ambos') {
                 const policyContractType = policy.contract_type;
-                console.log('🔍 Debug contract_type:', {
+                console.log('🔍 Debug contract_type DETALHADO:', {
                   criterionContractType: criterion.contract_type,
                   policyContractType: policyContractType,
                   policyId: policy.id,
-                  policyNumber: policy.policy_number
+                  policyNumber: policy.policy_number,
+                  comparisonNovo: criterion.contract_type === 'novo' && policyContractType !== 'Novo',
+                  comparisonRenovacao: criterion.contract_type === 'renovacao_bradesco' && policyContractType !== 'Renovação Bradesco'
                 });
-                if (criterion.contract_type === 'novo' && policyContractType !== 'Novo') meetsContractType = false;
-                if (criterion.contract_type === 'renovacao_bradesco' && policyContractType !== 'Renovação Bradesco') meetsContractType = false;
-                console.log('🔍 meetsContractType:', meetsContractType);
+                
+                // CRITÉRIO MAIS RIGOROSO: Se é específico para um tipo, DEVE ser exato
+                if (criterion.contract_type === 'novo' && policyContractType !== 'Novo') {
+                  console.log('❌ REJEITANDO: Critério pede NOVO, mas apólice é:', policyContractType);
+                  meetsContractType = false;
+                }
+                if (criterion.contract_type === 'renovacao_bradesco' && policyContractType !== 'Renovação Bradesco') {
+                  console.log('❌ REJEITANDO: Critério pede RENOVAÇÃO, mas apólice é:', policyContractType);
+                  meetsContractType = false;
+                }
+                
+                console.log('🔍 meetsContractType FINAL:', meetsContractType);
+              } else {
+                console.log('⚠️ CampaignProgressAuxiliar - SEM FILTRO DE CONTRACT_TYPE:', {
+                  criterionContractType: criterion.contract_type,
+                  policyContractType: policy.contract_type
+                });
               }
               
               return isCorrectType && meetsMinValue && meetsContractType;

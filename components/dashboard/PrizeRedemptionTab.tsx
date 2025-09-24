@@ -229,23 +229,23 @@ const PrizeRedemptionTab: React.FC = () => {
                 </div>
             </div>
 
-            {/* Valor Total de Premiação */}
-            <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            {/* Prêmios Conquistados - Simplificado */}
+            <Card className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="text-lg font-semibold text-blue-800">
-                            Valor Total de Premiação
+                        <h3 className="text-lg font-semibold text-green-800">
+                            Prêmios Conquistados
                         </h3>
-                        <p className="text-blue-600">
-                            Total de prêmios conquistados
+                        <p className="text-green-600">
+                            Seus prêmios disponíveis para resgate
                         </p>
                     </div>
                     <div className="text-right">
-                        <div className="text-3xl font-bold text-blue-800">
-                            {formatCurrency(balance.total_conquistado)}
+                        <div className="text-3xl font-bold text-green-800">
+                            {availablePrizes.length}
                         </div>
-                        <div className="text-sm text-blue-600">
-                            {availablePrizes.length} prêmio{availablePrizes.length !== 1 ? 's' : ''} disponível{availablePrizes.length !== 1 ? 'is' : ''}
+                        <div className="text-sm text-green-600">
+                            prêmio{availablePrizes.length !== 1 ? 's' : ''} disponível{availablePrizes.length !== 1 ? 'is' : ''}
                         </div>
                     </div>
                 </div>

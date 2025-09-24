@@ -443,8 +443,25 @@ export class CampaignCriteriaService {
                     // Verificar tipo de contrato
                     if (criterion.contract_type && criterion.contract_type !== 'ambos') {
                         const policyContractType = policy.contract_type;
-                        if (criterion.contract_type === 'novo' && policyContractType !== 'Novo') return false;
-                        if (criterion.contract_type === 'renovacao_bradesco' && policyContractType !== 'Renovação Bradesco') return false;
+                        console.log('🔍 CampaignCriteriaService - Debug contract_type:', {
+                            criterionContractType: criterion.contract_type,
+                            policyContractType: policyContractType,
+                            policyId: policy.id
+                        });
+                        
+                        if (criterion.contract_type === 'novo' && policyContractType !== 'Novo') {
+                            console.log('❌ CampaignCriteriaService REJEITANDO: Critério pede NOVO, mas apólice é:', policyContractType);
+                            return false;
+                        }
+                        if (criterion.contract_type === 'renovacao_bradesco' && policyContractType !== 'Renovação Bradesco') {
+                            console.log('❌ CampaignCriteriaService REJEITANDO: Critério pede RENOVAÇÃO, mas apólice é:', policyContractType);
+                            return false;
+                        }
+                    } else {
+                        console.log('⚠️ CampaignCriteriaService - SEM FILTRO DE CONTRACT_TYPE:', {
+                            criterionContractType: criterion.contract_type,
+                            policyContractType: policy.contract_type
+                        });
                     }
 
                     // Verificar valor mínimo por apólice

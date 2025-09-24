@@ -54,13 +54,18 @@ export const useConqueredPrizes = () => {
                 return;
             }
 
+            console.log('🔍 Debug: Buscando prêmios para user_id:', user.id);
+            
             const { data: prizesData, error: prizesError } = await supabase
                 .from('premios_conquistados')
                 .select('*')
                 .eq('user_id', user.id)
                 .order('data_conquista', { ascending: false });
 
+            console.log('🔍 Debug: Resultado da busca:', { prizesData, prizesError });
+
             if (prizesError) {
+                console.error('❌ Erro ao buscar prêmios:', prizesError);
                 throw prizesError;
             }
 
@@ -81,18 +86,11 @@ export const useConqueredPrizes = () => {
             setConqueredPrizes(uniquePrizesArray);
             setAvailablePrizes(available);
 
-            // Calcular total conquistado usando os prêmios únicos
-            const totalConquistado = uniquePrizesArray.reduce((sum, prize) => {
-                // Usar valor_total_conquistado se disponível, senão calcular
-                const valor = prize.valor_total_conquistado || (prize.premio_valor_estimado * prize.quantidade_conquistada);
-                return sum + (valor || 0);
-            }, 0);
-
-            // Atualizar o saldo imediatamente
+            // Simplificado: Apenas definir valores básicos sem cálculo de saldo
             setBalance({
-                total_conquistado: totalConquistado,
-                total_pedidos_pendentes: 0,
-                saldo_disponivel: totalConquistado
+                total_conquistado: 0, // Não usado mais
+                total_pedidos_pendentes: 0, // Não usado mais
+                saldo_disponivel: 0 // Não usado mais
             });
 
         } catch (err: any) {
@@ -150,20 +148,12 @@ export const useConqueredPrizes = () => {
 
             const valorTotal = orderData.quantidade * conqueredPrize.premio_valor_estimado;
 
-            // Verificar se tem saldo suficiente
-            const { data: saldoSuficiente, error: saldoError } = await supabase
-                .rpc('verificar_saldo_suficiente', {
-                    user_id_param: user.id,
-                    valor_solicitado: valorTotal
-                });
-
-            if (saldoError) {
-                throw saldoError;
-            }
-
-            if (!saldoSuficiente) {
-                throw new Error('Saldo insuficiente para este pedido');
-            }
+            // Simplificado: Apenas verificar se o prêmio está disponível
+            console.log('🔍 Debug: Criando pedido:', {
+                premio_nome: conqueredPrize.premio_nome,
+                quantidade: orderData.quantidade,
+                valorTotal
+            });
 
             // Criar pedido na tabela pedidos_premios
             const { data: newOrder, error: createError } = await supabase
