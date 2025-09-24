@@ -6,6 +6,7 @@ interface PremioCarouselProps {
         premio: {
             id: string;
             nome: string;
+            imagem_url?: string;
             imagem_miniatura_url?: string;
             valor_estimado: number;
         };
@@ -64,35 +65,41 @@ const PremioCarousel: React.FC<PremioCarouselProps> = ({
 
     return (
         <div className={`relative ${className}`}>
-            {/* Carousel Container */}
-            <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-[#49de80] to-green-600 p-4">
+            {/* Carousel Container - BRANCO */}
+            <div className="relative overflow-hidden rounded-lg bg-white p-4 border-2 border-gray-200">
                 {/* Premio Display */}
                 <div className="flex items-center justify-center">
                     <div className="text-center">
                         {/* Premio Image */}
-                        <div className="mb-3">
-                            {premios[currentIndex].premio.imagem_miniatura_url ? (
-                                <img
-                                    src={premios[currentIndex].premio.imagem_miniatura_url}
-                                    alt={premios[currentIndex].premio.nome}
-                                    className="w-16 h-16 mx-auto rounded-lg object-cover border-2 border-white shadow-lg"
-                                />
+                        <div className="mb-3 flex justify-center">
+                            {(premios[currentIndex].premio.imagem_url || premios[currentIndex].premio.imagem_miniatura_url) ? (
+                                <div className="relative w-36 h-36 rounded-xl border-4 border-gray-200 shadow-2xl overflow-hidden hover:border-green-400 transition-all duration-300">
+                                    {/* Imagem principal centralizada e completa - MUITO MAIOR */}
+                                    <div className="relative w-full h-full flex items-center justify-center bg-gray-50">
+                                        <img
+                                            src={premios[currentIndex].premio.imagem_url || premios[currentIndex].premio.imagem_miniatura_url}
+                                            alt={premios[currentIndex].premio.nome}
+                                            className="w-full h-full object-contain"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                </div>
                             ) : (
-                                <div className="w-16 h-16 mx-auto rounded-lg bg-white bg-opacity-20 flex items-center justify-center border-2 border-white">
-                                    <Gift className="w-8 h-8 text-white" />
+                                <div className="w-36 h-36 mx-auto rounded-xl bg-gray-100 flex items-center justify-center border-4 border-gray-200">
+                                    <Gift className="w-14 h-14 text-gray-400" />
                                 </div>
                             )}
                         </div>
                         
                         {/* Premio Info */}
-                        <div className="text-white">
+                        <div className="text-gray-800">
                             <h4 className="font-bold text-sm mb-1 line-clamp-1">
                                 {premios[currentIndex].premio.nome}
                             </h4>
-                            <p className="text-xs opacity-90">
+                            <p className="text-xs text-gray-600">
                                 Qtd: {premios[currentIndex].quantidade}
                             </p>
-                            <p className="text-xs font-semibold">
+                            <p className="text-xs font-semibold text-green-600">
                                 R$ {premios[currentIndex].premio.valor_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                             </p>
                         </div>
@@ -104,15 +111,15 @@ const PremioCarousel: React.FC<PremioCarouselProps> = ({
                     <>
                         <button
                             onClick={goToPrevious}
-                            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-1 transition-all duration-200"
+                            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 rounded-full p-1 transition-all duration-200"
                         >
-                            <ChevronLeft className="w-4 h-4 text-white" />
+                            <ChevronLeft className="w-4 h-4 text-gray-700" />
                         </button>
                         <button
                             onClick={goToNext}
-                            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-full p-1 transition-all duration-200"
+                            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-200 hover:bg-gray-300 rounded-full p-1 transition-all duration-200"
                         >
-                            <ChevronRight className="w-4 h-4 text-white" />
+                            <ChevronRight className="w-4 h-4 text-gray-700" />
                         </button>
                     </>
                 )}
@@ -126,8 +133,8 @@ const PremioCarousel: React.FC<PremioCarouselProps> = ({
                                 onClick={() => goToSlide(index)}
                                 className={`w-2 h-2 rounded-full transition-all duration-200 ${
                                     index === currentIndex 
-                                        ? 'bg-white' 
-                                        : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+                                        ? 'bg-green-500' 
+                                        : 'bg-gray-300 hover:bg-gray-400'
                                 }`}
                             />
                         ))}
@@ -136,8 +143,8 @@ const PremioCarousel: React.FC<PremioCarouselProps> = ({
 
                 {/* Premio Counter */}
                 {premios.length > 1 && (
-                    <div className="absolute top-2 right-2 bg-white bg-opacity-20 rounded-full px-2 py-1">
-                        <span className="text-xs text-white font-bold">
+                    <div className="absolute top-2 right-2 bg-gray-200 rounded-full px-2 py-1">
+                        <span className="text-xs text-gray-700 font-bold">
                             {currentIndex + 1}/{premios.length}
                         </span>
                     </div>

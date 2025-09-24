@@ -159,43 +159,12 @@ const CampaignDetailsSidepanel: React.FC<CampaignDetailsSidepanelProps> = ({
                             <div>
                                 <h1 className="text-xl font-bold text-gray-900 mb-1">
                                     {campaign.campanhas_premios && campaign.campanhas_premios.length > 0 
-                                        ? `${campaign.campanhas_premios.length} Prêmio${campaign.campanhas_premios.length > 1 ? 's' : ''} da Campanha`
+                                        ? campaign.campanhas_premios.length > 1 
+                                            ? 'Possíveis Prêmios da Campanha'
+                                            : 'Prêmio da Campanha'
                                         : 'Prêmio da Campanha'
                                     }
                                 </h1>
-                                
-                                {campaign.campanhas_premios && campaign.campanhas_premios.length > 0 && (
-                                    <div className="space-y-3">
-                                        {/* Total dos Prêmios */}
-                                        <div className="text-lg font-semibold text-green-600 mb-2">
-                                            Total: R$ {campaign.campanhas_premios.reduce((total, premioData) => 
-                                                total + (premioData.premio.valor_estimado * premioData.quantidade), 0
-                                            ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                        </div>
-                                        
-                                        {/* Lista de Prêmios */}
-                                        <div className="space-y-2">
-                                            {campaign.campanhas_premios.map((premioData, index) => (
-                                                <div key={index} className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-                                                    <div className="flex items-center justify-between">
-                                                        <div className="flex-1">
-                                                            <h3 className="font-medium text-gray-900">{premioData.premio.nome}</h3>
-                                                            <p className="text-sm text-gray-600">
-                                                                Quantidade: {premioData.quantidade} • 
-                                                                Valor unitário: R$ {premioData.premio.valor_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <div className="font-semibold text-green-600">
-                                                                R$ {(premioData.premio.valor_estimado * premioData.quantidade).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
                                 
                                 {(!campaign.campanhas_premios || campaign.campanhas_premios.length === 0) && (
                                     <div className="text-sm text-gray-600 mb-2">

@@ -1,6 +1,9 @@
 // Configuração da API de IA
+const mistralKey = import.meta.env.VITE_MISTRAL_KEY || process.env.VITE_MISTRAL_KEY || '';
+console.log('🔑 AI Config: Chave Mistral carregada:', !!mistralKey, 'Tamanho:', mistralKey.length);
+
 export const AI_CONFIG = {
-    MISTRAL_API_KEY: import.meta.env.VITE_MISTRAL_KEY || '',
+    MISTRAL_API_KEY: mistralKey,
     MISTRAL_API_URL: 'https://api.mistral.ai/v1/chat/completions',
     MODEL: 'mistral-small-latest',
     MAX_TOKENS: 500,

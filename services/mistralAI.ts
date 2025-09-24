@@ -19,11 +19,17 @@ export interface AISuggestion {
 class MistralAIService {
     private async callMistralAPI(prompt: string): Promise<string> {
         try {
+            console.log('🤖 MistralAI: Verificando configuração da API...');
+            console.log('🤖 MistralAI: Chave API configurada:', !!AI_CONFIG.MISTRAL_API_KEY);
+            console.log('🤖 MistralAI: URL da API:', AI_CONFIG.MISTRAL_API_URL);
+            console.log('🤖 MistralAI: Modelo:', AI_CONFIG.MODEL);
+            
             // Verificar se a chave API está configurada
             if (!AI_CONFIG.MISTRAL_API_KEY) {
                 throw new Error('Chave da API Mistral não configurada. Verifique a variável VITE_MISTRAL_KEY no arquivo .env.local');
             }
 
+            console.log('🤖 MistralAI: Enviando requisição para API...');
             const response = await fetch(AI_CONFIG.MISTRAL_API_URL, {
                 method: 'POST',
                 headers: getAIHeaders(),
@@ -40,19 +46,26 @@ class MistralAIService {
                 })
             });
 
+            console.log('🤖 MistralAI: Status da resposta:', response.status, response.statusText);
+
             if (!response.ok) {
                 const errorText = await response.text();
+                console.error('🤖 MistralAI: Erro na resposta da API:', errorText);
                 throw new Error(`Erro na API Mistral: ${response.status} - ${response.statusText}. Detalhes: ${errorText}`);
             }
 
             const data: MistralResponse = await response.json();
+            console.log('🤖 MistralAI: Resposta da API recebida:', data);
             return data.choices[0]?.message?.content || '';
         } catch (error) {
+            console.error('🤖 MistralAI: Erro na chamada da API:', error);
             throw error;
         }
     }
 
     async correctText(text: string): Promise<string> {
+        console.log('🔧 MistralAI: Iniciando correção de texto:', text);
+        
         const prompt = `
         Corrija o seguinte texto em português brasileiro, mantendo o tom profissional e objetivo.
         Corrija apenas erros de ortografia, gramática e pontuação. Mantenha o significado original.
@@ -63,9 +76,12 @@ class MistralAIService {
         `;
 
         try {
+            console.log('🔧 MistralAI: Enviando prompt para API...');
             const corrected = await this.callMistralAPI(prompt);
+            console.log('🔧 MistralAI: Texto corrigido recebido:', corrected);
             return corrected.trim();
         } catch (error) {
+            console.error('🔧 MistralAI: Erro na correção:', error);
             return text; // Retorna o texto original em caso de erro
         }
     }
@@ -100,6 +116,8 @@ class MistralAIService {
     }
 
     async improveDescription(description: string, goalType: string, goalTitle?: string): Promise<string> {
+        console.log('✨ MistralAI: Iniciando melhoria de descrição:', { description, goalType, goalTitle });
+        
         const isPremio = goalType === 'premio';
         const prompt = `
         Melhore a seguinte descrição de ${isPremio ? 'prêmio' : `meta de ${goalType}`}${goalTitle ? ` com o título "${goalTitle}"` : ''}, tornando-a mais profissional, clara e ${isPremio ? 'atrativa' : 'motivacional'}.
@@ -117,9 +135,12 @@ class MistralAIService {
         `;
 
         try {
+            console.log('✨ MistralAI: Enviando prompt para API...');
             const improved = await this.callMistralAPI(prompt);
+            console.log('✨ MistralAI: Descrição melhorada recebida:', improved);
             return improved.trim();
         } catch (error) {
+            console.error('✨ MistralAI: Erro na melhoria:', error);
             return description;
         }
     }

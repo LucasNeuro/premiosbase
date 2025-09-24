@@ -39,12 +39,19 @@ const AIDescriptionField: React.FC<AIDescriptionFieldProps> = ({
     const [showSuggestions, setShowSuggestions] = useState(false);
 
     const handleAIAction = async (action: string) => {
+        console.log('🎯 AIDescriptionField: Ação iniciada:', action);
+        console.log('🎯 AIDescriptionField: Valor atual:', value);
+        console.log('🎯 AIDescriptionField: goalType:', goalType);
+        console.log('🎯 AIDescriptionField: goalTitle:', goalTitle);
+        
         if (!value.trim() && action !== 'generate') {
+            console.log('🎯 AIDescriptionField: Campo vazio para ação:', action);
             alert('Digite algo no campo de descrição primeiro');
             return;
         }
 
         if ((action === 'generate' || action === 'suggest') && !goalTitle.trim()) {
+            console.log('🎯 AIDescriptionField: Título vazio para ação:', action);
             alert('Digite o título do prêmio primeiro para usar esta função');
             return;
         }
@@ -55,27 +62,36 @@ const AIDescriptionField: React.FC<AIDescriptionFieldProps> = ({
         try {
             switch (action) {
                 case 'correct':
+                    console.log('🎯 AIDescriptionField: Executando correção...');
                     const corrected = await mistralAI.correctText(value);
+                    console.log('🎯 AIDescriptionField: Texto corrigido:', corrected);
                     onChange(corrected);
                     break;
 
                 case 'improve':
+                    console.log('🎯 AIDescriptionField: Executando melhoria...');
                     const improved = await mistralAI.improveDescription(value, goalType, goalTitle);
+                    console.log('🎯 AIDescriptionField: Texto melhorado:', improved);
                     onChange(improved);
                     break;
 
                 case 'suggest':
+                    console.log('🎯 AIDescriptionField: Executando sugestão...');
                     const newSuggestions = await mistralAI.suggestDescription(goalType, goalTitle, value);
+                    console.log('🎯 AIDescriptionField: Sugestões recebidas:', newSuggestions);
                     setSuggestions(newSuggestions);
                     setShowSuggestions(true);
                     break;
 
                 case 'generate':
+                    console.log('🎯 AIDescriptionField: Executando geração...');
                     const generated = await mistralAI.generateGoalDescription(goalType, goalTitle, target, period);
+                    console.log('🎯 AIDescriptionField: Texto gerado:', generated);
                     onChange(generated);
                     break;
             }
         } catch (error) {
+            console.error('🎯 AIDescriptionField: Erro na ação:', action, error);
             alert('Erro ao processar com IA. Tente novamente.');
         } finally {
             setIsLoading(false);

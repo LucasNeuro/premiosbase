@@ -189,11 +189,12 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
                         <div className="relative">
                             {/* Imagem Principal do Prêmio */}
                             <div className="w-full h-48 bg-gray-100 relative overflow-hidden">
-                                {goal.campanhas_premios[0].premio.imagem_miniatura_url ? (
+                                {(goal.campanhas_premios[0].premio.imagem_url || goal.campanhas_premios[0].premio.imagem_miniatura_url) ? (
                                     <img
-                                        src={goal.campanhas_premios[0].premio.imagem_miniatura_url}
+                                        src={goal.campanhas_premios[0].premio.imagem_url || goal.campanhas_premios[0].premio.imagem_miniatura_url}
                                         alt={goal.campanhas_premios[0].premio.nome}
-                                        className="w-full h-full object-cover"
+                                        className="w-full h-full object-contain bg-white"
+                                        loading="lazy"
                                     />
                                 ) : (
                                     <div className="w-full h-full bg-gradient-to-br from-yellow-100 to-orange-100 flex items-center justify-center">

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { CampaignCriteria } from '../../hooks/useGoals';
 import { User } from '../../types';
-import { Plus, X, Car, Home, Target, DollarSign, Hash, Users, Package, Search } from 'lucide-react';
+import { Plus, X, Car, Home, Target, DollarSign, Hash, Users, Package, Search, FileText } from 'lucide-react';
 import Button from '../ui/Button';
 import Alert from '../ui/Alert';
 import AIDescriptionField from '../ui/AIDescriptionField';
@@ -118,7 +118,8 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                     policy_type: 'auto',
                     target: 0,
                     type: 'quantity',
-                    min_value: 0
+                    min_value: 0,
+                    contract_type: 'ambos'
                 }
             ]
         });
@@ -223,6 +224,15 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
             newErrors.criteria = 'Adicione pelo menos um critério';
         }
 
+        // Validar se há pelo menos um critério de valor
+        const hasValueCriteria = formData.criteria.some(criteria => 
+            criteria.min_value !== undefined && criteria.min_value !== null && criteria.min_value > 0
+        );
+        
+        if (!hasValueCriteria) {
+            newErrors.value_criteria = 'É obrigatório sempre colocar pelo menos uma meta de valor';
+        }
+
         if (selectedPremios.length === 0) {
             newErrors.premio = 'Selecione pelo menos um prêmio para a campanha';
         }
@@ -262,8 +272,13 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
     const { vincularPremioCampanha } = usePremios();
 
     // Funções para gerenciar múltiplos prêmios
-    const addPremio = () => {
-        if (currentPremio && currentQuantidade > 0) {
+    const addPremio = (premio?: Premio, quantidade?: number) => {
+        const premioToAdd = premio || currentPremio;
+        const quantidadeToAdd = quantidade || currentQuantidade;
+        
+        console.log('🎁 addPremio chamado:', { premioToAdd, quantidadeToAdd, selectedPremios: selectedPremios.length });
+        
+        if (premioToAdd && quantidadeToAdd > 0) {
             // Verificar limite de 4 prêmios
             if (selectedPremios.length >= 4) {
                 alert('Limite máximo de 4 prêmios por campanha!');
@@ -271,11 +286,20 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
             }
             
             // Verificar se o prêmio já foi adicionado
-            const alreadyExists = selectedPremios.some(p => p.premio.id === currentPremio.id);
+            const alreadyExists = selectedPremios.some(p => p.premio.id === premioToAdd.id);
             if (!alreadyExists) {
-                setSelectedPremios(prev => [...prev, { premio: currentPremio, quantidade: currentQuantidade }]);
-                setCurrentPremio(null);
-                setCurrentQuantidade(1);
+                const newPremio = { premio: premioToAdd, quantidade: quantidadeToAdd };
+                setSelectedPremios(prev => {
+                    const updated = [...prev, newPremio];
+                    console.log('🎁 Prêmio adicionado:', newPremio, 'Total:', updated.length);
+                    return updated;
+                });
+                
+                // Só limpar se não foi passado como parâmetro (modo tradicional)
+                if (!premio) {
+                    setCurrentPremio(null);
+                    setCurrentQuantidade(1);
+                }
             } else {
                 alert('Este prêmio já foi adicionado à campanha!');
             }
@@ -313,6 +337,7 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                     target_type: criterion.type,
                     target_value: criterion.target,
                     min_value_per_policy: criterion.min_value || 0,
+                    contract_type: criterion.contract_type || 'ambos',
                     order_index: 0
                 })),
                 selectedPremios: selectedPremios.map(p => ({
@@ -395,6 +420,38 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                             type={message.type} 
                             onClose={() => setMessage(null)} 
                         />
+                    )}
+
+                    {/* Aviso sobre critérios de valor - NO TOPO */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-start gap-3">
+                            <div className="flex-shrink-0">
+                                <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
+                                    <span className="text-amber-600 text-sm font-bold">!</span>
+                                </div>
+                            </div>
+                            <div className="flex-1">
+                                <h4 className="font-medium text-amber-800 mb-1">⚠️ Obrigatório: Meta de Valor</h4>
+                                <p className="text-sm text-amber-700">
+                                    <strong>É obrigatório sempre colocar pelo menos uma meta de valor.</strong>
+                                </p>
+                                <div className="mt-2 text-xs text-amber-600">
+                                    <strong>Exemplo:</strong> "Auto - Meta: R$ 500.000,00 com valor mínimo de R$ 3.000,00 por apólice"
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Erro de validação para critérios de valor */}
+                    {errors.value_criteria && (
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 bg-red-100 rounded-full flex items-center justify-center">
+                                    <span className="text-red-600 text-xs font-bold">!</span>
+                                </div>
+                                <p className="text-red-700 text-sm font-medium">{errors.value_criteria}</p>
+                            </div>
+                        </div>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
@@ -578,9 +635,19 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                                 </div>
                             </div>
                             
-                            {/* Seletor de Prêmio Atual */}
+                            {/* Seletor de Prêmio - Modo Carrinho de Compras */}
                             {selectedPremios.length < 4 ? (
                                 <div className="space-y-3">
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <Package className="w-4 h-4 text-blue-600" />
+                                            <span className="text-sm font-medium text-blue-800">Modo Carrinho de Compras</span>
+                                        </div>
+                                        <p className="text-xs text-blue-700">
+                                            Clique diretamente no prêmio para adicioná-lo à campanha. Quantidade padrão: {currentQuantidade}
+                                        </p>
+                                    </div>
+                                    
                                     <PremioSelector
                                         selectedPremioId={currentPremio?.id}
                                         onPremioSelect={setCurrentPremio}
@@ -588,17 +655,33 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                                         onQuantidadeChange={setCurrentQuantidade}
                                         allowMultiple={true}
                                         selectedPremios={selectedPremios}
+                                        onAddPremio={addPremio}
+                                        maxPremios={4}
                                     />
                                     
-                                    <button
-                                        type="button"
-                                        onClick={addPremio}
-                                        disabled={!currentPremio || currentQuantidade <= 0}
-                                        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        <Plus className="w-4 h-4 inline mr-2" />
-                                        Adicionar Prêmio
-                                    </button>
+                                    {/* Controles de Quantidade */}
+                                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium text-gray-700">Quantidade padrão:</span>
+                                            <div className="flex items-center space-x-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCurrentQuantidade(Math.max(1, currentQuantidade - 1))}
+                                                    className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                                >
+                                                    -
+                                                </button>
+                                                <span className="w-12 text-center font-medium">{currentQuantidade}</span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setCurrentQuantidade(Math.min(100, currentQuantidade + 1))}
+                                                    className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                                >
+                                                    +
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-center">
@@ -607,10 +690,11 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                                 </div>
                             )}
                             
-                            {/* Lista de Prêmios Selecionados */}
-                            {selectedPremios.length > 0 && (
-                                <div className="mt-4">
-                                    <h4 className="font-medium text-blue-900 mb-2">Prêmios Selecionados:</h4>
+                            {/* Lista de Prêmios Selecionados - Sempre visível */}
+                            <div className="mt-4">
+                                <h4 className="font-medium text-blue-900 mb-2">Prêmios Selecionados:</h4>
+                                
+                                {selectedPremios.length > 0 ? (
                                     <div className="space-y-2">
                                         {selectedPremios.map((premioData, index) => (
                                             <div key={premioData.premio.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-200">
@@ -631,16 +715,24 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                                                 </button>
                                             </div>
                                         ))}
-                                    </div>
-                                    
-                                    {/* Total Geral */}
-                                <div className="mt-3 p-3 bg-white rounded-lg border border-blue-200">
-                                    <div className="text-sm text-blue-800">
-                                            <strong>Total Geral dos Prêmios:</strong> R$ {selectedPremios.reduce((total, premioData) => total + (premioData.premio.valor_estimado * premioData.quantidade), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                        
+                                        {/* Total Geral */}
+                                        <div className="mt-3 p-3 bg-white rounded-lg border border-blue-200">
+                                            <div className="text-sm text-blue-800">
+                                                <strong>Total Geral dos Prêmios:</strong> R$ {selectedPremios.reduce((total, premioData) => total + (premioData.premio.valor_estimado * premioData.quantidade), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
+                                ) : (
+                                    <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                                        <div className="text-gray-500 text-sm">
+                                            <Package className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                                            <p className="font-medium">Nenhum prêmio selecionado</p>
+                                            <p className="text-xs mt-1">Clique nos prêmios acima para adicioná-los à campanha</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                             
                             {errors.premio && <p className="text-red-500 text-sm mt-2">{errors.premio}</p>}
                         </div>
@@ -694,26 +786,6 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                                 </div>
                             </div>
                             
-                            {/* Aviso sobre critérios de valor */}
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                                <div className="flex items-start gap-3">
-                                    <div className="flex-shrink-0">
-                                        <div className="w-6 h-6 bg-amber-100 rounded-full flex items-center justify-center">
-                                            <span className="text-amber-600 text-sm font-bold">!</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex-1">
-                                        <h4 className="font-medium text-amber-800 mb-1">⚠️ Importante: Critérios de Valor</h4>
-                                        <p className="text-sm text-amber-700">
-                                            <strong>Campanhas com critérios apenas de quantidade podem não contabilizar corretamente.</strong><br/>
-                                            Para garantir o funcionamento adequado, recomenda-se sempre incluir um critério de valor mínimo por apólice.
-                                        </p>
-                                        <div className="mt-2 text-xs text-amber-600">
-                                            <strong>Exemplo:</strong> "3 apólices de Seguro Auto com valor mínimo de R$ 3.000,00 cada"
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
                             {formData.criteria.length === 0 && (
                                 <div className="text-center py-8 text-gray-500">
@@ -743,7 +815,7 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                                         </button>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                                 Tipo de Apólice
@@ -822,6 +894,22 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                                             {errors[`criteria_${index}_min_value`] && (
                                                 <p className="text-red-500 text-sm mt-1">{errors[`criteria_${index}_min_value`]}</p>
                                             )}
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                                                <FileText className="w-4 h-4 text-purple-600" />
+                                                Tipo de Contrato
+                                            </label>
+                                            <select
+                                                value={criteria.contract_type || 'ambos'}
+                                                onChange={(e) => updateCriteria(index, 'contract_type', e.target.value)}
+                                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            >
+                                                <option value="novo">Apenas Novas</option>
+                                                <option value="renovacao_bradesco">Renovação Bradesco</option>
+                                                <option value="ambos">Ambos</option>
+                                            </select>
                                         </div>
                                     </div>
                                 </div>

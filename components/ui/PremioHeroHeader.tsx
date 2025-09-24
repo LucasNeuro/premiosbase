@@ -6,6 +6,7 @@ interface PremioHeroHeaderProps {
         premio: {
             id: string;
             nome: string;
+            imagem_url?: string;
             imagem_miniatura_url?: string;
             valor_estimado: number;
         };
@@ -64,19 +65,25 @@ const PremioHeroHeader: React.FC<PremioHeroHeaderProps> = ({
 
     return (
         <div className={`relative h-32 overflow-hidden ${className}`}>
-            {/* Hero Background */}
-            <div className="absolute inset-0 bg-gradient-to-r from-[#49de80] to-green-600">
+            {/* Hero Background - BRANCO */}
+            <div className="absolute inset-0 bg-white">
                 {/* Premio Image - Full Width Hero */}
-                <div className="relative h-full flex items-center justify-center">
-                    {premios[currentIndex].premio.imagem_miniatura_url ? (
-                        <img
-                            src={premios[currentIndex].premio.imagem_miniatura_url}
-                            alt={premios[currentIndex].premio.nome}
-                            className="w-full h-full object-cover"
-                        />
+                <div className="relative h-full w-full">
+                    {(premios[currentIndex].premio.imagem_url || premios[currentIndex].premio.imagem_miniatura_url) ? (
+                        <div className="relative w-full h-full">
+                            {/* Imagem principal centralizada e completa - MUITO MAIOR */}
+                            <div className="relative w-full h-full flex items-center justify-center">
+                                <img
+                                    src={premios[currentIndex].premio.imagem_url || premios[currentIndex].premio.imagem_miniatura_url}
+                                    alt={premios[currentIndex].premio.nome}
+                                    className="w-full h-full object-contain rounded-lg shadow-2xl border-3 border-gray-200 hover:border-green-400 transition-all duration-300"
+                                    loading="lazy"
+                                />
+                            </div>
+                        </div>
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <Gift className="w-16 h-16 text-white opacity-80" />
+                        <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+                            <Gift className="w-16 h-16 text-gray-400" />
                         </div>
                     )}
                     

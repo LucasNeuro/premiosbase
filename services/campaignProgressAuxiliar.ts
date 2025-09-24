@@ -65,7 +65,8 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
           premium_value,
           type,
           status,
-          created_at
+          created_at,
+          contract_type
         )
       `)
       .eq('campaign_id', campaignId)
@@ -139,7 +140,23 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
               const isCorrectType = policy.type === targetPolicyType;
               const meetsMinValue = !criterion.min_value_per_policy || 
                                    policy.premium_value >= criterion.min_value_per_policy;
-              return isCorrectType && meetsMinValue;
+              
+              // Verificar tipo de contrato
+              let meetsContractType = true;
+              if (criterion.contract_type && criterion.contract_type !== 'ambos') {
+                const policyContractType = policy.contract_type;
+                console.log('🔍 Debug contract_type:', {
+                  criterionContractType: criterion.contract_type,
+                  policyContractType: policyContractType,
+                  policyId: policy.id,
+                  policyNumber: policy.policy_number
+                });
+                if (criterion.contract_type === 'novo' && policyContractType !== 'Novo') meetsContractType = false;
+                if (criterion.contract_type === 'renovacao_bradesco' && policyContractType !== 'Renovação Bradesco') meetsContractType = false;
+                console.log('🔍 meetsContractType:', meetsContractType);
+              }
+              
+              return isCorrectType && meetsMinValue && meetsContractType;
             });
             
             let currentProgress = 0;

@@ -6,6 +6,7 @@ export interface CampaignCriteria {
     target: number;
     type: 'quantity' | 'value';
     min_value?: number; // Para qualificações como "≥ R$ 2.000"
+    contract_type?: 'novo' | 'renovacao_bradesco' | 'ambos';
 }
 
 export interface Goal {

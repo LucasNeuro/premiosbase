@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { supabase } from '../../lib/supabase';
 import { X, Upload, Image as ImageIcon, Package, Save, AlertCircle } from 'lucide-react';
+import ImageOptimizationService from '../../services/imageOptimizationService';
 import AIDescriptionField from '../ui/AIDescriptionField';
 import SearchableCategoryDropdown from './SearchableCategoryDropdown';
 import SearchableTipoDropdown from './SearchableTipoDropdown';
@@ -46,6 +47,11 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
 
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
+    const [optimizationInfo, setOptimizationInfo] = useState<{
+        originalSize: string;
+        optimizedSize: string;
+        thumbnailSize: string;
+    } | null>(null);
     const [previewImage, setPreviewImage] = useState<string | null>(premio?.imagem_url || null);
     const [previewThumbnail, setPreviewThumbnail] = useState<string | null>(premio?.imagem_miniatura_url || null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -106,9 +112,9 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
             return;
         }
 
-        // Validar tamanho (máximo 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            setUploadError('A imagem deve ter no máximo 5MB.');
+        // Validar tamanho (máximo 10MB para permitir otimização)
+        if (file.size > 10 * 1024 * 1024) {
+            setUploadError('A imagem deve ter no máximo 10MB.');
             return;
         }
 
@@ -116,42 +122,80 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
         setUploadError(null);
 
         try {
-            // Gerar nome único para o arquivo
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-            const filePath = `premios/${fileName}`;
+            console.log('🖼️ Iniciando otimização de imagem...');
+            
+            // Otimizar imagem principal (1200x1200, qualidade 90%)
+            const optimizedImage = await ImageOptimizationService.optimizeImage(file, {
+                maxWidth: 1200,
+                maxHeight: 1200,
+                quality: 0.9,
+                format: 'jpeg'
+            });
 
-            // Upload da imagem principal
+            // Criar miniatura otimizada (300x300, qualidade 80%)
+            const thumbnailImage = await ImageOptimizationService.createThumbnail(file, 300);
+
+            const originalSize = `${(file.size / 1024 / 1024).toFixed(2)}MB`;
+            const optimizedSize = `${(optimizedImage.size / 1024 / 1024).toFixed(2)}MB`;
+            const thumbnailSize = `${(thumbnailImage.size / 1024 / 1024).toFixed(2)}MB`;
+
+            console.log('✅ Imagens otimizadas:', {
+                original: originalSize,
+                optimized: optimizedSize,
+                thumbnail: thumbnailSize
+            });
+
+            // Mostrar informações de otimização
+            setOptimizationInfo({
+                originalSize,
+                optimizedSize,
+                thumbnailSize
+            });
+
+            // Gerar nomes únicos
+            const timestamp = Date.now();
+            const randomId = Math.random().toString(36).substring(2);
+            
+            const mainFileName = `premio_${timestamp}_${randomId}.jpg`;
+            const thumbnailFileName = `thumb_${timestamp}_${randomId}.jpg`;
+            
+            const mainPath = `premios/${mainFileName}`;
+            const thumbnailPath = `premios/thumbnails/${thumbnailFileName}`;
+
+            // Upload da imagem principal otimizada
             const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('premios-img')
-                .upload(filePath, file);
+                .upload(mainPath, optimizedImage);
 
             if (uploadError) {
                 throw new Error(`Erro no upload: ${uploadError.message} (Código: ${uploadError.statusCode})`);
             }
 
-            // Obter URL pública
-            const { data: { publicUrl } } = supabase.storage
-                .from('premios-img')
-                .getPublicUrl(filePath);
-
-            // Criar miniatura (simplificado - em produção, usar uma biblioteca de redimensionamento)
-            const thumbnailPath = `premios/thumbnails/${fileName}`;
+            // Upload da miniatura otimizada
             const { error: thumbnailError } = await supabase.storage
                 .from('premios-img')
-                .upload(thumbnailPath, file);
+                .upload(thumbnailPath, thumbnailImage);
 
-            if (!thumbnailError) {
-                const { data: { publicUrl: thumbnailUrl } } = supabase.storage
-                    .from('premios-img')
-                    .getPublicUrl(thumbnailPath);
-                setPreviewThumbnail(thumbnailUrl);
-                } else {
-                }
+            if (thumbnailError) {
+                console.warn('⚠️ Erro ao fazer upload da miniatura:', thumbnailError);
+            }
+
+            // Obter URLs públicas
+            const { data: { publicUrl } } = supabase.storage
+                .from('premios-img')
+                .getPublicUrl(mainPath);
+
+            const { data: { publicUrl: thumbnailUrl } } = supabase.storage
+                .from('premios-img')
+                .getPublicUrl(thumbnailPath);
 
             setPreviewImage(publicUrl);
-            setUploadError(null); // Limpar erros anteriores
+            setPreviewThumbnail(thumbnailUrl);
+            setUploadError(null);
+            
+            console.log('🎉 Upload concluído com sucesso!');
         } catch (error: any) {
+            console.error('❌ Erro no upload:', error);
             setUploadError(error.message || 'Erro ao fazer upload da imagem.');
         } finally {
             setUploading(false);
@@ -325,6 +369,19 @@ const AdminPremiosSidepanel: React.FC<AdminPremiosSidepanelProps> = ({
                             <div className="mt-2 flex items-center space-x-2 text-red-600">
                                 <AlertCircle className="w-4 h-4" />
                                 <span className="text-sm">{uploadError}</span>
+                            </div>
+                        )}
+
+                        {optimizationInfo && (
+                            <div className="mt-3 bg-green-50 border border-green-200 rounded-lg p-3">
+                                <div className="text-sm text-green-800">
+                                    <div className="font-semibold mb-2">✅ Imagem Otimizada Automaticamente</div>
+                                    <div className="space-y-1">
+                                        <div>📸 Original: {optimizationInfo.originalSize}</div>
+                                        <div>🖼️ Otimizada: {optimizationInfo.optimizedSize}</div>
+                                        <div>🔍 Miniatura: {optimizationInfo.thumbnailSize}</div>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </div>

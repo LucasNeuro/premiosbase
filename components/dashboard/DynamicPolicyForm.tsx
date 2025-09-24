@@ -640,9 +640,9 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                         </div>
                     )}
 
-                    {/* Grupo de Botões - Canto Inferior Esquerdo */}
+                    {/* Grupo de Botões - Reorganizado */}
                     <div className="flex justify-start gap-4 pt-6">
-                        {/* Primeiro Grupo de Botões */}
+                        {/* Grupo Unificado - Todos os botões juntos */}
                         <div className="flex">
                             {/* Botão Timeline */}
                             <button
@@ -664,33 +664,11 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                                 <span>Limpar</span>
                             </button>
 
-                            {/* Botão Salvar com IA */}
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                                className="group relative flex items-center gap-2 px-6 py-2 bg-[#1e293b] text-white font-medium text-sm rounded-r-lg rounded-l-none shadow-md hover:shadow-lg hover:bg-[#49de80] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-                        >
-                            {isSubmitting ? (
-                                <>
-                                    <Spinner size="sm" />
-                                    <span>Salvando...</span>
-                                </>
-                            ) : (
-                                <>
-                                        <Sparkles className="w-4 h-4 group-hover:animate-pulse" />
-                                        <span>Salvar</span>
-                                </>
-                            )}
-                        </button>
-                        </div>
-
-                        {/* Segundo Grupo de Botões */}
-                        <div className="flex">
                             {/* Botão 30 dias */}
                             <button
                                 type="button"
                                 onClick={() => onPeriodChange?.('30')}
-                                className={`group flex items-center gap-2 px-4 py-2 font-medium text-sm rounded-l-lg rounded-r-none shadow-md transition-all duration-300 ${
+                                className={`group flex items-center gap-2 px-4 py-2 font-medium text-sm shadow-md transition-all duration-300 ${
                                     selectedPeriod === '30' 
                                         ? 'bg-[#49de80] text-white' 
                                         : 'bg-[#1e293b] text-white hover:bg-[#49de80] hover:shadow-lg'
@@ -723,6 +701,27 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                                 }`}
                             >
                                 <span>Geral</span>
+                            </button>
+                        </div>
+
+                        {/* Botão Adicionar Apólice - Separado */}
+                        <div className="flex">
+                            <button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="group relative flex items-center gap-2 px-4 py-2 bg-[#55165e] text-white font-medium text-sm rounded-lg shadow-md hover:shadow-lg hover:bg-[#4a1452] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Spinner size="sm" />
+                                        <span>Salvando...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Sparkles className="w-4 h-4 group-hover:animate-pulse" />
+                                        <span>Adicionar Apólice</span>
+                                    </>
+                                )}
                             </button>
                         </div>
                     </div>

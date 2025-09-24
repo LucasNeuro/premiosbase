@@ -429,7 +429,7 @@ export class CampaignCriteriaService {
             for (let i = 0; i < criteriaArray.length; i++) {
                 const criterion = criteriaArray[i];
 
-                const matchingPolicies = allPolicies.filter(policy => {
+                const matchingPolicies = allPolicies.filter((policy: any) => {
                     const policyTypeMap: { [key: string]: string } = {
                         'Seguro Auto': 'auto',
                         'Seguro Residencial': 'residencial'
@@ -441,8 +441,10 @@ export class CampaignCriteriaService {
                     }
 
                     // Verificar tipo de contrato
-                    if (criterion.contract_type && criterion.contract_type !== policy.contract_type) {
-                        return false;
+                    if (criterion.contract_type && criterion.contract_type !== 'ambos') {
+                        const policyContractType = policy.contract_type;
+                        if (criterion.contract_type === 'novo' && policyContractType !== 'Novo') return false;
+                        if (criterion.contract_type === 'renovacao_bradesco' && policyContractType !== 'Renovação Bradesco') return false;
                     }
 
                     // Verificar valor mínimo por apólice
@@ -467,7 +469,7 @@ export class CampaignCriteriaService {
 
                 } else if (criterion.target_type === 'value') {
                     // Critério por valor
-                    criterionCurrent = matchingPolicies.reduce((sum, policy) => sum + policy.premium_value, 0);
+                    criterionCurrent = matchingPolicies.reduce((sum, policy: any) => sum + policy.premium_value, 0);
                     criterionTarget = criterion.target_value || 0;
                     criterionProgressPercentage = criterionTarget > 0 ? (criterionCurrent / criterionTarget) * 100 : 0;
                     criterionCompleted = criterionProgressPercentage >= 100;
@@ -483,7 +485,7 @@ export class CampaignCriteriaService {
 
                     } else if (criterion.target_value) {
                         // Critério por valor (estrutura antiga)
-                        criterionCurrent = matchingPolicies.reduce((sum, policy) => sum + policy.premium_value, 0);
+                        criterionCurrent = matchingPolicies.reduce((sum, policy: any) => sum + policy.premium_value, 0);
                         criterionTarget = criterion.target_value;
                         criterionProgressPercentage = criterionTarget > 0 ? (criterionCurrent / criterionTarget) * 100 : 0;
                         criterionCompleted = criterionProgressPercentage >= 100;

@@ -331,8 +331,10 @@ export const calculateCompositeCampaignProgress = async (campaignId: string): Pr
         }
 
         // Verificar tipo de contrato
-        if (criterion.contract_type && policy.policy_contract_type !== criterion.contract_type) {
-          return false;
+        if (criterion.contract_type && criterion.contract_type !== 'ambos') {
+          const policyContractType = policy.contract_type;
+          if (criterion.contract_type === 'novo' && policyContractType !== 'Novo') return false;
+          if (criterion.contract_type === 'renovacao_bradesco' && policyContractType !== 'Renovação Bradesco') return false;
         }
 
         // Verificar valor mínimo

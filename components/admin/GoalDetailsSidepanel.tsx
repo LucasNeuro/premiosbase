@@ -37,6 +37,7 @@ interface Goal {
             id: string;
             nome: string;
             valor_estimado: number;
+            imagem_url?: string;
             imagem_miniatura_url?: string;
             categoria: { nome: string };
             tipo: { nome: string };
@@ -328,11 +329,12 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
                                         <div key={campanhaPremio.id} className="bg-gray-50 rounded-lg p-6 border border-gray-200">
                                             <div className="flex flex-col items-center text-center">
                                                 {/* Imagem Grande e Ajustada */}
-                                            {campanhaPremio.premio.imagem_miniatura_url ? (
+                                            {(campanhaPremio.premio.imagem_url || campanhaPremio.premio.imagem_miniatura_url) ? (
                                                 <img
-                                                    src={campanhaPremio.premio.imagem_miniatura_url}
+                                                    src={campanhaPremio.premio.imagem_url || campanhaPremio.premio.imagem_miniatura_url}
                                                     alt={campanhaPremio.premio.nome}
-                                                        className="w-48 h-48 object-cover rounded-lg shadow-lg mb-4"
+                                                        className="w-48 h-48 object-contain bg-gray-100 rounded-lg shadow-lg mb-4"
+                                                    loading="lazy"
                                                 />
                                             ) : (
                                                     <div className="w-48 h-48 bg-[#49de80] rounded-lg flex items-center justify-center shadow-lg mb-4">

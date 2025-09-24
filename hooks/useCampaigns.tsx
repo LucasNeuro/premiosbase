@@ -8,6 +8,7 @@ export interface CampaignCriteria {
     target_type: 'quantity' | 'value';
     target_value: number;
     min_value_per_policy: number;
+    contract_type?: 'novo' | 'renovacao_bradesco' | 'ambos';
     order_index: number;
 }
 

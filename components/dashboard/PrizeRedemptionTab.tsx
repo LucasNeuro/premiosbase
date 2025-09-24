@@ -298,7 +298,8 @@ const PrizeRedemptionTab: React.FC = () => {
                                                             <img 
                                                                 src={prize.premio_imagem_url} 
                                                                 alt={prize.premio_nome}
-                                                                className="w-12 h-12 object-cover rounded-lg"
+                                                                className="w-12 h-12 object-contain bg-gray-100 rounded-lg"
+                                                                loading="lazy"
                                                             />
                                                         ) : (
                                                             <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">

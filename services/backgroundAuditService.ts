@@ -240,6 +240,13 @@ export class BackgroundAuditService {
                     return false;
                 }
 
+                // Verificar tipo de contrato
+                if (criterion.contract_type && criterion.contract_type !== 'ambos') {
+                    const policyContractType = policy.contract_type;
+                    if (criterion.contract_type === 'novo' && policyContractType !== 'Novo') return false;
+                    if (criterion.contract_type === 'renovacao_bradesco' && policyContractType !== 'Renovação Bradesco') return false;
+                }
+
                 // Verificar valor mínimo por apólice
                 if (criterion.min_value_per_policy && policy.premium_value < criterion.min_value_per_policy) {
                     return false;

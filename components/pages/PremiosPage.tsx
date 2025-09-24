@@ -218,11 +218,12 @@ const PremiosPage: React.FC = () => {
                                     {premiosConquistados.map((item) => (
                                         <div key={item.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                                             <div className="flex items-start space-x-4">
-                                                {item.premio.imagem_miniatura_url ? (
+                                                {(item.premio.imagem_url || item.premio.imagem_miniatura_url) ? (
                                                     <img
-                                                        src={item.premio.imagem_miniatura_url}
+                                                        src={item.premio.imagem_url || item.premio.imagem_miniatura_url}
                                                         alt={item.premio.nome}
-                                                        className="w-16 h-16 object-cover rounded-lg"
+                                                        className="w-16 h-16 object-contain bg-gray-100 rounded-lg"
+                                                        loading="lazy"
                                                     />
                                                 ) : (
                                                     <div className="w-16 h-16 bg-gradient-to-br from-[#49de80] to-green-600 rounded-lg flex items-center justify-center">

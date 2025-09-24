@@ -11,6 +11,8 @@ interface PremioSelectorProps {
   disabled?: boolean;
   allowMultiple?: boolean;
   selectedPremios?: Array<{premio: Premio, quantidade: number}>;
+  onAddPremio?: (premio: Premio, quantidade: number) => void;
+  maxPremios?: number;
 }
 
 const PremioSelector: React.FC<PremioSelectorProps> = ({
@@ -20,7 +22,9 @@ const PremioSelector: React.FC<PremioSelectorProps> = ({
   onQuantidadeChange,
   disabled = false,
   allowMultiple = false,
-  selectedPremios = []
+  selectedPremios = [],
+  onAddPremio,
+  maxPremios = 4
 }) => {
   const { premios, loading, error, fetchPremios } = usePremios();
   const [searchTerm, setSearchTerm] = useState('');
@@ -46,10 +50,29 @@ const PremioSelector: React.FC<PremioSelectorProps> = ({
   );
 
   const handlePremioSelect = (premio: Premio) => {
-    setSelectedPremio(premio);
-    onPremioSelect(premio);
-    setShowDropdown(false);
-    setSearchTerm('');
+    if (onAddPremio && allowMultiple) {
+      // Modo carrinho de compras - adiciona diretamente
+      const isAlreadySelected = selectedPremios.some(p => p.premio.id === premio.id);
+      if (isAlreadySelected) {
+        alert('Este prêmio já foi adicionado à campanha!');
+        return;
+      }
+      
+      if (selectedPremios.length >= maxPremios) {
+        alert(`Limite máximo de ${maxPremios} prêmios por campanha!`);
+        return;
+      }
+      
+      onAddPremio(premio, quantidade);
+      setShowDropdown(false);
+      setSearchTerm('');
+    } else {
+      // Modo tradicional - seleciona primeiro
+      setSelectedPremio(premio);
+      onPremioSelect(premio);
+      setShowDropdown(false);
+      setSearchTerm('');
+    }
   };
 
   const handleRemovePremio = () => {
@@ -95,11 +118,12 @@ const PremioSelector: React.FC<PremioSelectorProps> = ({
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              {selectedPremio.imagem_miniatura_url ? (
+              {(selectedPremio.imagem_url || selectedPremio.imagem_miniatura_url) ? (
                 <img
-                  src={selectedPremio.imagem_miniatura_url}
+                  src={selectedPremio.imagem_url || selectedPremio.imagem_miniatura_url}
                   alt={selectedPremio.nome}
-                  className="w-12 h-12 object-cover rounded-lg"
+                  className="w-12 h-12 object-contain bg-gray-100 rounded-lg"
+                  loading="lazy"
                 />
               ) : (
                 <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -179,20 +203,26 @@ const PremioSelector: React.FC<PremioSelectorProps> = ({
                 <div className="py-1">
                                                         {filteredPremios.map((premio) => {
                                                             const isAlreadySelected = allowMultiple && selectedPremios.some(p => p.premio.id === premio.id);
+                                                            const canAdd = !isAlreadySelected && selectedPremios.length < maxPremios;
                                                             return (
                                                                 <button
                                                                     key={premio.id}
                                                                     type="button"
                                                                     onClick={() => handlePremioSelect(premio)}
-                                                                    disabled={isAlreadySelected}
-                                                                    className="w-full px-4 py-3 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                    disabled={!canAdd}
+                                                                    className={`w-full px-4 py-3 text-left focus:outline-none transition-colors ${
+                                                                        canAdd 
+                                                                            ? 'hover:bg-blue-50 focus:bg-blue-50 cursor-pointer' 
+                                                                            : 'opacity-50 cursor-not-allowed'
+                                                                    }`}
                                                                 >
                       <div className="flex items-center space-x-3">
-                        {premio.imagem_miniatura_url ? (
+                        {(premio.imagem_url || premio.imagem_miniatura_url) ? (
                           <img
-                            src={premio.imagem_miniatura_url}
+                            src={premio.imagem_url || premio.imagem_miniatura_url}
                             alt={premio.nome}
-                            className="w-10 h-10 object-cover rounded-lg"
+                            className="w-10 h-10 object-contain bg-gray-100 rounded-lg"
+                            loading="lazy"
                           />
                         ) : (
                           <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center">
@@ -208,7 +238,13 @@ const PremioSelector: React.FC<PremioSelectorProps> = ({
                                                                             R$ {premio.valor_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                                                         </p>
                                                                         {isAlreadySelected && (
-                                                                            <p className="text-xs text-orange-600">Já adicionado</p>
+                                                                            <p className="text-xs text-orange-600">✅ Já adicionado</p>
+                                                                        )}
+                                                                        {!isAlreadySelected && selectedPremios.length >= maxPremios && (
+                                                                            <p className="text-xs text-red-600">❌ Limite atingido</p>
+                                                                        )}
+                                                                        {canAdd && onAddPremio && (
+                                                                            <p className="text-xs text-blue-600">🛒 Clique para adicionar</p>
                                                                         )}
                                                                     </div>
                                                                 </div>
