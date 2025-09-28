@@ -194,6 +194,7 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
 
             // 2. Buscar campanhas compatíveis aceitas
 
+            console.log('🔍 Debug - Buscando campanhas ativas para o usuário:', userId);
             const { data: acceptedCampaigns, error: campaignsError } = await supabase
                 .from('goals')
                 .select('*')
@@ -204,7 +205,13 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
                 .eq('is_active', true);
 
             if (campaignsError) {
-                }
+                console.error('❌ Debug - Erro ao buscar campanhas:', campaignsError);
+            } else {
+                console.log('✅ Debug - Campanhas encontradas:', acceptedCampaigns?.length || 0);
+                acceptedCampaigns?.forEach(campaign => {
+                    console.log(`📋 Campanha: ${campaign.title} (ID: ${campaign.id}) - Aceita em: ${campaign.accepted_at}`);
+                });
+            }
 
             let linkedCampaigns = 0;
             let campaignMessage = '';
@@ -213,25 +220,32 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
 
             // 🎯 CORREÇÃO CRÍTICA: Só vincular apólices criadas APÓS aceite da campanha
             const policyCreatedAt = new Date(newPolicy.created_at);
+            console.log('🔍 Debug - Apólice criada em:', policyCreatedAt.toISOString());
             
             for (const campaign of acceptedCampaigns || []) {
+                console.log(`🔍 Debug - Analisando campanha: ${campaign.title} (ID: ${campaign.id})`);
+                
                 // ✅ REGRA FUNDAMENTAL: Só vincular se a apólice foi criada APÓS aceitar a campanha
                 const campaignAcceptedAt = campaign.accepted_at ? new Date(campaign.accepted_at) : null;
+                console.log(`🔍 Debug - Campanha aceita em:`, campaignAcceptedAt?.toISOString() || 'N/A');
                 
                 if (!campaignAcceptedAt) {
-
+                    console.log('⚠️ Debug - Campanha sem data de aceite, pulando...');
                     continue;
                 }
                 
                 if (policyCreatedAt < campaignAcceptedAt) {
-
+                    console.log('⚠️ Debug - Apólice criada ANTES do aceite da campanha, pulando...');
                     continue;
                 }
+                
+                console.log('✅ Debug - Apólice pode ser vinculada à campanha');
                 
                 // ✅ Apólice foi criada APÓS aceite da campanha - pode vincular
                 const confidence = 100; // Confiança máxima - código é confiável
                 const reasoning = `Apólice ${policyData.type} criada em ${policyCreatedAt.toISOString()} vinculada à campanha aceita em ${campaignAcceptedAt.toISOString()}`;
 
+                console.log('🔗 Debug - Criando vinculação...');
                 const { error: linkError } = await supabase
                     .from('policy_campaign_links')
                     .insert({
@@ -247,8 +261,9 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
                 if (!linkError) {
                     linkedCampaigns++;
                     campaignMessage += `✅ Vinculada à campanha "${campaign.title}" (aceita em ${campaignAcceptedAt.toLocaleDateString()})\n`;
-
+                    console.log('✅ Debug - Vinculação criada com sucesso!');
                 } else {
+                    console.error('❌ Debug - Erro ao criar vinculação:', linkError);
                 }
             }
 
@@ -289,7 +304,7 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
                         policy_number: policyData.policy_number
                     },
                     campaigns: acceptedCampaigns || []
-                });
+                }, userId);
 
             } catch (aiError) {
                 // Criar análise básica como fallback
@@ -341,14 +356,19 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
             await fetchPolicies(); // Recarregar dados
             
             // Atualizar progresso das campanhas e refresh em tempo real
+            console.log('🔄 Debug - Iniciando atualização de progresso das campanhas...');
             try {
                 await updateAllUserCampaignProgressAuxiliar(userId);
+                console.log('✅ Debug - Progresso das campanhas atualizado com sucesso');
+                
                 // Forçar refresh dos dados no contexto Goals
                 if (window.refreshCampaigns) {
+                    console.log('🔄 Debug - Executando refresh das campanhas...');
                     window.refreshCampaigns();
                 }
                 
                 // Evento personalizado para notificar outros componentes
+                console.log('📡 Debug - Disparando eventos de atualização...');
                 window.dispatchEvent(new CustomEvent('campaignProgressUpdated', { 
                     detail: { userId, linkedCampaigns } 
                 }));
@@ -359,7 +379,8 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
                 }));
                 
             } catch (progressError) {
-                }
+                console.error('❌ Debug - Erro ao atualizar progresso das campanhas:', progressError);
+            }
 
             // Mensagem de sucesso com análise inteligente
             let successMessage = `✅ Apólice ${policyData.policy_number} salva com sucesso!`;

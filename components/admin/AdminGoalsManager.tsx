@@ -242,6 +242,7 @@ const AdminGoalsManager: React.FC = () => {
         }
     };
 
+
     // Função para limpar filtros
     const clearFilters = () => {
         setFilters({
@@ -502,7 +503,7 @@ const AdminGoalsManager: React.FC = () => {
                 const goal = row.original;
                 const current = goal.current_value || 0;
                 
-                // LÓGICA CORRETA: Para campanhas compostas, calcular baseado nos critérios
+                // ✅ USAR A MESMA LÓGICA DO CORRETOR PARA TODAS AS CAMPANHAS
                 if (goal.campaign_type === 'composite' && goal.criteria) {
                     try {
                         const criteria = Array.isArray(goal.criteria) ? goal.criteria : JSON.parse(goal.criteria);
@@ -518,6 +519,9 @@ const AdminGoalsManager: React.FC = () => {
                                 </div>
                             );
                         }
+                        
+                        // ✅ APLICAR FILTRO DE DATA: Só apólices criadas APÓS aceitar a campanha
+                        const acceptedAt = goal.accepted_at ? new Date(goal.accepted_at) : new Date();
                         
                         // Calcular progresso de cada critério
                         let totalProgress = 0;
@@ -840,7 +844,7 @@ const AdminGoalsManager: React.FC = () => {
                     <p className="text-gray-600 mt-1">Crie e gerencie campanhas para os corretores</p>
                 </div>
                 <div className="flex items-center gap-4">
-                <button 
+                <button
                     onClick={handleCreateGoal}
                         className="bg-[#1e293b] hover:bg-[#49de80] text-white px-6 py-3 rounded-lg flex items-center gap-2 transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
                 >

@@ -165,39 +165,35 @@ const CampaignsKanban: React.FC = () => {
                         <p className="text-sm text-gray-600 mb-3 line-clamp-2">{campaign.description}</p>
                     )}
 
-                    {/* Grid de informações */}
-                    <div className="grid grid-cols-2 gap-3 text-sm mb-3">
-                        <div className="flex items-center text-gray-700">
-                            <Target className="w-4 h-4 mr-2 text-[#1E293B]" />
-                            <span className="truncate">Meta: <strong>{formatTarget(campaign)}</strong></span>
-                        </div>
-                        
-                        <div className="flex items-center text-gray-700">
-                            <Calendar className="w-4 h-4 mr-2 text-orange-500" />
-                            <span className="truncate">{formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}</span>
-                        </div>
-
-                        {/* Dias restantes */}
-                        <div className="flex items-center">
-                            <Clock className="w-4 h-4 mr-2" />
-                            <span className={`text-sm font-medium ${
-                                calculateDaysRemaining(campaign.end_date).urgencyLevel === 'expired' 
-                                    ? 'text-red-600' 
-                                    : calculateDaysRemaining(campaign.end_date).urgencyLevel === 'critical'
-                                    ? 'text-red-500'
-                                    : calculateDaysRemaining(campaign.end_date).urgencyLevel === 'warning'
-                                    ? 'text-yellow-600'
-                                    : 'text-green-600'
-                            }`}>
-                                {calculateDaysRemaining(campaign.end_date).label}
-                            </span>
+                    {/* Informações em uma linha */}
+                    <div className="flex items-center justify-between text-sm mb-3 text-gray-600">
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center">
+                                <Calendar className="w-4 h-4 mr-1 text-orange-500" />
+                                <span>{formatDate(campaign.start_date)} - {formatDate(campaign.end_date)}</span>
+                            </div>
+                            
+                            <div className="flex items-center">
+                                <Clock className="w-4 h-4 mr-1" />
+                                <span className={`font-medium ${
+                                    calculateDaysRemaining(campaign.end_date).urgencyLevel === 'expired' 
+                                        ? 'text-red-600' 
+                                        : calculateDaysRemaining(campaign.end_date).urgencyLevel === 'critical'
+                                        ? 'text-red-500'
+                                        : calculateDaysRemaining(campaign.end_date).urgencyLevel === 'warning'
+                                        ? 'text-yellow-600'
+                                        : 'text-green-600'
+                                }`}>
+                                    {calculateDaysRemaining(campaign.end_date).label}
+                                </span>
+                            </div>
                         </div>
 
-                        {/* Prêmios com imagem */}
+                        {/* Prêmios */}
                         {campaign.campanhas_premios && campaign.campanhas_premios.length > 0 && (
-                            <div className="flex items-center text-gray-700">
-                                <Gift className="w-4 h-4 mr-2 text-[#49de80]" />
-                                <span>{campaign.campanhas_premios.length} prêmio(s)</span>
+                            <div className="flex items-center text-green-600">
+                                <Gift className="w-4 h-4 mr-1" />
+                                <span className="font-medium">{campaign.campanhas_premios.length} prêmio(s)</span>
                             </div>
                         )}
                     </div>

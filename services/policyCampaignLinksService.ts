@@ -36,13 +36,13 @@ export class PolicyCampaignLinksService {
                 .from('policy_campaign_links')
                 .select(`
                     *,
-                    policy:policy_id (
+                    policy:policies!policy_campaign_links_policy_id_fkey (
                         id,
                         policy_number,
                         type,
                         premium_value
                     ),
-                    campaign:campaign_id (
+                    campaign:goals!policy_campaign_links_campaign_id_fkey (
                         id,
                         title,
                         description
@@ -69,7 +69,7 @@ export class PolicyCampaignLinksService {
                 .from('policy_campaign_links')
                 .select(`
                     *,
-                    campaign:campaign_id (
+                    campaign:goals!policy_campaign_links_campaign_id_fkey (
                         id,
                         title,
                         description

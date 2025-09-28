@@ -211,6 +211,7 @@ export const useConqueredPrizes = () => {
         }
     }, [fetchConqueredPrizes, calculateBalance]);
 
+
     // Carregar dados iniciais
     useEffect(() => {
         if (user) {

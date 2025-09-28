@@ -8,6 +8,7 @@ import DashboardPage from './components/pages/DashboardPage';
 import GoalsPage from './components/pages/GoalsPage';
 import AdminDashboard from './components/pages/AdminDashboard';
 import PremiosPage from './components/pages/PremiosPage';
+import DebugPage from './components/pages/DebugPage';
 import AdminRedirect from './components/auth/AdminRedirect';
 import { PoliciesProvider } from './hooks/usePolicies';
 
@@ -84,6 +85,16 @@ const AppContent: React.FC = () => {
             <Route 
                 path="/admin/redirect" 
                 element={<AdminRedirect />} 
+            />
+            <Route 
+                path="/debug" 
+                element={
+                    user ? (
+                        <DebugPage />
+                    ) : (
+                        <Navigate to="/login" replace />
+                    )
+                } 
             />
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

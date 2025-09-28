@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useConqueredPrizes, ConqueredPrize, PrizeBalance } from '../../hooks/useConqueredPrizes';
 import { usePrizeOrders, PrizeOrder } from '../../hooks/usePrizeOrders';
 import { supabase } from '../../lib/supabase';
+import { AutoPrizeService } from '../../services/AutoPrizeService';
+import { PrizeRedemptionService } from '../../services/PrizeRedemptionService';
 import { 
     ShoppingCart, 
     Gift, 
@@ -44,7 +46,7 @@ const PrizeRedemptionTab: React.FC = () => {
         error, 
         createRedemptionOrder, 
         refreshPrizes, 
-        refreshBalance 
+        refreshBalance
     } = useConqueredPrizes();
 
     const { 
@@ -55,6 +57,39 @@ const PrizeRedemptionTab: React.FC = () => {
 
     const [cart, setCart] = useState<CartItem[]>([]);
     const [submitting, setSubmitting] = useState(false);
+    const [processingPrizes, setProcessingPrizes] = useState(false);
+
+    // ✅ NOVA FUNÇÃO: Processar prêmios de campanhas completadas
+    const processCompletedCampaignsPrizes = async () => {
+        try {
+            setProcessingPrizes(true);
+            console.log('🔍 PrizeRedemptionTab - Verificando campanhas completadas e disponibilizando prêmios');
+            
+            const result = await AutoPrizeService.processAllCompletedCampaigns();
+            
+            if (result.success) {
+                console.log(`✅ PrizeRedemptionTab - ${result.processedCampaigns} campanhas processadas`);
+                
+                // Recarregar prêmios após processamento
+                await refreshPrizes();
+                await refreshBalance();
+                
+                if (result.processedCampaigns > 0) {
+                    alert(`Prêmios disponibilizados para ${result.processedCampaigns} campanhas completadas!`);
+                } else {
+                    alert('Nenhuma campanha completada encontrada ou prêmios já disponibilizados.');
+                }
+            } else {
+                console.error('❌ PrizeRedemptionTab - Erro ao processar campanhas:', result.errors);
+                alert('Erro ao processar campanhas completadas');
+            }
+        } catch (error) {
+            console.error('❌ PrizeRedemptionTab - Erro ao processar prêmios:', error);
+            alert('Erro ao processar prêmios');
+        } finally {
+            setProcessingPrizes(false);
+        }
+    };
 
     // Verificar se campanha tem múltiplos prêmios
     const isMultiPrizeCampaign = (campaignId: string) => {
@@ -62,52 +97,40 @@ const PrizeRedemptionTab: React.FC = () => {
         return prizesFromSameCampaign.length > 1;
     };
 
-    // Verificar se já tem prêmio desta campanha no carrinho
+    // ✅ NOVA LÓGICA: Verificar se já tem prêmio desta campanha no carrinho
     const hasPrizeFromCampaign = (campaignId: string) => {
         return cart.some(item => item.campaign_id === campaignId);
     };
 
-    // Adicionar item ao carrinho
+    // ✅ NOVA LÓGICA: Verificar se prêmio já foi escolhido (removido da tabela)
+    const isPrizeAlreadyChosen = (prize: ConqueredPrize) => {
+        // Se o prêmio não está mais na lista de disponíveis, foi escolhido
+        return !availablePrizes.some(ap => ap.id === prize.id);
+    };
+
+    // ✅ NOVA LÓGICA: Adicionar item ao carrinho (apenas 1 por campanha)
     const addToCart = (prize: ConqueredPrize) => {
-        // Verificar se é campanha múltipla e já tem prêmio desta campanha
-        if (isMultiPrizeCampaign(prize.campaign_id) && hasPrizeFromCampaign(prize.campaign_id)) {
-            alert('Esta campanha tem múltiplos prêmios. Você só pode escolher 1 prêmio por campanha.');
+        // Verificar se já tem prêmio desta campanha no carrinho
+        if (hasPrizeFromCampaign(prize.campaign_id)) {
+            alert('Você já escolheu um prêmio desta campanha. Remova o prêmio atual para escolher outro.');
             return;
         }
 
-        const existingItem = cart.find(item => item.premio_conquistado_id === prize.id);
-        
-        if (existingItem) {
-            // Verificar se pode aumentar quantidade
-            const newQuantity = existingItem.quantidade + 1;
-            const maxQuantity = Math.min(prize.quantidade_conquistada, 2); // Máximo 2 ou quantidade conquistada
-            
-            if (newQuantity <= maxQuantity) {
-                setCart(cart.map(item => 
-                    item.premio_conquistado_id === prize.id 
-                        ? { ...item, quantidade: newQuantity, valor_total: newQuantity * item.premio_valor_estimado }
-                        : item
-                ));
-            } else {
-                alert(`Você só pode resgatar no máximo ${maxQuantity} unidade(s) deste prêmio.`);
-            }
-        } else {
-            // Adicionar novo item
-            const newItem: CartItem = {
-                premio_conquistado_id: prize.id,
-                campaign_id: prize.campaign_id,
-                campaign_title: prize.campaign_title,
-                premio_id: prize.premio_id,
-                premio_nome: prize.premio_nome,
-                premio_valor_estimado: prize.premio_valor_estimado,
-                premio_imagem: prize.premio_imagem_url,
-                premio_categoria: prize.premio_categoria,
-                premio_tipo: prize.premio_tipo,
-                quantidade: 1,
-                valor_total: prize.premio_valor_estimado
-            };
-            setCart([...cart, newItem]);
-        }
+        // Adicionar novo item (apenas 1 por campanha)
+        const newItem: CartItem = {
+            premio_conquistado_id: prize.id,
+            campaign_id: prize.campaign_id,
+            campaign_title: prize.campaign_title,
+            premio_id: prize.premio_id,
+            premio_nome: prize.premio_nome,
+            premio_valor_estimado: prize.premio_valor_estimado,
+            premio_imagem: prize.premio_imagem_url,
+            premio_categoria: prize.premio_categoria,
+            premio_tipo: prize.premio_tipo,
+            quantidade: 1,
+            valor_total: prize.premio_valor_estimado
+        };
+        setCart([...cart, newItem]);
     };
 
     // Remover item do carrinho
@@ -146,7 +169,7 @@ const PrizeRedemptionTab: React.FC = () => {
     // Calcular total do carrinho
     const cartTotal = cart.reduce((sum, item) => sum + item.valor_total, 0);
 
-    // Finalizar pedido
+    // ✅ NOVA LÓGICA: Finalizar pedido e remover prêmios
     const submitOrder = async () => {
         if (cart.length === 0) {
             alert('Carrinho vazio!');
@@ -155,20 +178,27 @@ const PrizeRedemptionTab: React.FC = () => {
 
         try {
             setSubmitting(true);
+            console.log('🛒 PrizeRedemptionTab - Finalizando pedido com nova lógica');
 
-            // Criar pedidos para cada item do carrinho
-            for (const item of cart) {
-                await createRedemptionOrder({
-                    premio_conquistado_id: item.premio_conquistado_id,
-                    quantidade: item.quantidade
-                });
+            // Usar o novo serviço para criar pedido e remover prêmios
+            const result = await PrizeRedemptionService.createRedemptionOrder(cart);
+
+            if (result.success) {
+                console.log(`✅ PrizeRedemptionTab - Pedido criado: ${result.orderId}, ${result.removedPrizes} prêmios removidos`);
+                
+                // Limpar carrinho
+                setCart([]);
+                
+                // Recarregar prêmios disponíveis
+                await loadConqueredPrizes();
+                
+                alert(`Pedido realizado com sucesso! ${result.removedPrizes} prêmios removidos da sua conta.`);
+            } else {
+                throw new Error(result.error || 'Erro ao criar pedido');
             }
 
-            // Limpar carrinho
-            setCart([]);
-            alert('Pedido realizado com sucesso!');
-
         } catch (err: any) {
+            console.error('❌ PrizeRedemptionTab - Erro ao finalizar pedido:', err);
             alert('Erro ao finalizar pedido: ' + err.message);
         } finally {
             setSubmitting(false);
@@ -223,29 +253,39 @@ const PrizeRedemptionTab: React.FC = () => {
                     <h2 className="text-2xl font-bold text-gray-900">Resgatar Prêmios</h2>
                     <p className="text-gray-600">Use seus prêmios conquistados para fazer pedidos</p>
                 </div>
-                <div className="flex items-center space-x-2">
-                    <Gift className="w-6 h-6 text-green-600" />
-                    <span className="text-sm font-medium text-gray-600">Prêmios</span>
+                <div className="flex items-center space-x-4">
+                    <button
+                        onClick={processCompletedCampaignsPrizes}
+                        disabled={processingPrizes}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
+                    >
+                        <Gift className={`w-4 h-4 ${processingPrizes ? 'animate-pulse' : ''}`} />
+                        {processingPrizes ? 'Processando...' : 'Verificar Prêmios'}
+                    </button>
+                    <div className="flex items-center space-x-2">
+                        <Gift className="w-6 h-6 text-green-600" />
+                        <span className="text-sm font-medium text-gray-600">Prêmios</span>
+                    </div>
                 </div>
             </div>
 
-            {/* Valor Total de Premiação */}
-            <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
+            {/* Prêmios Conquistados */}
+            <Card className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h3 className="text-lg font-semibold text-blue-800">
-                            Valor Total de Premiação
+                        <h3 className="text-lg font-semibold text-green-800">
+                            Prêmios Conquistados
                         </h3>
-                        <p className="text-blue-600">
-                            Total de prêmios conquistados
+                        <p className="text-green-600">
+                            Escolha um prêmio por campanha
                         </p>
                     </div>
                     <div className="text-right">
-                        <div className="text-3xl font-bold text-blue-800">
-                            {formatCurrency(balance.total_conquistado)}
+                        <div className="text-3xl font-bold text-green-800">
+                            {availablePrizes.length}
                         </div>
-                        <div className="text-sm text-blue-600">
-                            {availablePrizes.length} prêmio{availablePrizes.length !== 1 ? 's' : ''} disponível{availablePrizes.length !== 1 ? 'is' : ''}
+                        <div className="text-sm text-green-600">
+                            prêmios disponíveis
                         </div>
                     </div>
                 </div>
@@ -284,7 +324,6 @@ const PrizeRedemptionTab: React.FC = () => {
                                             <th className="text-left py-3 px-4 font-medium text-gray-700">Prêmio</th>
                                             <th className="text-left py-3 px-4 font-medium text-gray-700">Campanha</th>
                                             <th className="text-left py-3 px-4 font-medium text-gray-700">Categoria</th>
-                                            <th className="text-left py-3 px-4 font-medium text-gray-700">Valor</th>
                                             <th className="text-left py-3 px-4 font-medium text-gray-700">Qtd</th>
                                             <th className="text-center py-3 px-4 font-medium text-gray-700">Ação</th>
                                         </tr>
@@ -326,11 +365,6 @@ const PrizeRedemptionTab: React.FC = () => {
                                                     <Badge variant="secondary" className="text-xs">
                                                         {prize.premio_categoria}
                                                     </Badge>
-                                                </td>
-                                                <td className="py-4 px-4">
-                                                    <div className="font-semibold text-green-600">
-                                                        {formatCurrency(prize.premio_valor_estimado)}
-                                                    </div>
                                                 </td>
                                                 <td className="py-4 px-4">
                                                     <div className="text-sm text-gray-600">
@@ -420,9 +454,9 @@ const PrizeRedemptionTab: React.FC = () => {
 
                                 <div className="border-t border-gray-200 pt-4">
                                     <div className="flex items-center justify-between mb-4">
-                                        <span className="text-lg font-semibold text-gray-900">Total:</span>
+                                        <span className="text-lg font-semibold text-gray-900">Prêmios Escolhidos:</span>
                                         <span className="text-xl font-bold text-green-600">
-                                            {formatCurrency(cartTotal)}
+                                            {cart.length} prêmio{cart.length !== 1 ? 's' : ''}
                                         </span>
                                     </div>
 

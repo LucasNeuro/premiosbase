@@ -244,9 +244,14 @@ const GoalDetailsSidepanel: React.FC<GoalDetailsSidepanelProps> = ({
             
             setProgressLoading(true);
             try {
-                // Importar e usar o mesmo serviço do corretor
+                // ✅ USAR A MESMA LÓGICA DO CORRETOR
                 const { calculateCampaignProgressAuxiliar } = await import('../../services/campaignProgressAuxiliar');
                 const progressData = await calculateCampaignProgressAuxiliar(goal.id);
+                
+                console.log('🔍 Admin - Calculando progresso com mesma lógica do corretor:', {
+                    campaignId: goal.id,
+                    progressData
+                });
                 
                 if (progressData) {
                     setRealtimeProgress(progressData.progressPercentage);
