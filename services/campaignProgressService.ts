@@ -333,8 +333,28 @@ export const calculateCompositeCampaignProgress = async (campaignId: string): Pr
         // Verificar tipo de contrato
         if (criterion.contract_type && criterion.contract_type !== 'ambos') {
           const policyContractType = policy.contract_type;
-          if (criterion.contract_type === 'novo' && policyContractType !== 'Novo') return false;
-          if (criterion.contract_type === 'renovacao_bradesco' && policyContractType !== 'Renovação Bradesco') return false;
+          console.log('🔍 CampaignProgressService - Debug contract_type:', {
+            criterionContractType: criterion.contract_type,
+            policyContractType: policyContractType,
+            policyId: policy.id,
+            isAmbos: criterion.contract_type === 'ambos'
+          });
+          
+          if (criterion.contract_type === 'novo' && policyContractType !== 'Novo') {
+            console.log('❌ CampaignProgressService REJEITANDO: Critério pede NOVO, mas apólice é:', policyContractType);
+            return false;
+          }
+          if (criterion.contract_type === 'renovacao_bradesco' && policyContractType !== 'Renovação Bradesco') {
+            console.log('❌ CampaignProgressService REJEITANDO: Critério pede RENOVAÇÃO, mas apólice é:', policyContractType);
+            return false;
+          }
+        } else if (criterion.contract_type === 'ambos') {
+          console.log('✅ CampaignProgressService ACEITANDO: Critério é AMBOS, apólice é:', policy.contract_type);
+        } else {
+          console.log('⚠️ CampaignProgressService - SEM FILTRO DE CONTRACT_TYPE:', {
+            criterionContractType: criterion.contract_type,
+            policyContractType: policy.contract_type
+          });
         }
 
         // Verificar valor mínimo

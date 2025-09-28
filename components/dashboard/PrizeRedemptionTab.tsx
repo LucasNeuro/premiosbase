@@ -269,7 +269,11 @@ const PrizeRedemptionTab: React.FC = () => {
                 </div>
             </div>
 
+<<<<<<< HEAD
             {/* Prêmios Conquistados */}
+=======
+            {/* Prêmios Conquistados - Simplificado */}
+>>>>>>> d1d346b4fdc8a1a9e79909ca24747a7ec5a6c149
             <Card className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
                 <div className="flex items-center justify-between">
                     <div>
@@ -277,7 +281,11 @@ const PrizeRedemptionTab: React.FC = () => {
                             Prêmios Conquistados
                         </h3>
                         <p className="text-green-600">
+<<<<<<< HEAD
                             Escolha um prêmio por campanha
+=======
+                            Seus prêmios disponíveis para resgate
+>>>>>>> d1d346b4fdc8a1a9e79909ca24747a7ec5a6c149
                         </p>
                     </div>
                     <div className="text-right">
@@ -285,7 +293,11 @@ const PrizeRedemptionTab: React.FC = () => {
                             {availablePrizes.length}
                         </div>
                         <div className="text-sm text-green-600">
+<<<<<<< HEAD
                             prêmios disponíveis
+=======
+                            prêmio{availablePrizes.length !== 1 ? 's' : ''} disponível{availablePrizes.length !== 1 ? 'is' : ''}
+>>>>>>> d1d346b4fdc8a1a9e79909ca24747a7ec5a6c149
                         </div>
                     </div>
                 </div>
