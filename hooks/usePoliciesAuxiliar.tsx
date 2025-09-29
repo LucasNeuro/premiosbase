@@ -218,32 +218,19 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
 
             // 3. VINCULAR A TODAS AS CAMPANHAS ATIVAS DO CORRETOR (VIA CÓDIGO - SEM IA)
 
-            // 🎯 CORREÇÃO CRÍTICA: Só vincular apólices criadas APÓS aceite da campanha
+            // 🎯 NOVA LÓGICA: Vincular apólice a TODAS as campanhas ativas que ela atender aos critérios
             const policyCreatedAt = new Date(newPolicy.created_at);
             console.log('🔍 Debug - Apólice criada em:', policyCreatedAt.toISOString());
             
             for (const campaign of acceptedCampaigns || []) {
                 console.log(`🔍 Debug - Analisando campanha: ${campaign.title} (ID: ${campaign.id})`);
                 
-                // ✅ REGRA FUNDAMENTAL: Só vincular se a apólice foi criada APÓS aceitar a campanha
-                const campaignAcceptedAt = campaign.accepted_at ? new Date(campaign.accepted_at) : null;
-                console.log(`🔍 Debug - Campanha aceita em:`, campaignAcceptedAt?.toISOString() || 'N/A');
+                // ✅ NOVA REGRA: Vincular a TODAS as campanhas aceitas (sem restrição de data)
+                console.log('✅ Debug - Apólice será analisada para vinculação à campanha');
                 
-                if (!campaignAcceptedAt) {
-                    console.log('⚠️ Debug - Campanha sem data de aceite, pulando...');
-                    continue;
-                }
-                
-                if (policyCreatedAt < campaignAcceptedAt) {
-                    console.log('⚠️ Debug - Apólice criada ANTES do aceite da campanha, pulando...');
-                    continue;
-                }
-                
-                console.log('✅ Debug - Apólice pode ser vinculada à campanha');
-                
-                // ✅ Apólice foi criada APÓS aceite da campanha - pode vincular
+                // ✅ Vincular apólice à campanha
                 const confidence = 100; // Confiança máxima - código é confiável
-                const reasoning = `Apólice ${policyData.type} criada em ${policyCreatedAt.toISOString()} vinculada à campanha aceita em ${campaignAcceptedAt.toISOString()}`;
+                const reasoning = `Apólice ${policyData.type} criada em ${policyCreatedAt.toISOString()} vinculada à campanha ${campaign.title}`;
 
                 console.log('🔗 Debug - Criando vinculação...');
                 const { error: linkError } = await supabase
@@ -260,7 +247,7 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
 
                 if (!linkError) {
                     linkedCampaigns++;
-                    campaignMessage += `✅ Vinculada à campanha "${campaign.title}" (aceita em ${campaignAcceptedAt.toLocaleDateString()})\n`;
+                    campaignMessage += `✅ Vinculada à campanha "${campaign.title}"\n`;
                     console.log('✅ Debug - Vinculação criada com sucesso!');
                 } else {
                     console.error('❌ Debug - Erro ao criar vinculação:', linkError);
