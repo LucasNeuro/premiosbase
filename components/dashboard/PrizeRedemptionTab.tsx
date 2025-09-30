@@ -360,13 +360,13 @@ const PrizeRedemptionTab: React.FC = () => {
                                                 <td className="py-4 px-4">
                                                     <div className="flex items-center space-x-3">
                                                         <SafeImage 
-                                                            src={prize.premio_imagem_url} 
-                                                            alt={prize.premio_nome}
-                                                            className="w-12 h-12 object-contain bg-gray-100 rounded-lg"
+                                                                src={prize.premio_imagem_url} 
+                                                                alt={prize.premio_nome}
+                                                                className="w-12 h-12 object-contain bg-gray-100 rounded-lg"
                                                             fallback={
-                                                                <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                                                                    <Gift className="w-6 h-6 text-gray-400" />
-                                                                </div>
+                                                            <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                                                                <Gift className="w-6 h-6 text-gray-400" />
+                                                            </div>
                                                             }
                                                         />
                                                         <div>

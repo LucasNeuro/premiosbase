@@ -1,9 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useGoalsNew } from '../../hooks/useGoalsNew';
 import { useRealtimeListener } from '../../hooks/useRealtimeEvents';
-// 🔧 CORREÇÃO: Removendo imports de cache local para evitar conflitos
-// import { useCampaignsStore } from '../../stores/useCampaignsStore';
-// import { useCacheManager } from '../../hooks/useCacheManager';
+import { useCampaignsStore } from '../../stores/useCampaignsStore';
+import { useCacheManager } from '../../hooks/useCacheManager';
 import { calculateDaysRemaining } from '../../utils/dateUtils';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -33,9 +32,9 @@ const CampaignsKanban: React.FC = () => {
     const [selectedCampaign, setSelectedCampaign] = useState<Goal | null>(null);
     const [isSidepanelOpen, setIsSidepanelOpen] = useState(false);
     
-    // 🔧 CORREÇÃO: Removendo stores de cache para evitar conflitos
-    // const campaignsStore = useCampaignsStore();
-    // const cacheManager = useCacheManager();
+    // 🔧 CORREÇÃO: Cache restaurado com lógica melhorada
+    const campaignsStore = useCampaignsStore();
+    const cacheManager = useCacheManager();
 
     // Listener para atualizações em tempo real das campanhas
     useRealtimeListener('campaigns', useCallback(() => {
@@ -49,29 +48,51 @@ const CampaignsKanban: React.FC = () => {
         }
     }, [refreshCampaigns, fetchCampaigns]), [refreshCampaigns, fetchCampaigns]);
 
-    // 🔧 CORREÇÃO: Sempre buscar dados frescos do banco (sem cache local)
+    // 🔧 CORREÇÃO: Cache inteligente - usar cache para performance, mas sempre validar status
     useEffect(() => {
-        console.log('🔄 CampaignsKanban: Buscando dados frescos do banco...');
-        fetchCampaigns().catch(err => {
-            console.error('Erro ao buscar campanhas:', err);
-        });
+        // Se cache é válido, usar dados do cache MAS sempre validar status
+        if (campaignsStore.isCacheValid() && campaignsStore.campaigns.length > 0) {
+            console.log('📦 CampaignsKanban: Usando cache, mas validando status...');
+            
+            // Buscar dados frescos em background para validar status
+            fetchCampaigns().catch(err => {
+                console.error('Erro ao validar dados:', err);
+            });
+        } else {
+            console.log('🔄 CampaignsKanban: Cache inválido, buscando dados frescos...');
+            fetchCampaigns().catch(err => {
+                console.error('Erro ao buscar campanhas:', err);
+            });
+        }
     }, []); // Apenas na inicialização
 
-    // 🔧 CORREÇÃO: Não sincronizar com cache local para evitar conflitos
-    // Os dados sempre vêm direto do banco via useGoalsNew
-
-    // 🔧 CORREÇÃO: Auto-refresh simples sem cache (evitar conflitos)
+    // 🔧 CORREÇÃO: Sincronizar dados do banco com cache (dados sempre frescos)
     useEffect(() => {
-        // Auto-refresh a cada 60 segundos para manter dados atualizados
+        if (campaigns.length > 0) {
+            console.log('🔄 CampaignsKanban: Sincronizando dados frescos com cache...');
+            campaignsStore.setCampaigns(campaigns);
+            campaignsStore.setPendingCampaigns(pendingCampaigns);
+        }
+    }, [campaigns, pendingCampaigns]); // Sincronizar sempre que dados mudarem
+
+    // 🔧 CORREÇÃO: Auto-refresh inteligente com cache
+    useEffect(() => {
+        const { settings } = cacheManager;
+        
+        // Auto-refresh baseado nas configurações, mas com validação de status
+        if (!settings.autoRefresh) return;
+        
         const interval = setInterval(() => {
-            console.log('🔄 CampaignsKanban: Auto-refresh simples...');
+            console.log('🔄 CampaignsKanban: Auto-refresh com validação de status...');
+            
+            // Sempre buscar dados frescos para validar status
             fetchCampaigns().catch(err => {
                 console.error('Erro no auto-refresh:', err);
             });
-        }, 60000); // 60 segundos
+        }, Math.max(settings.refreshInterval * 1000, 30000)); // Mínimo 30 segundos
         
         return () => clearInterval(interval);
-    }, []); // Sem dependências para evitar loops
+    }, [cacheManager]); // Dependência do cacheManager
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     // Filtrar campanhas por status - EVITAR DUPLICAÇÃO usando Map com IDs
@@ -117,8 +138,8 @@ const CampaignsKanban: React.FC = () => {
         try {
             await acceptCampaign(campaignId);
             
-            // 🔧 CORREÇÃO: Não atualizar cache local para evitar conflitos
-            // Os dados serão atualizados via fetchCampaigns()
+            // 🔧 CORREÇÃO: Atualizar cache local imediatamente para UX
+            campaignsStore.acceptCampaign(campaignId);
             
             // Refresh automático após aceitar
             console.log('🔄 Campanha aceita, atualizando dados...');
@@ -140,8 +161,8 @@ const CampaignsKanban: React.FC = () => {
         try {
             await rejectCampaign(campaignId);
             
-            // 🔧 CORREÇÃO: Não atualizar cache local para evitar conflitos
-            // Os dados serão atualizados via fetchCampaigns()
+            // 🔧 CORREÇÃO: Atualizar cache local imediatamente para UX
+            campaignsStore.rejectCampaign(campaignId);
             
             // Refresh automático após rejeitar
             console.log('🔄 Campanha rejeitada, atualizando dados...');

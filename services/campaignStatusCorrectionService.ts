@@ -18,10 +18,10 @@ export class CampaignStatusCorrectionService {
       
       // Buscar todas as campanhas do usuário
       const { data: campaigns, error } = await supabase
-        .from('goals')
+                .from('goals')
         .select('id, title, status, progress_percentage, acceptance_status')
         .eq('user_id', userId)
-        .eq('record_type', 'campaign')
+                .eq('record_type', 'campaign')
         .eq('is_active', true)
         .in('status', ['active', 'completed', 'cancelled']);
       
@@ -43,13 +43,13 @@ export class CampaignStatusCorrectionService {
       }
       
       console.log('✅ Correção de status concluída');
-      
-    } catch (error) {
+
+        } catch (error) {
       console.error('❌ Erro na correção de status:', error);
+        }
     }
-  }
-  
-  /**
+
+    /**
    * Corrigir status de uma campanha específica
    */
   static async correctCampaignStatus(campaignId: string, campaignTitle: string): Promise<void> {
@@ -78,7 +78,7 @@ export class CampaignStatusCorrectionService {
       const currentProgress = currentCampaign.progress_percentage || 0;
       const isAccepted = currentCampaign.acceptance_status === 'accepted';
       
-      // Determinar status correto
+      // 🔧 CORREÇÃO: Lógica mais rigorosa para status correto
       let correctStatus = 'active';
       
       if (!isAccepted) {
@@ -88,8 +88,18 @@ export class CampaignStatusCorrectionService {
           correctStatus = 'active'; // Voltar para active
         }
       } else if (progressData.isCompleted && progressData.progressPercentage >= 100) {
-        // Campanha aceita E progresso >= 100% = completed
-        correctStatus = 'completed';
+        // 🔧 VALIDAÇÃO RIGOROSA: Só completed se TODOS os critérios foram atingidos
+        const allCriteriaMet = progressData.criteriaDetails?.every(criterion => 
+          criterion.isThisCriterionMet && criterion.percentage >= 100
+        ) || false;
+        
+        if (allCriteriaMet) {
+          correctStatus = 'completed';
+          console.log(`✅ Campanha "${campaignTitle}" realmente atingiu TODOS os critérios`);
+        } else {
+          correctStatus = 'active';
+          console.log(`⚠️ Campanha "${campaignTitle}" não atingiu todos os critérios (${progressData.progressPercentage}%)`);
+        }
       } else if (progressData.progressPercentage < 100) {
         // Campanha aceita mas progresso < 100% = active
         correctStatus = 'active';

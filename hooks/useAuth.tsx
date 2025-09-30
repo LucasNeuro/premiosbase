@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { User } from '../types';
 import { supabase } from '../lib/supabase';
 import bcrypt from 'bcryptjs';
+import { CacheCleanupService } from '../services/cacheCleanupService';
 
 interface AuthContextType {
     user: User | null;
@@ -85,9 +86,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const logout = async () => {
         try {
+            // 🔧 CORREÇÃO: Limpar cache local no logout
+            console.log('🧹 Limpando cache no logout...');
+            CacheCleanupService.clearCacheOnLogout();
+            
             localStorage.removeItem('user');
             setUser(null);
+            
+            console.log('✅ Logout realizado e cache limpo');
         } catch (error) {
+            console.error('❌ Erro no logout:', error);
         }
     };
 
