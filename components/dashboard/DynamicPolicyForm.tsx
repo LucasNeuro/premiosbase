@@ -15,6 +15,7 @@ import { CampaignRecommendationService } from '../../services/campaignRecommenda
 import { RealTimeAuditService } from '../../services/RealTimeAuditService';
 import { supabase } from '../../lib/supabase';
 import { FileText, Shield, DollarSign, Calendar, Building2, Plus, Building, Target, CheckCircle, X, Sparkles, Info, Clock, TrendingUp, Zap } from 'lucide-react';
+import LoadingOverlay from '../ui/LoadingOverlay';
 
 interface DynamicPolicyFormProps {
     selectedPeriod?: '30' | '60' | 'geral';
@@ -41,6 +42,10 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
     const [showTimelineSidepanel, setShowTimelineSidepanel] = useState(false);
     const [isAuditing, setIsAuditing] = useState(false);
     const [auditResult, setAuditResult] = useState<any>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [processingProgress, setProcessingProgress] = useState(0);
+    const [processingMessage, setProcessingMessage] = useState('');
+    const [isCompleted, setIsCompleted] = useState(false);
     const { addPolicy, policies } = usePoliciesAuxiliar();
     const { campaigns } = useGoalsNew();
     const { user } = useAuth();
@@ -396,13 +401,23 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
             return;
         }
 
+        // Iniciar loading overlay
+        setIsProcessing(true);
+        setIsCompleted(false);
+        setProcessingProgress(0);
+        setProcessingMessage('Iniciando processamento...');
+
         try {
             const numericPremium = unmaskCurrency(premiumValue);
             
-            // Análise inteligente das campanhas compatíveis
+            // Etapa 1: Análise inteligente das campanhas compatíveis
+            setProcessingProgress(25);
+            setProcessingMessage('Analisando campanhas compatíveis...');
             const { campaigns: compatibleCampaigns, analysis } = await analyzeCompatibleCampaigns(type, contractType, numericPremium);
             
-            // Salvar apólice
+            // Etapa 2: Salvar apólice
+            setProcessingProgress(50);
+            setProcessingMessage('Salvando apólice...');
             const result = await addPolicy({
                 user_id: user?.id || '',
                 policy_number: policyNumber,
@@ -414,9 +429,11 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
             });
 
             if (result.success) {
-                // EXECUTAR AUDITORIA EM TEMPO REAL
-                if (result.success && user?.id) {
-                    // Buscar a apólice mais recente do usuário (que acabou de ser criada)
+                // Etapa 3: Executar auditoria em tempo real
+                setProcessingProgress(75);
+                setProcessingMessage('Auditando...');
+                
+                if (user?.id) {
                     try {
                         const { data: latestPolicy, error: policyError } = await supabase
                             .from('policies')
@@ -435,27 +452,34 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                     }
                 }
                 
-                // Mostrar análise inteligente
-                setMessage({ 
-                    text: `${result.message} ${analysis}`, 
-                    type: 'success' 
-                });
+                // Etapa 4: Finalizar
+                setProcessingProgress(100);
+                setProcessingMessage('Finalizando...');
                 setLinkedCampaigns(compatibleCampaigns);
                 
-                // Limpar formulário após mostrar a mensagem de sucesso
+                // Mostrar check de sucesso
+                setIsCompleted(true);
+                setProcessingMessage('Apólice processada com sucesso!');
+                
+                // Limpar formulário após 2 segundos
                 setTimeout(() => {
                     clearForm();
-                }, 3000); // Aguarda 3 segundos para mostrar a mensagem
+                    setIsProcessing(false);
+                    setIsCompleted(false);
+                    setProcessingProgress(0);
+                }, 2000);
+                
             } else {
-                // Mostrar erro e limpar formulário para nova tentativa
+                // Erro - parar loading e mostrar erro
+                setIsProcessing(false);
                 setMessage({ text: result.message, type: 'error' });
-                // Limpar formulário após erro para facilitar nova tentativa
-                setTimeout(() => clearForm(), 2000); // Limpa após 2 segundos
+                setTimeout(() => clearForm(), 2000);
             }
         } catch (error) {
+            // Erro - parar loading e mostrar erro
+            setIsProcessing(false);
             setMessage({ text: 'Erro ao salvar apólice', type: 'error' });
-            // Limpar formulário após erro para facilitar nova tentativa
-            setTimeout(() => clearForm(), 2000); // Limpa após 2 segundos
+            setTimeout(() => clearForm(), 2000);
         } finally {
             setIsSubmitting(false);
         }
@@ -482,12 +506,8 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {message && (
-                        <div className={`alert ${
-                            message.type === 'success' 
-                                ? 'alert-success' 
-                                : 'alert-error'
-                        }`}>
+                    {message && message.type === 'error' && (
+                        <div className="alert alert-error">
                             <span>{message.text}</span>
                         </div>
                     )}
@@ -909,6 +929,14 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                     </div>
                 </div>
             )}
+
+            {/* Loading Overlay */}
+            <LoadingOverlay
+                isVisible={isProcessing}
+                isCompleted={isCompleted}
+                message={processingMessage}
+                progress={processingProgress}
+            />
         </div>
     );
 };

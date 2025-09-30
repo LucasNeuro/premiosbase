@@ -62,7 +62,7 @@ const AdminDashboard: React.FC = () => {
         },
         { 
             id: 'force-prizes', 
-            label: 'Corrigir Prêmios', 
+            label: 'Editar e Distribuir', 
             icon: <Wrench className="w-5 h-5" />,
             component: () => (
                 <ErrorBoundary>

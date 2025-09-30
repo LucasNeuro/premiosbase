@@ -369,21 +369,10 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
                 console.error('❌ Debug - Erro ao atualizar progresso das campanhas:', progressError);
             }
 
-            // Mensagem de sucesso com análise inteligente
-            let successMessage = `✅ Apólice ${policyData.policy_number} salva com sucesso!`;
-            if (linkedCampaigns > 0) {
-                successMessage += `\n\n🎯 Vinculada automaticamente a TODAS as ${linkedCampaigns} campanha(s) ativa(s) do corretor`;
-                successMessage += `\n\n📊 Esta apólice contará para:`;
-                successMessage += `\n• Valor total de todas as campanhas`;
-                successMessage += `\n• Quantidade de apólices de todas as campanhas`;
-                successMessage += `\n• Critérios específicos compatíveis`;
-            } else {
-                successMessage += `\n\nℹ️ Nenhuma campanha ativa encontrada para vinculação`;
-            }
-
+            // Retorna sucesso sem mensagem (será tratado pelo loading overlay)
             return { 
                 success: true, 
-                message: successMessage
+                message: ''
             };
 
         } catch (error: any) {
