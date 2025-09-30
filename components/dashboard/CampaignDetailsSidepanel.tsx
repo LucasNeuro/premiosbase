@@ -6,6 +6,7 @@ import Spinner from '../ui/Spinner';
 import PremioSidepanelHero from '../ui/PremioSidepanelHero';
 import { Goal } from '../../types';
 import { currencyMaskFree } from '../../utils/masks';
+import { getContractTypeLabel } from '../../utils/contractTypeUtils';
 // Removido imports de debug
 import { useGoalsNew } from '../../hooks/useGoalsNew';
 import { getCampaignCriteriaDetails, CriterionProgress } from '../../services/campaignProgressAuxiliar';
@@ -252,7 +253,7 @@ const CampaignDetailsSidepanel: React.FC<CampaignDetailsSidepanelProps> = ({
                                                 <div className={`text-sm ${isPending ? 'text-yellow-700' : 'text-gray-700'}`}>
                                                     • <strong>Tipo de Apólice:</strong> {criterion.policy_type === 'auto' ? 'Seguro Auto' : 'Seguro Residencial'}
                                                     {criterion.contract_type && (
-                                                        <><br />• <strong>Tipo de Contrato:</strong> {criterion.contract_type === 'novo' ? 'Novo' : 'Renovação'}</>
+                                                        <><br />• <strong>Tipo de Contrato:</strong> {getContractTypeLabel(criterion.contract_type)}</>
                                                     )}
                                                     {criterion.min_value_per_policy && (
                                                         <><br />• <strong>Valor Mínimo por Apólice:</strong> {currencyMaskFree(criterion.min_value_per_policy.toString())}</>
