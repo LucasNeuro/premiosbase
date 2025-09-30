@@ -91,10 +91,10 @@ const PremioHeroHeader: React.FC<PremioHeroHeaderProps> = ({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                     
                     {/* Premio Info Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 p-3 text-white">
+                    <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
                         <div className="flex items-center justify-between">
                             <div className="flex-1 min-w-0">
-                                <h3 className="font-bold text-sm mb-1 line-clamp-1">
+                                <h3 className="font-bold text-sm mb-0.5 line-clamp-1">
                                     {premios[currentIndex].premio.nome}
                                 </h3>
                                 <div className="flex items-center gap-2 text-xs">

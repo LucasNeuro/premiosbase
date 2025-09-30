@@ -31,25 +31,23 @@ const CategoryPreview: React.FC<CategoryPreviewProps> = ({ categoryId, isVisible
         setError(null);
         
         try {
-            const { data, error } = await supabase
-                .from('users')
+            const { data: userCategorias, error: userCategoriasError } = await supabase
+                .from('user_categorias')
                 .select(`
-                    id,
-                    email,
-                    name,
-                    corretores_categorias!inner(
-                        categoria_id,
-                        categorias_corretores!inner(
-                            id,
-                            nome
-                        )
+                    user_id,
+                    users!user_id (
+                        id,
+                        email,
+                        name
                     )
                 `)
-                .eq('corretores_categorias.categoria_id', categoryId);
+                .eq('categoria_id', categoryId)
+                .eq('is_active', true);
 
-            if (error) throw error;
+            if (userCategoriasError) throw userCategoriasError;
             
-            setUsers(data || []);
+            const users = userCategorias?.map(uc => uc.users).filter(Boolean) || [];
+            setUsers(users.flat());
         } catch (err: any) {
             setError(err.message);
         } finally {

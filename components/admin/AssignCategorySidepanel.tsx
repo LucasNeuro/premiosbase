@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
 import { X, Save, Users, Tag, CheckCircle } from 'lucide-react';
 
 interface CategoriaCorretor {
@@ -28,6 +29,7 @@ const AssignCategorySidepanel: React.FC<AssignCategorySidepanelProps> = ({
     onClose,
     onSave
 }) => {
+    const { user: currentUser } = useAuth();
     const [categorias, setCategorias] = useState<CategoriaCorretor[]>([]);
     const [selectedCategoria, setSelectedCategoria] = useState<string>('');
     const [loading, setLoading] = useState(false);
@@ -62,25 +64,42 @@ const AssignCategorySidepanel: React.FC<AssignCategorySidepanelProps> = ({
         setLoading(true);
 
         try {
-            // Criar relacionamentos corretores_categorias
-            const assignments = selectedUsers.map(user => ({
-                corretor_id: user.id,
-                categoria_id: selectedCategoria
-            }));
+            // Verificar se já existem relacionamentos para evitar duplicatas
+            const { data: existingAssignments } = await supabase
+                .from('user_categorias')
+                .select('user_id')
+                .eq('categoria_id', selectedCategoria)
+                .in('user_id', selectedUsers.map(u => u.id));
 
-            const { error } = await supabase
-                .from('corretores_categorias')
-                .insert(assignments);
+            const existingUserIds = existingAssignments?.map(a => a.user_id) || [];
+            const newAssignments = selectedUsers
+                .filter(user => !existingUserIds.includes(user.id))
+                .map(user => ({
+                    user_id: user.id,
+                    categoria_id: selectedCategoria,
+                    assigned_by: currentUser?.id
+                }));
 
-            if (error) {
-                alert('Erro ao atribuir categoria');
+            if (newAssignments.length === 0) {
+                alert('Todos os corretores selecionados já possuem esta categoria!');
                 return;
             }
 
-            alert(`Categoria atribuída com sucesso para ${selectedUsers.length} corretor(es)!`);
+            const { error } = await supabase
+                .from('user_categorias')
+                .insert(newAssignments);
+
+            if (error) {
+                console.error('Erro ao atribuir categoria:', error);
+                alert(`Erro ao atribuir categoria: ${error.message}`);
+                return;
+            }
+
+            alert(`Categoria atribuída com sucesso para ${newAssignments.length} corretor(es)!`);
             onSave();
-        } catch (error) {
-            alert('Erro ao atribuir categoria');
+        } catch (error: any) {
+            console.error('Erro ao atribuir categoria:', error);
+            alert(`Erro ao atribuir categoria: ${error.message || 'Erro desconhecido'}`);
         } finally {
             setLoading(false);
         }

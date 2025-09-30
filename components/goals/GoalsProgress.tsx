@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { TrendingUp, Calendar, BarChart3, Target, Award } from 'lucide-react';
-import { useGoals } from '../../hooks/useGoals';
+import { useGoals } from '../../hooks/useGoalsNew';
 
 const GoalsProgress: React.FC = () => {
     const { stats, goals } = useGoals();

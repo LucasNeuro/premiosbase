@@ -224,19 +224,6 @@ const CampaignDetailsSidepanel: React.FC<CampaignDetailsSidepanelProps> = ({
                                 </div>
                             )}
 
-                            {/* Mensagem para campanhas com critérios */}
-                            {!isPending && !isRejected && criteriaDetails.length > 0 && (
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <Target className="w-4 h-4 text-blue-600" />
-                                        <span className="text-sm font-medium text-blue-800">Campanha com Critérios Específicos</span>
-                                    </div>
-                                    <p className="text-xs text-blue-700">
-                                        O progresso é calculado individualmente para cada critério abaixo. 
-                                        Todos os critérios devem ser 100% atingidos para conquistar o prêmio.
-                                    </p>
-                                </div>
-                            )}
 
                             {/* Data */}
                             <div className="flex items-center text-sm text-gray-500">

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
-import { CampaignCriteria } from '../../hooks/useGoals';
+import { CampaignCriteria } from '../../hooks/useGoalsNew';
 import { User } from '../../types';
 import { Plus, X, Car, Home, Target, DollarSign, Hash, Users, Package, Search, FileText } from 'lucide-react';
 import Button from '../ui/Button';
 import Alert from '../ui/Alert';
+import ModernSelect from '../ui/ModernSelect';
 import AIDescriptionField from '../ui/AIDescriptionField';
 import { currencyMask, unmaskCurrency, currencyMaskCalculator, currencyMaskSimple, currencyMaskFree } from '../../utils/masks';
 import { useCampaigns } from '../../hooks/useCampaigns';
@@ -511,38 +512,36 @@ const CompositeCampaignSidepanel: React.FC<CompositeCampaignSidepanelProps> = ({
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Corretor *
                                 </label>
-                                <select
+                                <ModernSelect
+                                    options={users.map(user => ({
+                                        value: user.id,
+                                        label: user.name,
+                                        email: user.email
+                                    }))}
                                     value={formData.user_id}
-                                    onChange={(e) => setFormData({ ...formData, user_id: e.target.value })}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="">Selecione um corretor</option>
-                                    {users.map(user => (
-                                        <option key={user.id} value={user.id}>
-                                            {user.name} ({user.email})
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.user_id && <p className="text-red-500 text-sm mt-1">{errors.user_id}</p>}
+                                    onChange={(value) => setFormData({ ...formData, user_id: value })}
+                                    placeholder="Selecione um corretor"
+                                    searchable={true}
+                                    error={errors.user_id}
+                                />
                             </div>
                         ) : (
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Categoria de Corretores *
                                 </label>
-                                <select
+                                <ModernSelect
+                                    options={categories.map(category => ({
+                                        value: category.id,
+                                        label: category.nome,
+                                        description: category.descricao
+                                    }))}
                                     value={formData.category_id}
-                                    onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                >
-                                    <option value="">Selecione uma categoria</option>
-                                    {categories.map(category => (
-                                        <option key={category.id} value={category.id}>
-                                            {category.nome}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.category_id && <p className="text-red-500 text-sm mt-1">{errors.category_id}</p>}
+                                    onChange={(value) => setFormData({ ...formData, category_id: value })}
+                                    placeholder="Selecione uma categoria"
+                                    searchable={true}
+                                    error={errors.category_id}
+                                />
                                 
                                 {/* Preview dos corretores da categoria */}
                                 <CategoryPreview 

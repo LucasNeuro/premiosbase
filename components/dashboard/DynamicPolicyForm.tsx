@@ -12,14 +12,17 @@ import Alert from '../ui/Alert';
 import { currencyMaskFree, unmaskCurrency } from '../../utils/masks';
 import Spinner from '../ui/Spinner';
 import { CampaignRecommendationService } from '../../services/campaignRecommendationService';
-import { FileText, Shield, DollarSign, Calendar, Building2, Plus, Building, Target, CheckCircle, X, Sparkles, Info, Clock, TrendingUp } from 'lucide-react';
+import { RealTimeAuditService } from '../../services/RealTimeAuditService';
+import { supabase } from '../../lib/supabase';
+import { FileText, Shield, DollarSign, Calendar, Building2, Plus, Building, Target, CheckCircle, X, Sparkles, Info, Clock, TrendingUp, Zap } from 'lucide-react';
 
 interface DynamicPolicyFormProps {
     selectedPeriod?: '30' | '60' | 'geral';
     onPeriodChange?: (period: '30' | '60' | 'geral') => void;
+    onTimelineClick?: () => void;
 }
 
-const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 'geral', onPeriodChange }) => {
+const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 'geral', onPeriodChange, onTimelineClick }) => {
     const [policyNumber, setPolicyNumber] = useState('');
     const [type, setType] = useState<PolicyType>(PolicyType.AUTO);
     const [contractType, setContractType] = useState<ContractType>(ContractType.NOVO);
@@ -36,6 +39,8 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
     const [showCampaignDropdown, setShowCampaignDropdown] = useState(false);
     const [selectedCampaignId, setSelectedCampaignId] = useState<string>('');
     const [showTimelineSidepanel, setShowTimelineSidepanel] = useState(false);
+    const [isAuditing, setIsAuditing] = useState(false);
+    const [auditResult, setAuditResult] = useState<any>(null);
     const { addPolicy, policies } = usePoliciesAuxiliar();
     const { campaigns } = useGoalsNew();
     const { user } = useAuth();
@@ -345,6 +350,41 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
         // Manter o CPD selecionado para facilitar o uso
     };
 
+    const runRealTimeAudit = async (policyId: string, userId: string) => {
+        setIsAuditing(true);
+        try {
+            console.log('🔍 DynamicPolicyForm: Iniciando auditoria em tempo real...');
+            
+            const auditResult = await RealTimeAuditService.auditNewPolicy(policyId, userId);
+            
+            if (auditResult.success && auditResult.data) {
+                setAuditResult(auditResult.data);
+                console.log('✅ DynamicPolicyForm: Auditoria concluída:', auditResult.data);
+                
+                // Mostrar resultado da auditoria
+                const { compatibleCampaigns, incompatibleCampaigns, totalCampaigns } = auditResult.data;
+                setMessage({ 
+                    text: `Auditoria concluída! ${compatibleCampaigns} de ${totalCampaigns} campanhas são compatíveis. ${incompatibleCampaigns} campanhas não receberam a apólice.`, 
+                    type: 'success' 
+                });
+            } else {
+                console.error('❌ DynamicPolicyForm: Erro na auditoria:', auditResult.error);
+                setMessage({ 
+                    text: 'Apólice adicionada, mas houve erro na auditoria automática.', 
+                    type: 'error' 
+                });
+            }
+        } catch (error: any) {
+            console.error('❌ DynamicPolicyForm: Erro na auditoria:', error);
+            setMessage({ 
+                text: 'Apólice adicionada, mas houve erro na auditoria automática.', 
+                type: 'error' 
+            });
+        } finally {
+            setIsAuditing(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setMessage(null);
@@ -374,6 +414,27 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
             });
 
             if (result.success) {
+                // EXECUTAR AUDITORIA EM TEMPO REAL
+                if (result.success && user?.id) {
+                    // Buscar a apólice mais recente do usuário (que acabou de ser criada)
+                    try {
+                        const { data: latestPolicy, error: policyError } = await supabase
+                            .from('policies')
+                            .select('id')
+                            .eq('user_id', user.id)
+                            .eq('policy_number', policyNumber)
+                            .order('created_at', { ascending: false })
+                            .limit(1)
+                            .single();
+                        
+                        if (!policyError && latestPolicy?.id) {
+                            await runRealTimeAudit(latestPolicy.id, user.id);
+                        }
+                    } catch (error) {
+                        console.error('❌ Erro ao buscar apólice para auditoria:', error);
+                    }
+                }
+                
                 // Mostrar análise inteligente
                 setMessage({ 
                     text: `${result.message} ${analysis}`, 
@@ -647,7 +708,7 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                             {/* Botão Timeline */}
                             <button
                                 type="button"
-                                onClick={() => setShowTimelineSidepanel(true)}
+                                onClick={() => onTimelineClick?.()}
                                 className="group flex items-center gap-2 px-4 py-2 bg-[#1e293b] text-white font-medium text-sm rounded-l-lg rounded-r-none shadow-md hover:shadow-lg hover:bg-[#49de80] transition-all duration-300"
                             >
                                 <Calendar className="w-4 h-4 group-hover:animate-pulse" />
@@ -708,13 +769,18 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                         <div className="flex">
                             <button
                                 type="submit"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || isAuditing}
                                 className="group relative flex items-center gap-2 px-4 py-2 bg-[#55165e] text-white font-medium text-sm rounded-lg shadow-md hover:shadow-lg hover:bg-[#4a1452] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                             >
                                 {isSubmitting ? (
                                     <>
                                         <Spinner size="sm" />
                                         <span>Salvando...</span>
+                                    </>
+                                ) : isAuditing ? (
+                                    <>
+                                        <Zap className="w-4 h-4 animate-pulse" />
+                                        <span>Auditando...</span>
                                     </>
                                 ) : (
                                     <>

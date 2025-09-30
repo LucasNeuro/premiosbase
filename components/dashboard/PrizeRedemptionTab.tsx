@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../hooks/useAuth';
 import { useConqueredPrizes, ConqueredPrize, PrizeBalance } from '../../hooks/useConqueredPrizes';
 import { usePrizeOrders, PrizeOrder } from '../../hooks/usePrizeOrders';
 import { supabase } from '../../lib/supabase';
 import { AutoPrizeService } from '../../services/AutoPrizeService';
 import { PrizeRedemptionService } from '../../services/PrizeRedemptionService';
+import SafeImage from '../ui/SafeImage';
+import ImagePreloader from '../ui/ImagePreloader';
+import { usePoliciesStore } from '../../stores/usePoliciesStore';
+import { useCacheManager } from '../../hooks/useCacheManager';
 import { 
     ShoppingCart, 
     Gift, 
@@ -16,7 +21,9 @@ import {
     Truck,
     DollarSign,
     Package,
-    AlertCircle
+    AlertCircle,
+    Search,
+    Filter
 } from 'lucide-react';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -39,6 +46,7 @@ interface CartItem {
 }
 
 const PrizeRedemptionTab: React.FC = () => {
+    const { user } = useAuth();
     const { 
         availablePrizes, 
         balance, 
@@ -58,6 +66,9 @@ const PrizeRedemptionTab: React.FC = () => {
     const [cart, setCart] = useState<CartItem[]>([]);
     const [submitting, setSubmitting] = useState(false);
     const [processingPrizes, setProcessingPrizes] = useState(false);
+    const [orderSearchTerm, setOrderSearchTerm] = useState('');
+    const [orderCurrentPage, setOrderCurrentPage] = useState(1);
+    const [orderItemsPerPage, setOrderItemsPerPage] = useState(10);
 
     // ✅ NOVA FUNÇÃO: Processar prêmios de campanhas completadas
     const processCompletedCampaignsPrizes = async () => {
@@ -181,7 +192,10 @@ const PrizeRedemptionTab: React.FC = () => {
             console.log('🛒 PrizeRedemptionTab - Finalizando pedido com nova lógica');
 
             // Usar o novo serviço para criar pedido e remover prêmios
-            const result = await PrizeRedemptionService.createRedemptionOrder(cart);
+            if (!user?.id) {
+                throw new Error('Usuário não autenticado');
+            }
+            const result = await PrizeRedemptionService.createRedemptionOrder(cart, user.id);
 
             if (result.success) {
                 console.log(`✅ PrizeRedemptionTab - Pedido criado: ${result.orderId}, ${result.removedPrizes} prêmios removidos`);
@@ -190,7 +204,7 @@ const PrizeRedemptionTab: React.FC = () => {
                 setCart([]);
                 
                 // Recarregar prêmios disponíveis
-                await loadConqueredPrizes();
+                await refreshPrizes();
                 
                 alert(`Pedido realizado com sucesso! ${result.removedPrizes} prêmios removidos da sua conta.`);
             } else {
@@ -245,8 +259,20 @@ const PrizeRedemptionTab: React.FC = () => {
         );
     }
 
+    // Coletar URLs das imagens para preload
+    const imageUrls = availablePrizes
+        .map(prize => prize.premio_imagem_url)
+        .filter(Boolean) as string[];
+
     return (
         <div className="space-y-6">
+            {/* Preloader invisível para melhorar performance */}
+            <ImagePreloader 
+                images={imageUrls}
+                onComplete={() => console.log('🖼️ PrizeRedemptionTab: Imagens pré-carregadas')}
+                onProgress={(loaded, total) => console.log(`🖼️ PrizeRedemptionTab: ${loaded}/${total} imagens carregadas`)}
+            />
+            
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
@@ -301,7 +327,7 @@ const PrizeRedemptionTab: React.FC = () => {
                     <Card className="p-6">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-xl font-semibold text-gray-900">Prêmios Disponíveis</h3>
-                            <Badge variant="secondary">
+                            <Badge className="bg-blue-100 text-blue-800">
                                 {availablePrizes.length} disponível{availablePrizes.length !== 1 ? 'is' : ''}
                             </Badge>
                         </div>
@@ -333,18 +359,16 @@ const PrizeRedemptionTab: React.FC = () => {
                                             <tr key={prize.id} className="border-b border-gray-100 hover:bg-gray-50">
                                                 <td className="py-4 px-4">
                                                     <div className="flex items-center space-x-3">
-                                                        {prize.premio_imagem_url ? (
-                                                            <img 
-                                                                src={prize.premio_imagem_url} 
-                                                                alt={prize.premio_nome}
-                                                                className="w-12 h-12 object-contain bg-gray-100 rounded-lg"
-                                                                loading="lazy"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                                                                <Gift className="w-6 h-6 text-gray-400" />
-                                                            </div>
-                                                        )}
+                                                        <SafeImage 
+                                                            src={prize.premio_imagem_url} 
+                                                            alt={prize.premio_nome}
+                                                            className="w-12 h-12 object-contain bg-gray-100 rounded-lg"
+                                                            fallback={
+                                                                <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
+                                                                    <Gift className="w-6 h-6 text-gray-400" />
+                                                                </div>
+                                                            }
+                                                        />
                                                         <div>
                                                             <div className="font-medium text-gray-900">{prize.premio_nome}</div>
                                                             <div className="text-sm text-gray-500">{prize.premio_tipo}</div>
@@ -362,7 +386,7 @@ const PrizeRedemptionTab: React.FC = () => {
                                                     </div>
                                                 </td>
                                                 <td className="py-4 px-4">
-                                                    <Badge variant="secondary" className="text-xs">
+                                                    <Badge className="bg-gray-100 text-gray-800 text-xs">
                                                         {prize.premio_categoria}
                                                     </Badge>
                                                 </td>
@@ -373,10 +397,9 @@ const PrizeRedemptionTab: React.FC = () => {
                                                 </td>
                                                 <td className="py-4 px-4 text-center">
                                                     <Button
-                                                        size="sm"
                                                         onClick={() => addToCart(prize)}
                                                         disabled={isMultiPrizeCampaign(prize.campaign_id) && hasPrizeFromCampaign(prize.campaign_id)}
-                                                        className="flex items-center space-x-1"
+                                                        className="flex items-center space-x-1 text-sm px-3 py-1"
                                                     >
                                                         <Plus className="w-4 h-4" />
                                                         <span>
@@ -484,44 +507,216 @@ const PrizeRedemptionTab: React.FC = () => {
                 </div>
             </div>
 
-            {/* Pedidos Realizados */}
+            {/* Pedidos Realizados - Versão Melhorada */}
             {orders.length > 0 && (
+                <>
+                    {/* Busca Simples - Igual ao Histórico de Apólices */}
+                    <div className="mb-6">
+                        <div className="flex justify-end">
+                            <div className="relative w-80">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                <input
+                                    type="text"
+                                    placeholder="Buscar por prêmio ou campanha..."
+                                    value={orderSearchTerm}
+                                    onChange={(e) => setOrderSearchTerm(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                            </div>
+                        </div>
+                    </div>
                 <Card className="p-6">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-6">Meus Pedidos</h3>
-                    <div className="space-y-4">
-                        {orders.map((order) => (
-                            <div key={order.id} className="border border-gray-200 rounded-lg p-4">
-                                <div className="flex items-start justify-between">
-                                    <div className="flex-1">
-                                        <div className="flex items-center space-x-2 mb-2">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-xl font-semibold text-gray-900">Meus Pedidos</h3>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-500">
+                                {(() => {
+                                    const filteredOrders = orders.filter(order => {
+                                        const matchesSearch = 
+                                            order.premio_nome.toLowerCase().includes(orderSearchTerm.toLowerCase()) ||
+                                            order.campaign_title.toLowerCase().includes(orderSearchTerm.toLowerCase());
+                                        return matchesSearch;
+                                    });
+                                    return `${filteredOrders.length} de ${orders.length} pedido${orders.length !== 1 ? 's' : ''}`;
+                                })()}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Prêmio
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Campanha
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Qtd
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Valor
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Status
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Data
+                                    </th>
+                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Ações
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {(() => {
+                                    const filteredOrders = orders.filter(order => {
+                                        const matchesSearch = 
+                                            order.premio_nome.toLowerCase().includes(orderSearchTerm.toLowerCase()) ||
+                                            order.campaign_title.toLowerCase().includes(orderSearchTerm.toLowerCase());
+                                        return matchesSearch;
+                                    });
+                                    
+                                    // Paginação
+                                    const totalPages = Math.ceil(filteredOrders.length / orderItemsPerPage);
+                                    const startIndex = (orderCurrentPage - 1) * orderItemsPerPage;
+                                    const endIndex = startIndex + orderItemsPerPage;
+                                    const paginatedOrders = filteredOrders.slice(startIndex, endIndex);
+                                    
+                                    return paginatedOrders.map((order) => (
+                                    <tr key={order.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center">
+                                                <Gift className="h-5 w-5 text-yellow-500 mr-3" />
+                                                <div>
+                                                    <div className="text-sm font-medium text-gray-900">
+                                                        {order.premio_nome}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {order.campaign_title}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {order.quantidade}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            {formatCurrency(order.valor_total)}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <div className="flex items-center">
                                             {getStatusIcon(order.status)}
-                                            <h4 className="font-semibold text-gray-900">{order.premio_nome}</h4>
-                                            <Badge className={getStatusColor(order.status)}>
-                                                {order.status}
+                                                <Badge className={`ml-2 ${getStatusColor(order.status)}`}>
+                                                    {order.status === 'pending' ? 'Pendente' :
+                                                     order.status === 'approved' ? 'Aprovado' :
+                                                     order.status === 'rejected' ? 'Rejeitado' :
+                                                     order.status === 'delivered' ? 'Entregue' :
+                                                     order.status === 'cancelled' ? 'Cancelado' : order.status}
                                             </Badge>
                                         </div>
-                                        <p className="text-sm text-gray-600 mb-1">{order.campaign_title}</p>
-                                        <p className="text-sm text-gray-500">
-                                            Quantidade: {order.quantidade} • 
-                                            Valor: {formatCurrency(order.valor_total)} • 
-                                            Data: {new Date(order.data_solicitacao).toLocaleDateString('pt-BR')}
-                                        </p>
-                                    </div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            {new Date(order.data_solicitacao).toLocaleDateString('pt-BR')}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     {order.status === 'pending' && (
                                         <Button
-                                            size="sm"
-                                            variant="outline"
                                             onClick={() => cancelOrder(order.id)}
-                                            className="text-red-600 border-red-200 hover:bg-red-50"
+                                            className="text-red-600 border border-red-200 hover:bg-red-50 text-sm px-3 py-1"
                                         >
+                                                    <XCircle className="w-4 h-4 mr-1" />
                                             Cancelar
                                         </Button>
                                     )}
+                                            {order.status !== 'pending' && (
+                                                <span className="text-gray-400 text-xs">
+                                                    {order.status === 'approved' ? 'Aguardando entrega' :
+                                                     order.status === 'delivered' ? 'Entregue' :
+                                                     order.status === 'rejected' ? 'Rejeitado' :
+                                                     order.status === 'cancelled' ? 'Cancelado' : ''}
+                                                </span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                    ));
+                                })()}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    {/* Paginação - Igual ao Histórico de Apólices */}
+                    {(() => {
+                        const filteredOrders = orders.filter(order => {
+                            const matchesSearch = 
+                                order.premio_nome.toLowerCase().includes(orderSearchTerm.toLowerCase()) ||
+                                order.campaign_title.toLowerCase().includes(orderSearchTerm.toLowerCase());
+                            return matchesSearch;
+                        });
+                        
+                        const totalPages = Math.ceil(filteredOrders.length / orderItemsPerPage);
+                        const startIndex = (orderCurrentPage - 1) * orderItemsPerPage;
+                        const endIndex = startIndex + orderItemsPerPage;
+                        
+                        return (
+                            <div className="flex items-center justify-between mt-6">
+                                <div className="flex items-center text-sm text-gray-700">
+                                    <span>Mostrando {startIndex + 1} a {Math.min(endIndex, filteredOrders.length)} de {filteredOrders.length} registros</span>
+                                    <select
+                                        value={orderItemsPerPage}
+                                        onChange={(e) => {
+                                            setOrderItemsPerPage(Number(e.target.value));
+                                            setOrderCurrentPage(1);
+                                        }}
+                                        className="ml-4 px-2 py-1 border border-gray-300 rounded text-sm"
+                                    >
+                                        <option value={5}>5</option>
+                                        <option value={10}>10</option>
+                                        <option value={25}>25</option>
+                                        <option value={50}>50</option>
+                                    </select>
+                                    <span className="ml-2">Por página:</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        onClick={() => setOrderCurrentPage(1)}
+                                        disabled={orderCurrentPage === 1}
+                                        className="px-3 py-1 text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        &lt;&lt;
+                                    </Button>
+                                    <Button
+                                        onClick={() => setOrderCurrentPage(orderCurrentPage - 1)}
+                                        disabled={orderCurrentPage === 1}
+                                        className="px-3 py-1 text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        &lt;
+                                    </Button>
+                                    <span className="px-3 py-1 text-sm text-gray-700">
+                                        Página {orderCurrentPage} de {totalPages}
+                                    </span>
+                                    <Button
+                                        onClick={() => setOrderCurrentPage(orderCurrentPage + 1)}
+                                        disabled={orderCurrentPage === totalPages}
+                                        className="px-3 py-1 text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        &gt;
+                                    </Button>
+                                    <Button
+                                        onClick={() => setOrderCurrentPage(totalPages)}
+                                        disabled={orderCurrentPage === totalPages}
+                                        className="px-3 py-1 text-sm border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        &gt;&gt;
+                                    </Button>
                                 </div>
                             </div>
-                        ))}
-                    </div>
+                        );
+                    })()}
                 </Card>
+                </>
             )}
         </div>
     );

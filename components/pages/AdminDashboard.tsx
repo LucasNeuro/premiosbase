@@ -5,9 +5,10 @@ import AdminGoalsManager from '../admin/AdminGoalsManager';
 import AdminPoliciesTable from '../admin/AdminPoliciesTable';
 import AdminUsersManager from '../admin/AdminUsersManager';
 import AdminStatsOverview from '../admin/AdminStatsOverview';
-import AdminPremiosManager from '../admin/AdminPremiosManager';
-import AdminPrizeOrdersManager from '../admin/AdminPrizeOrdersManager';
-import { Target, Users, FileText, BarChart3, Settings, Trophy, Package } from 'lucide-react';
+import AdminPrizesManager from '../admin/AdminPrizesManager';
+import ForcePrizeAvailability from '../admin/ForcePrizeAvailability';
+import ErrorBoundary from '../ui/ErrorBoundary';
+import { Target, Users, FileText, BarChart3, Settings, Trophy, Package, Wrench } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -23,31 +24,51 @@ const AdminDashboard: React.FC = () => {
             id: 'goals', 
             label: 'Gerenciar Campanhas', 
             icon: <Target className="w-5 h-5" />,
-            component: AdminGoalsManager
+            component: () => (
+                <ErrorBoundary>
+                    <AdminGoalsManager />
+                </ErrorBoundary>
+            )
         },
         { 
             id: 'policies', 
             label: 'Todas as Vendas', 
             icon: <FileText className="w-5 h-5" />,
-            component: AdminPoliciesTable
+            component: () => (
+                <ErrorBoundary>
+                    <AdminPoliciesTable />
+                </ErrorBoundary>
+            )
         },
         { 
             id: 'premios', 
             label: 'Gerenciar Prêmios', 
             icon: <Trophy className="w-5 h-5" />,
-            component: AdminPremiosManager
+            component: () => (
+                <ErrorBoundary>
+                    <AdminPrizesManager />
+                </ErrorBoundary>
+            )
         },
         { 
             id: 'users', 
             label: 'Gerenciar Corretores', 
             icon: <Users className="w-5 h-5" />,
-            component: AdminUsersManager
+            component: () => (
+                <ErrorBoundary>
+                    <AdminUsersManager />
+                </ErrorBoundary>
+            )
         },
         { 
-            id: 'prize-orders', 
-            label: 'Gestão de Retirada', 
-            icon: <Package className="w-5 h-5" />,
-            component: AdminPrizeOrdersManager
+            id: 'force-prizes', 
+            label: 'Corrigir Prêmios', 
+            icon: <Wrench className="w-5 h-5" />,
+            component: () => (
+                <ErrorBoundary>
+                    <ForcePrizeAvailability />
+                </ErrorBoundary>
+            )
         },
     ];
 

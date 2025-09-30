@@ -10,7 +10,8 @@ import AdminDashboard from './components/pages/AdminDashboard';
 import PremiosPage from './components/pages/PremiosPage';
 import DebugPage from './components/pages/DebugPage';
 import AdminRedirect from './components/auth/AdminRedirect';
-import { PoliciesProvider } from './hooks/usePolicies';
+import { PoliciesProvider } from './hooks/usePoliciesNew';
+import CacheProvider from './components/providers/CacheProvider';
 
 const AppContent: React.FC = () => {
     const { user, loading } = useAuth();
@@ -104,11 +105,13 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => {
     return (
         <AuthProvider>
-            <Router>
-                <div className="min-h-screen font-sans text-slate-800">
-                    <AppContent />
-                </div>
-            </Router>
+            <CacheProvider>
+                <Router>
+                    <div className="min-h-screen font-sans text-slate-800">
+                        <AppContent />
+                    </div>
+                </Router>
+            </CacheProvider>
         </AuthProvider>
     );
 };

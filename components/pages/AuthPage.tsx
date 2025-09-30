@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import ModernLoginForm from '../auth/ModernLoginForm';
-import SimpleRegisterForm from '../auth/SimpleRegisterForm';
+import ModernRegisterForm from '../auth/ModernRegisterForm';
 
 const AuthPage: React.FC = () => {
     const location = useLocation();
@@ -25,7 +25,7 @@ const AuthPage: React.FC = () => {
                     </p>
                 </div>
 
-                {isLoginView ? <ModernLoginForm /> : <SimpleRegisterForm />}
+                {isLoginView ? <ModernLoginForm /> : <ModernRegisterForm />}
             </div>
         </div>
     );

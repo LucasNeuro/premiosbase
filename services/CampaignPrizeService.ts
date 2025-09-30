@@ -183,8 +183,6 @@ export class CampaignPrizeService {
                         valor_estimado,
                         imagem_url,
                         imagem_miniatura_url,
-                        categoria:categorias_premios(nome),
-                        tipo:tipos_premios(nome)
                     )
                 `)
                 .eq('goal_id', campaignId);
@@ -220,8 +218,8 @@ export class CampaignPrizeService {
                 premio_nome: cp.premio?.nome || 'Prêmio',
                 premio_valor_estimado: cp.premio?.valor_estimado || 0,
                 premio_imagem_url: cp.premio?.imagem_url,
-                premio_categoria: cp.premio?.categoria?.nome,
-                premio_tipo: cp.premio?.tipo?.nome,
+                premio_categoria: 'Prêmio', // Categoria padrão
+                premio_tipo: 'Prêmio', // Tipo padrão
                 quantidade_conquistada: cp.quantidade || 1,
                 valor_total_conquistado: (cp.premio?.valor_estimado || 0) * (cp.quantidade || 1),
                 data_conquista: new Date().toISOString(),

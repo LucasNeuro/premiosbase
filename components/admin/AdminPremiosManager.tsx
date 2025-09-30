@@ -7,21 +7,14 @@ interface Premio {
     id: string;
     nome: string;
     descricao: string;
-    tipo_id: string;
-    categoria_id: string;
+    tipo_id?: string;
+    categoria_id?: string;
     valor_estimado: number;
     imagem_url?: string;
     imagem_miniatura_url?: string;
     is_ativo: boolean;
     created_at: string;
     updated_at: string;
-    // Dados relacionados (joins)
-    tipos_premios?: {
-        nome: string;
-    };
-    categorias_premios?: {
-        nome: string;
-    };
 }
 
 const AdminPremiosManager: React.FC = () => {
@@ -39,8 +32,6 @@ const AdminPremiosManager: React.FC = () => {
     // Estados para layout moderno
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive'>('all');
-    const [filterCategory, setFilterCategory] = useState<string>('all');
-    const [filterType, setFilterType] = useState<string>('all');
 
     // Removido - agora é chamado pelo useEffect de paginação
 
@@ -51,11 +42,7 @@ const AdminPremiosManager: React.FC = () => {
             
             const { data, error, count } = await supabase
                 .from('premios')
-                .select(`
-                    *,
-                    tipos_premios!premios_tipo_id_fkey(nome),
-                    categorias_premios!premios_categoria_id_fkey(nome)
-                `, { count: 'exact' })
+                .select('*', { count: 'exact' })
                 .order('created_at', { ascending: false })
                 .range(offset, offset + itemsPerPage - 1);
 
@@ -144,24 +131,14 @@ const AdminPremiosManager: React.FC = () => {
     const filteredPremios = premios.filter(premio => {
         // Filtro de busca
         const matchesSearch = premio.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        premio.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (premio.tipos_premios?.nome || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (premio.categorias_premios?.nome || '').toLowerCase().includes(searchTerm.toLowerCase());
+        premio.descricao.toLowerCase().includes(searchTerm.toLowerCase());
         
         // Filtro de status
         const matchesStatus = filterStatus === 'all' || 
             (filterStatus === 'active' && premio.is_ativo) ||
             (filterStatus === 'inactive' && !premio.is_ativo);
         
-        // Filtro de categoria
-        const matchesCategory = filterCategory === 'all' || 
-            premio.categorias_premios?.nome === filterCategory;
-        
-        // Filtro de tipo
-        const matchesType = filterType === 'all' || 
-            premio.tipos_premios?.nome === filterType;
-        
-        return matchesSearch && matchesStatus && matchesCategory && matchesType;
+        return matchesSearch && matchesStatus;
     });
 
     // Componente de Skeleton para cards
@@ -316,29 +293,6 @@ const AdminPremiosManager: React.FC = () => {
                             <option value="inactive">Inativos</option>
                         </select>
                         
-                        {/* Filtro de Categoria */}
-                        <select
-                            value={filterCategory}
-                            onChange={(e) => setFilterCategory(e.target.value)}
-                            className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#49de80] focus:border-transparent transition-all duration-200"
-                        >
-                            <option value="all">Todas as Categorias</option>
-                            {Array.from(new Set(premios.map(p => p.categorias_premios?.nome).filter(Boolean))).map(cat => (
-                                <option key={cat} value={cat}>{cat}</option>
-                            ))}
-                        </select>
-                        
-                        {/* Filtro de Tipo */}
-                        <select
-                            value={filterType}
-                            onChange={(e) => setFilterType(e.target.value)}
-                            className="px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#49de80] focus:border-transparent transition-all duration-200"
-                        >
-                            <option value="all">Todos os Tipos</option>
-                            {Array.from(new Set(premios.map(p => p.tipos_premios?.nome).filter(Boolean))).map(type => (
-                                <option key={type} value={type}>{type}</option>
-                            ))}
-                        </select>
                     </div>
                 </div>
                 
@@ -435,10 +389,7 @@ const AdminPremiosManager: React.FC = () => {
                                             
                                             <div className="flex flex-wrap gap-1 justify-center">
                                                 <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                                                    {premio.tipos_premios?.nome || 'N/A'}
-                                                </span>
-                                                <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
-                                                    {premio.categorias_premios?.nome || 'N/A'}
+                                                    Prêmio
                                                 </span>
                                             </div>
                                             
@@ -521,10 +472,7 @@ const AdminPremiosManager: React.FC = () => {
                                                 <div className="flex items-center gap-4">
                                                     <div className="flex gap-2">
                                                         <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                                                            {premio.tipos_premios?.nome || 'N/A'}
-                                                        </span>
-                                                        <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-800">
-                                                            {premio.categorias_premios?.nome || 'N/A'}
+                                                            Prêmio
                                                         </span>
                                                     </div>
                                                     

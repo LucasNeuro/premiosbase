@@ -97,7 +97,7 @@ const AdminUsersManager: React.FC = () => {
 
                     // Buscar categorias
                     const { data: categoriasData } = await supabase
-                        .from('corretores_categorias')
+                        .from('user_categorias')
                         .select(`
                             categorias_corretores!categoria_id (
                                 id,
@@ -108,7 +108,8 @@ const AdminUsersManager: React.FC = () => {
                                 is_ativo
                             )
                         `)
-                        .eq('corretor_id', user.id);
+                        .eq('user_id', user.id)
+                        .eq('is_active', true);
 
                     const categorias = categoriasData?.map(item => item.categorias_corretores).filter(Boolean) || [];
 
@@ -259,7 +260,7 @@ const AdminUsersManager: React.FC = () => {
             try {
                 // Primeiro, remover todas as associações de corretores com esta categoria
                 await supabase
-                    .from('corretores_categorias')
+                    .from('user_categorias')
                     .delete()
                     .eq('categoria_id', categoriaId);
 

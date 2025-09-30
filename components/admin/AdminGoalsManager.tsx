@@ -6,7 +6,6 @@ import DynamicTable from '../ui/DynamicTable';
 import CompositeCampaignSidepanel from './CompositeCampaignSidepanel';
 import GoalDetailsSidepanel from './GoalDetailsSidepanel';
 import DateRangePicker from '../ui/DateRangePicker';
-import CampaignReportGenerator from './CampaignReportGenerator';
 import { currencyMask } from '../../utils/masks';
 import { UnifiedCampaignProgressService } from '../../services/unifiedCampaignProgressService';
 
@@ -64,7 +63,6 @@ const AdminGoalsManager: React.FC = () => {
     const [showCreateSidepanel, setShowCreateSidepanel] = useState(false);
     const [selectedGoal, setSelectedGoal] = useState<AdminGoal | null>(null);
     const [showDetailsPanel, setShowDetailsPanel] = useState(false);
-    const [showReportGenerator, setShowReportGenerator] = useState(false);
     
     // Estados para filtros simples
     const [filters, setFilters] = useState({
@@ -78,6 +76,14 @@ const AdminGoalsManager: React.FC = () => {
     useEffect(() => {
         fetchGoals();
         fetchUsers();
+        
+        // Configurar refresh automático a cada 30 segundos
+        const interval = setInterval(() => {
+            console.log('🔄 AdminGoalsManager: Auto-refresh...');
+            fetchGoals();
+        }, 30000);
+        
+        return () => clearInterval(interval);
     }, []);
 
     // Efeito para aplicar filtros
@@ -144,17 +150,22 @@ const AdminGoalsManager: React.FC = () => {
 
     const fetchGoals = async () => {
         try {
+            console.log('🔍 AdminGoalsManager: Buscando campanhas...');
+            
             // Primeiro buscar as campanhas (incluindo dados de aceitação)
             const { data: goalsData, error: goalsError } = await supabase
                 .from('goals')
                 .select('*, acceptance_status, accepted_at, accepted_by')
                 .eq('record_type', 'campaign')
-                .eq('is_active', true)
                 .order('created_at', { ascending: false });
 
             if (goalsError) {
+                console.error('❌ Erro ao buscar campanhas:', goalsError);
                 return;
             }
+            
+            console.log('✅ Campanhas encontradas:', goalsData?.length || 0);
+            console.log('📋 Dados das campanhas:', goalsData);
 
             // Depois buscar os prêmios associados
             let goalsWithPrizes = goalsData || [];
@@ -235,8 +246,10 @@ const AdminGoalsManager: React.FC = () => {
                 };
             }) || []);
 
+            console.log('📊 Goals formatados:', formattedGoals);
             setGoals(formattedGoals);
         } catch (error) {
+            console.error('❌ Erro no processamento dos goals:', error);
         } finally {
             setLoading(false);
         }
@@ -282,17 +295,22 @@ const AdminGoalsManager: React.FC = () => {
 
     const fetchUsers = async () => {
         try {
+            console.log('🔍 AdminGoalsManager: Buscando usuários...');
+            
             const { data, error } = await supabase
                 .from('users')
                 .select('id, name, email')
                 .eq('is_admin', false);
 
             if (error) {
+                console.error('❌ Erro ao buscar usuários:', error);
                 return;
             }
 
+            console.log('✅ Usuários encontrados:', data?.length || 0);
             setUsers(data || []);
         } catch (error) {
+            console.error('❌ Erro no fetchUsers:', error);
         }
     };
 
@@ -922,13 +940,6 @@ const AdminGoalsManager: React.FC = () => {
                                 Limpar Filtros
                             </button>
                             
-                            <button
-                                onClick={() => setShowReportGenerator(true)}
-                                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm"
-                            >
-                                <Download className="w-4 h-4" />
-                                Relatório Completo
-                            </button>
                         </div>
                         
                         {/* Filtros Simples */}
@@ -999,12 +1010,6 @@ const AdminGoalsManager: React.FC = () => {
                 onGoalUpdated={handleGoalUpdated}
             />
 
-            {/* Gerador de Relatório Completo */}
-            {showReportGenerator && (
-                <CampaignReportGenerator
-                    onClose={() => setShowReportGenerator(false)}
-                />
-            )}
         </div>
     );
 };

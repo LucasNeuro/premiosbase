@@ -121,8 +121,8 @@ const CampaignAcceptanceNew: React.FC = () => {
                 
                 return (
                     <Card key={campaign.id} className={`${isUrgent ? 'border-red-200 bg-red-50' : ''}`}>
-                        <div className="p-6">
-                            <div className="flex items-start justify-between mb-4">
+                        <div className="p-4">
+                            <div className="flex items-start justify-between mb-3">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-2">
                                         <Target className="w-5 h-5 text-blue-600" />

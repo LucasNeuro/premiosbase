@@ -9,12 +9,16 @@ import DynamicPolicyForm from '../dashboard/DynamicPolicyForm';
 import PoliciesTable from '../dashboard/PoliciesTable';
 import SummaryCards from '../dashboard/SummaryCards';
 import CampaignsKanban from '../dashboard/CampaignsKanban';
+import PrizeRedemptionTab from '../dashboard/PrizeRedemptionTab';
+import CampaignTimeline from '../dashboard/CampaignTimeline';
 // import RealtimeStatsOverview from '../dashboard/RealtimeStatsOverview';
-import { Home, Target } from 'lucide-react';
+import ErrorBoundary from '../ui/ErrorBoundary';
+import { Home, Target, Trophy, Clock } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
     const { user } = useAuth();
     const [selectedPeriod, setSelectedPeriod] = useState<'30' | '60' | 'geral'>('geral');
+    const [isTimelineOpen, setIsTimelineOpen] = useState(false);
 
     // DESABILITADO: Sistema de eventos em tempo real (causando loops)
     // useRealtimeEvents(user?.id || '');
@@ -39,9 +43,19 @@ const DashboardPage: React.FC = () => {
 
                 return (
                     <div className="space-y-6">
-                        <SummaryCards selectedPeriod={selectedPeriod} />
-                        <DynamicPolicyForm selectedPeriod={selectedPeriod} onPeriodChange={setSelectedPeriod} />
-                        <PoliciesTable />
+                        <ErrorBoundary>
+                            <SummaryCards selectedPeriod={selectedPeriod} />
+                        </ErrorBoundary>
+                        <ErrorBoundary>
+                            <DynamicPolicyForm 
+                                selectedPeriod={selectedPeriod} 
+                                onPeriodChange={setSelectedPeriod}
+                                onTimelineClick={() => setIsTimelineOpen(true)}
+                            />
+                        </ErrorBoundary>
+                        <ErrorBoundary>
+                            <PoliciesTable />
+                        </ErrorBoundary>
                     </div>
                 );
             }
@@ -54,7 +68,24 @@ const DashboardPage: React.FC = () => {
 
                 return (
                     <div className="space-y-6">
-                        <CampaignsKanban />
+                        <ErrorBoundary>
+                            <CampaignsKanban />
+                        </ErrorBoundary>
+                    </div>
+                );
+            }
+        },
+        { 
+            id: 'premios', 
+            label: 'Prêmios', 
+            icon: <Trophy className="w-5 h-5" />,
+            component: () => {
+
+                return (
+                    <div className="space-y-6">
+                        <ErrorBoundary>
+                            <PrizeRedemptionTab />
+                        </ErrorBoundary>
                     </div>
                 );
             }
@@ -65,6 +96,10 @@ const DashboardPage: React.FC = () => {
         <PoliciesAuxiliarProvider userId={user.id || user.email || ''}>
             <GoalsProvider userId={user.id || user.email || ''}>
                 <TabsLayout tabs={tabs} defaultTab="dashboard" />
+                <CampaignTimeline 
+                    isOpen={isTimelineOpen} 
+                    onClose={() => setIsTimelineOpen(false)} 
+                />
             </GoalsProvider>
         </PoliciesAuxiliarProvider>
     );

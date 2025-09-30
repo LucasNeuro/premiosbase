@@ -28,6 +28,12 @@ const Sidebar: React.FC = () => {
       href: '/goals',
       icon: Target,
       current: location.pathname === '/goals'
+    },
+    {
+      name: 'Prêmios',
+      href: '/premios',
+      icon: Trophy,
+      current: location.pathname === '/premios'
     }
   ];
 

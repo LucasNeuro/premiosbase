@@ -1,6 +1,6 @@
 import React from 'react';
 import { Trophy, Medal, Award, Crown } from 'lucide-react';
-import { useGoals } from '../../hooks/useGoals';
+import { useGoals } from '../../hooks/useGoalsNew';
 
 interface RankingItem {
     position: number;

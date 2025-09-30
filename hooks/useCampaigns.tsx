@@ -75,17 +75,23 @@ export const useCampaigns = () => {
             setLoading(true);
             setError(null);
 
+            console.log('🔍 Buscando campanhas...');
+
             const { data, error } = await supabase
                 .from('goals')
                 .select('*')
                 .eq('record_type', 'campaign')
-                .eq('campaign_type', 'composite')
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            if (error) {
+                console.error('❌ Erro ao buscar campanhas:', error);
+                throw error;
+            }
 
+            console.log('✅ Campanhas encontradas:', data?.length || 0);
             setCampaigns(data || []);
         } catch (err) {
+            console.error('❌ Erro no fetchCampaigns:', err);
             setError(err instanceof Error ? err.message : 'Erro ao carregar campanhas');
         } finally {
             setLoading(false);
@@ -123,12 +129,13 @@ export const useCampaigns = () => {
 
                 // Buscar todos os corretores da categoria
                 const { data: corretoresCategoria, error: categoriaError } = await supabase
-                    .from('corretores_categorias')
+                    .from('user_categorias')
                     .select(`
-                        corretor_id,
-                        users!corretores_categorias_corretor_id_fkey(id, name, email)
+                        user_id,
+                        users!user_categorias_user_id_fkey(id, name, email)
                     `)
-                    .eq('categoria_id', campaignData.target_category_id);
+                    .eq('categoria_id', campaignData.target_category_id)
+                    .eq('is_active', true);
                 
                 if (!corretoresCategoria || corretoresCategoria.length === 0 || categoriaError) {
                     throw new Error('Nenhum corretor encontrado na categoria selecionada');
@@ -152,7 +159,7 @@ export const useCampaigns = () => {
                     // Verificar se já existe campanha para este corretor com o mesmo título
                     const campaignTitle = campaignData.title + ' - ' + (corretor.users as any)?.name;
                     const existingForUser = existingCampaigns?.filter(c => 
-                        c.user_id === corretor.corretor_id && c.title === campaignTitle
+                        c.user_id === corretor.user_id && c.title === campaignTitle
                     ) || [];
 
                     if (existingForUser.length > 0) {
@@ -163,7 +170,7 @@ export const useCampaigns = () => {
                     const { data: activeCampaignsForUser, error: countError } = await supabase
                         .from('goals')
                         .select('id, title, start_date, end_date')
-                        .eq('user_id', corretor.corretor_id)
+                        .eq('user_id', corretor.user_id)
                         .eq('record_type', 'campaign')
                         .eq('is_active', true)
                         .in('status', ['active', 'completed']);
@@ -204,7 +211,7 @@ export const useCampaigns = () => {
                         target: totalTarget > 0 ? totalTarget : 1,
                         unit: 'reais',
                         criteria: campaignData.criteria,
-                        user_id: corretor.corretor_id, // Corretor específico
+                        user_id: corretor.user_id, // Corretor específico
                         target_category_id: null, // Não precisa para campanhas individuais
                         created_by: (await supabase.auth.getUser()).data.user?.id,
                         record_type: 'campaign' as const,
@@ -416,6 +423,14 @@ export const useCampaigns = () => {
 
     useEffect(() => {
         fetchCampaigns();
+        
+        // Configurar refresh automático a cada 30 segundos
+        const interval = setInterval(() => {
+            console.log('🔄 Auto-refresh: Atualizando campanhas...');
+            fetchCampaigns();
+        }, 30000);
+        
+        return () => clearInterval(interval);
     }, [fetchCampaigns]);
 
     return {

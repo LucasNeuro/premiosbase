@@ -14,19 +14,6 @@ export interface Premio {
   tipo_id?: string;
   created_at: string;
   updated_at: string;
-  // Dados das tabelas auxiliares
-  categoria?: {
-    id: string;
-    nome: string;
-    cor: string;
-    icone: string;
-  };
-  tipo?: {
-    id: string;
-    nome: string;
-    cor: string;
-    icone: string;
-  };
 }
 
 export interface CampanhaPremio {
@@ -55,11 +42,7 @@ export const usePremios = () => {
     try {
       const { data, error } = await supabase
         .from('premios')
-        .select(`
-          *,
-          categoria:categorias_premios!premios_categoria_id_fkey(id, nome, cor, icone),
-          tipo:tipos_premios!premios_tipo_id_fkey(id, nome, cor, icone)
-        `)
+        .select('*')
         .eq('is_ativo', true)
         .order('nome');
 
@@ -80,11 +63,7 @@ export const usePremios = () => {
     try {
       const { data, error } = await supabase
         .from('premios')
-        .select(`
-          *,
-          categoria:categorias_premios!premios_categoria_id_fkey(id, nome, cor, icone),
-          tipo:tipos_premios!premios_tipo_id_fkey(id, nome, cor, icone)
-        `)
+        .select('*')
         .eq('is_ativo', true)
         .eq('categoria_id', categoriaId)
         .order('nome');
@@ -106,11 +85,7 @@ export const usePremios = () => {
     try {
       const { data, error } = await supabase
         .from('premios')
-        .select(`
-          *,
-          categoria:categorias_premios!premios_categoria_id_fkey(id, nome, cor, icone),
-          tipo:tipos_premios!premios_tipo_id_fkey(id, nome, cor, icone)
-        `)
+        .select('*')
         .eq('is_ativo', true)
         .eq('tipo_id', tipoId)
         .order('nome');
@@ -169,11 +144,7 @@ export const usePremios = () => {
         .from('campanhas_premios')
         .select(`
           *,
-          premio:premios(
-            *,
-            categoria:categorias_premios!premios_categoria_id_fkey(id, nome, cor, icone),
-            tipo:tipos_premios!premios_tipo_id_fkey(id, nome, cor, icone)
-          )
+          premio:premios(*)
         `)
         .eq('goal_id', goalId);
 

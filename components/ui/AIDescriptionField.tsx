@@ -50,9 +50,9 @@ const AIDescriptionField: React.FC<AIDescriptionFieldProps> = ({
             return;
         }
 
-        if ((action === 'generate' || action === 'suggest') && !goalTitle.trim()) {
+        if ((action === 'generate' || action === 'suggest') && (!goalTitle || !goalTitle.trim())) {
             console.log('🎯 AIDescriptionField: Título vazio para ação:', action);
-            alert('Digite o título do prêmio primeiro para usar esta função');
+            alert('Digite o nome do prêmio primeiro para usar esta função');
             return;
         }
 

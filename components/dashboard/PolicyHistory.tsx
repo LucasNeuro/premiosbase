@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { usePolicies } from '../../hooks/usePolicies';
+import { usePolicies } from '../../hooks/usePoliciesNew';
 import Card from '../ui/Card';
 
 const PolicyHistory: React.FC = () => {

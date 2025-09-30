@@ -4,7 +4,21 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = 'https://wdqobcvasxfiettueifs.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndkcW9iY3Zhc3hmaWV0dHVlaWZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxNDExMzUsImV4cCI6MjA3MjcxNzEzNX0.rC6xS8Za4jWjQTOEhaP9bkWVSuYQgL83o7KsyHaK0WA';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Configuração do cliente Supabase com opções de CORS
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
+    },
+    global: {
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey'
+        }
+    }
+});
 
 // Database types
 export interface Database {

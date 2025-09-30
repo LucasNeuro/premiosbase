@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Target, TrendingUp, Award, Calendar, DollarSign, FileText } from 'lucide-react';
-import { useGoals } from '../../hooks/useGoals';
+import { useGoals } from '../../hooks/useGoalsNew';
 
 interface CreateGoalModalProps {
     onClose: () => void;

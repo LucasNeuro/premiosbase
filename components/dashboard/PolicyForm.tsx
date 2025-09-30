@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { usePolicies } from '../../hooks/usePolicies';
+import { usePolicies } from '../../hooks/usePoliciesNew';
 import { PolicyType, ContractType } from '../../types';
 import Input from '../ui/Input';
 import Button from '../ui/Button';

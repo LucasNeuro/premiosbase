@@ -151,7 +151,7 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, progress, onClick }) => {
 
     return (
         <div 
-            className={`relative bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md cursor-pointer group transition-all duration-200 ${
+            className={`relative bg-white border border-gray-200 rounded-lg p-3 shadow-sm hover:shadow-md cursor-pointer group transition-all duration-200 ${
                 isCompleted 
                     ? 'border-green-200 bg-green-50' 
                     : (isExpired || isExpiredByDate)
@@ -169,7 +169,7 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, progress, onClick }) => {
             </div>
 
             {/* Header com Valor em Destaque */}
-            <div className="mb-3">
+            <div className="mb-2">
                 <h3 className="font-semibold text-gray-900 mb-2">{goal.title}</h3>
                 
                 {/* Valor em Destaque */}

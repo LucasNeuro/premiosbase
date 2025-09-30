@@ -39,9 +39,9 @@ const SalesByCategoryList: React.FC = () => {
                         id,
                         nome,
                         cor,
-                        corretores_categorias!categoria_id(
-                            corretor_id,
-                            users!corretor_id(
+                        user_categorias!categoria_id(
+                            user_id,
+                            users!user_id(
                                 id,
                                 policies!policies_user_id_fkey(
                                     id,
@@ -58,7 +58,7 @@ const SalesByCategoryList: React.FC = () => {
 
                 // Processar dados para criar estatísticas por categoria
                 const processedData = categoriesData?.map(category => {
-                    const corretoresCategorias = category.corretores_categorias || [];
+                    const corretoresCategorias = category.user_categorias || [];
                     const users = corretoresCategorias.map((cc: any) => cc.users).filter(Boolean);
                     const allPolicies = users.flatMap((user: any) => user.policies || []);
                     const totalBrokers = users.length;

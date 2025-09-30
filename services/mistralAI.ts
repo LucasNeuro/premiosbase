@@ -146,7 +146,18 @@ class MistralAIService {
     }
 
     async generateGoalDescription(goalType: string, goalTitle: string, target: number, period: string): Promise<string> {
+        console.log('🎯 MistralAI: generateGoalDescription chamada com:', { goalType, goalTitle, target, period });
+        
         const isPremio = goalType === 'premio';
+        
+        // Verificar se goalTitle está vazio
+        if (!goalTitle || goalTitle.trim() === '') {
+            console.log('🎯 MistralAI: goalTitle vazio, usando fallback');
+            return isPremio 
+                ? `Prêmio atrativo e de qualidade para motivar o desempenho.`
+                : `Meta de ${goalType} para ${period} com foco em resultados e crescimento.`;
+        }
+        
         const prompt = `
         Gere uma descrição profissional para ${isPremio ? 'um prêmio' : `uma meta de ${goalType}`} com o título "${goalTitle}" ${isPremio ? `que custa R$ ${target}` : `com valor ${target} para o período de ${period}`}.
         
@@ -161,9 +172,12 @@ class MistralAIService {
         `;
 
         try {
+            console.log('🎯 MistralAI: Enviando prompt para API...');
             const description = await this.callMistralAPI(prompt);
+            console.log('🎯 MistralAI: Descrição gerada:', description);
             return description.trim();
         } catch (error) {
+            console.error('🎯 MistralAI: Erro na geração:', error);
             return isPremio 
                 ? `Prêmio atrativo e de qualidade para motivar o desempenho.`
                 : `Meta de ${goalType} para ${period} com foco em resultados e crescimento.`;
@@ -203,6 +217,56 @@ class MistralAIService {
             return data;
         } catch (error) {
             throw error;
+        }
+    }
+
+    async analyzePolicyCampaign(policy: any, campaign: any): Promise<string> {
+        console.log('🤖 MistralAI: analyzePolicyCampaign chamada');
+        
+        const prompt = `
+Analise esta apólice vs critérios da campanha:
+
+APÓLICE:
+- Número: ${policy.policy_number}
+- Tipo: ${policy.type}
+- Valor: R$ ${policy.premium_value}
+- Contrato: ${policy.contract_type}
+- Data: ${policy.registration_date}
+
+CAMPANHA:
+- Título: ${campaign.title}
+- Descrição: ${campaign.description || 'Sem descrição'}
+- Meta: R$ ${campaign.target} ${campaign.unit}
+- Tipo: ${campaign.type}
+- Critérios: ${JSON.stringify(campaign.criteria || {})}
+
+Forneça uma análise detalhada em JSON com:
+{
+  "confidence": 0-100,
+  "criteriaMatch": true/false,
+  "matchedCriteria": ["lista de critérios que fazem match"],
+  "unmatchedCriteria": ["lista de critérios que não fazem match"],
+  "suggestions": ["sugestões específicas"],
+  "reasoning": "explicação detalhada",
+  "recommendation": "aceitar/rejeitar/analisar_mais"
+}
+`;
+        
+        try {
+            const response = await this.callMistralAPI(prompt);
+            console.log('✅ MistralAI: Análise de apólice recebida:', response);
+            return response;
+        } catch (error: any) {
+            console.error('❌ MistralAI: Erro na análise de apólice:', error);
+            return JSON.stringify({
+                confidence: 50,
+                criteriaMatch: false,
+                matchedCriteria: [],
+                unmatchedCriteria: ['Erro na análise'],
+                suggestions: ['Verificar critérios manualmente'],
+                reasoning: 'Erro na análise automática: ' + error.message,
+                recommendation: 'analisar_mais'
+            });
         }
     }
 }

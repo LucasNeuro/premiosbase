@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useGoalsNew } from '../../hooks/useGoalsNew';
 import { useRealtimeListener } from '../../hooks/useRealtimeEvents';
+import { useCampaignsStore } from '../../stores/useCampaignsStore';
+import { useCacheManager } from '../../hooks/useCacheManager';
 import { calculateDaysRemaining } from '../../utils/dateUtils';
 import Card from '../ui/Card';
 import Button from '../ui/Button';
@@ -8,7 +10,6 @@ import Badge from '../ui/Badge';
 import Spinner from '../ui/Spinner';
 import Alert from '../ui/Alert';
 import CampaignDetailsSidepanel from './CampaignDetailsSidepanel';
-import PrizeRedemptionTab from './PrizeRedemptionTab';
 import { 
     CheckCircle, 
     XCircle, 
@@ -20,9 +21,9 @@ import {
     TrendingUp,
     Users,
     Award,
-    ShoppingCart
 } from 'lucide-react';
 import PremioHeroHeader from '../ui/PremioHeroHeader';
+import ModernCriteriaCard from '../ui/ModernCriteriaCard';
 import { currencyMaskFree } from '../../utils/masks';
 import { Goal } from '../../types';
 
@@ -30,7 +31,10 @@ const CampaignsKanban: React.FC = () => {
     const { campaigns, pendingCampaigns, acceptCampaign, rejectCampaign, loading, error, refreshCampaigns, fetchCampaigns } = useGoalsNew();
     const [selectedCampaign, setSelectedCampaign] = useState<Goal | null>(null);
     const [isSidepanelOpen, setIsSidepanelOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'campaigns' | 'prizes'>('campaigns');
+    
+    // Zustand stores para cache
+    const campaignsStore = useCampaignsStore();
+    const cacheManager = useCacheManager();
 
     // Listener para atualizações em tempo real das campanhas
     useRealtimeListener('campaigns', useCallback(() => {
@@ -43,6 +47,45 @@ const CampaignsKanban: React.FC = () => {
             refreshCampaigns();
         }
     }, [refreshCampaigns, fetchCampaigns]), [refreshCampaigns, fetchCampaigns]);
+
+    // Sincronizar dados com cache (apenas na inicialização)
+    useEffect(() => {
+        // Se cache é válido, usar dados do cache
+        if (campaignsStore.isCacheValid() && campaignsStore.campaigns.length > 0) {
+            console.log('📦 CampaignsKanban: Usando dados do cache');
+            // Os dados já estão no store, não precisamos fazer nada
+        } else {
+            console.log('🔄 CampaignsKanban: Cache inválido, buscando dados...');
+            fetchCampaigns().catch(err => {
+                console.error('Erro ao buscar campanhas:', err);
+            });
+        }
+    }, []); // Removendo dependências que causam loop
+
+    // Sincronizar dados do hook com store (apenas quando dados mudam)
+    useEffect(() => {
+        if (campaigns.length > 0) {
+            console.log('🔄 CampaignsKanban: Sincronizando dados com store');
+            campaignsStore.setCampaigns(campaigns);
+            campaignsStore.setPendingCampaigns(pendingCampaigns);
+        }
+    }, [campaigns.length, pendingCampaigns.length]); // Apenas quando quantidade muda
+
+    // Refresh automático baseado nas configurações
+    useEffect(() => {
+        const { settings } = cacheManager;
+        
+        if (!settings.autoRefresh || !settings.cacheEnabled) return;
+        
+        const interval = setInterval(() => {
+            console.log('🔄 CampaignsKanban: Auto-refresh baseado em configurações...');
+            fetchCampaigns().catch(err => {
+                console.error('Erro no auto-refresh:', err);
+            });
+        }, settings.refreshInterval * 1000);
+        
+        return () => clearInterval(interval);
+    }, []); // Removendo dependências que causam loop
     const [actionLoading, setActionLoading] = useState<string | null>(null);
 
     // Filtrar campanhas por status - EVITAR DUPLICAÇÃO usando Map com IDs
@@ -70,14 +113,48 @@ const CampaignsKanban: React.FC = () => {
 
     const handleAccept = async (campaignId: string) => {
         setActionLoading(campaignId);
-        await acceptCampaign(campaignId);
-        setActionLoading(null);
+        
+        try {
+            await acceptCampaign(campaignId);
+            
+            // Atualizar cache imediatamente
+            campaignsStore.acceptCampaign(campaignId);
+            
+            // Refresh automático após aceitar
+            console.log('🔄 Campanha aceita, atualizando dados...');
+            setTimeout(() => {
+                fetchCampaigns().catch(err => {
+                    console.error('Erro ao atualizar após aceitar:', err);
+                });
+            }, 1000);
+        } catch (error) {
+            console.error('Erro ao aceitar campanha:', error);
+        } finally {
+            setActionLoading(null);
+        }
     };
 
     const handleReject = async (campaignId: string) => {
         setActionLoading(campaignId);
-        await rejectCampaign(campaignId);
-        setActionLoading(null);
+        
+        try {
+            await rejectCampaign(campaignId);
+            
+            // Atualizar cache imediatamente
+            campaignsStore.rejectCampaign(campaignId);
+            
+            // Refresh automático após rejeitar
+            console.log('🔄 Campanha rejeitada, atualizando dados...');
+            setTimeout(() => {
+                fetchCampaigns().catch(err => {
+                    console.error('Erro ao atualizar após rejeitar:', err);
+                });
+            }, 1000);
+        } catch (error) {
+            console.error('Erro ao rejeitar campanha:', error);
+        } finally {
+            setActionLoading(null);
+        }
     };
 
     const openDetails = (campaign: Goal) => {
@@ -95,6 +172,14 @@ const CampaignsKanban: React.FC = () => {
         await acceptCampaign(campaignId);
         setActionLoading(null);
         closeSidepanel();
+        
+        // Refresh automático após aceitar do sidepanel
+        console.log('🔄 Campanha aceita do sidepanel, atualizando dados...');
+        setTimeout(() => {
+            fetchCampaigns().catch(err => {
+                console.error('Erro ao atualizar após aceitar do sidepanel:', err);
+            });
+        }, 1000);
     };
 
     const handleRejectFromSidepanel = async (campaignId: string) => {
@@ -102,6 +187,14 @@ const CampaignsKanban: React.FC = () => {
         await rejectCampaign(campaignId);
         setActionLoading(null);
         closeSidepanel();
+        
+        // Refresh automático após rejeitar do sidepanel
+        console.log('🔄 Campanha rejeitada do sidepanel, atualizando dados...');
+        setTimeout(() => {
+            fetchCampaigns().catch(err => {
+                console.error('Erro ao atualizar após rejeitar do sidepanel:', err);
+            });
+        }, 1000);
     };
 
     const formatDate = (dateString: string) => {
@@ -118,10 +211,8 @@ const CampaignsKanban: React.FC = () => {
     const CampaignCard: React.FC<{ 
         campaign: Goal; 
         showActions?: boolean; 
-        showProgress?: boolean;
         columnType: 'new' | 'active' | 'rejected' | 'completed';
-    }> = ({ campaign, showActions = false, showProgress = false, columnType }) => {
-        const progressPercentage = campaign.progress_percentage || 0;
+    }> = ({ campaign, showActions = false, columnType }) => {
         const isLoading = actionLoading === campaign.id;
         
         // Destaque especial para campanhas ativas
@@ -150,8 +241,8 @@ const CampaignsKanban: React.FC = () => {
                 )}
 
                 {/* Content */}
-                <div className="p-4">
-                    <div className="flex justify-between items-start mb-3">
+                <div className="p-3">
+                    <div className="flex justify-between items-start mb-2">
                         <h3 className={`font-semibold flex-1 mr-2 ${titleClass}`}>{campaign.title}</h3>
                         {(campaign as any).parent_campaign_id && (
                             <Badge className="bg-purple-100 text-purple-700 text-xs px-2 py-1 rounded-full">
@@ -162,11 +253,11 @@ const CampaignsKanban: React.FC = () => {
                     </div>
 
                     {campaign.description && (
-                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{campaign.description}</p>
+                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">{campaign.description}</p>
                     )}
 
                     {/* Informações em uma linha */}
-                    <div className="flex items-center justify-between text-sm mb-3 text-gray-600">
+                    <div className="flex items-center justify-between text-sm mb-2 text-gray-600">
                         <div className="flex items-center gap-4">
                             <div className="flex items-center">
                                 <Calendar className="w-4 h-4 mr-1 text-orange-500" />
@@ -198,44 +289,9 @@ const CampaignsKanban: React.FC = () => {
                         )}
                     </div>
 
-                    {showProgress && (
-                        <div className="mt-3">
-                            {/* Verificar se tem critérios específicos */}
-                            {campaign.criteria && (Array.isArray(campaign.criteria) || (typeof campaign.criteria === 'string' && (campaign.criteria as string).trim() !== '')) ? (
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-2">
-                                    <div className="flex items-center gap-1 mb-1">
-                                        <Target className="w-3 h-3 text-blue-600" />
-                                        <span className="text-xs font-medium text-blue-800">Critérios Específicos</span>
-                                    </div>
-                                    <p className="text-xs text-blue-700">
-                                        Ver detalhes para acompanhar o progresso individual de cada critério
-                                    </p>
-                                </div>
-                            ) : (
-                                <>
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-sm text-gray-600">Progresso</span>
-                                        <span className="text-lg font-bold text-[#1E293B]">{progressPercentage.toFixed(1)}%</span>
-                                    </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-2">
-                                        <div 
-                                            className={`h-2 rounded-full transition-all duration-300 ${
-                                                progressPercentage >= 100 ? 'bg-[#49de80]' : 'bg-[#1E293B]'
-                                            }`}
-                                            style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-                                        />
-                                    </div>
-                                    {campaign.current_value && (
-                                        <div className="text-xs text-gray-600 mt-1">
-                                            {campaign.type === 'valor' ? currencyMaskFree(campaign.current_value.toString()) : campaign.current_value.toLocaleString()} de {formatTarget(campaign)}
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                        </div>
-                    )}
 
-                    <div className="flex gap-2 mt-4">
+
+                    <div className="flex gap-2 mt-3">
                         <Button
                             variant="secondary"
                             onClick={() => openDetails(campaign)}
@@ -330,7 +386,6 @@ const CampaignsKanban: React.FC = () => {
                                     key={campaign.id}
                                     campaign={campaign}
                                     showActions={columnType === 'new'}
-                                    showProgress={columnType === 'active' || columnType === 'completed'}
                                     columnType={columnType}
                                 />
                             ))}
@@ -365,43 +420,10 @@ const CampaignsKanban: React.FC = () => {
                 </div>
 
                 {/* Abas */}
-                <div className="mt-6">
-                    <div className="border-b border-gray-200">
-                        <nav className="-mb-px flex space-x-8">
-                            <button
-                                onClick={() => setActiveTab('campaigns')}
-                                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                                    activeTab === 'campaigns'
-                                        ? 'border-[#1e293b] text-[#1e293b]'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                }`}
-                            >
-                                <div className="flex items-center space-x-2">
-                                    <Target className="w-4 h-4" />
-                                    <span>Campanhas</span>
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('prizes')}
-                                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                                    activeTab === 'prizes'
-                                        ? 'border-[#1e293b] text-[#1e293b]'
-                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                                }`}
-                            >
-                                <div className="flex items-center space-x-2">
-                                    <ShoppingCart className="w-4 h-4" />
-                                    <span>Resgatar Prêmios</span>
-                                </div>
-                            </button>
-                        </nav>
-                    </div>
-                </div>
             </div>
 
-            {/* Conteúdo das Abas */}
-            {activeTab === 'campaigns' ? (
-                <div className="space-y-8">
+            {/* Conteúdo das Campanhas */}
+            <div className="space-y-8">
                     {/* SEÇÃO PRINCIPAL: CAMPANHAS ATIVAS EM DESTAQUE */}
                     {activeCampaigns.length > 0 && (
                     <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 shadow-sm">
@@ -426,7 +448,6 @@ const CampaignsKanban: React.FC = () => {
                                     key={campaign.id}
                                     campaign={campaign}
                                     showActions={false}
-                                    showProgress={true}
                                     columnType="active"
                                 />
                             ))}
@@ -458,7 +479,6 @@ const CampaignsKanban: React.FC = () => {
                                     key={campaign.id}
                                     campaign={campaign}
                                     showActions={true}
-                                    showProgress={false}
                                     columnType="new"
                                 />
                             ))}
@@ -490,7 +510,6 @@ const CampaignsKanban: React.FC = () => {
                                     key={campaign.id}
                                     campaign={campaign}
                                     showActions={false}
-                                    showProgress={false}
                                     columnType="rejected"
                                 />
                             ))}
@@ -522,7 +541,6 @@ const CampaignsKanban: React.FC = () => {
                                     key={campaign.id}
                                     campaign={campaign}
                                     showActions={false}
-                                    showProgress={false}
                                     columnType="completed"
                                 />
                             ))}
@@ -541,10 +559,6 @@ const CampaignsKanban: React.FC = () => {
                         </div>
                     )}
                 </div>
-            ) : (
-                /* ABA: RESGATAR PRÊMIOS */
-                <PrizeRedemptionTab />
-            )}
 
             {/* Sidepanel de Detalhes */}
             <CampaignDetailsSidepanel
