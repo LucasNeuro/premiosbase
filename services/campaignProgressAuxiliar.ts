@@ -283,18 +283,23 @@ export const updateCampaignProgressAuxiliar = async (campaignId: string): Promis
       last_updated: new Date().toISOString()
     };
 
-    // Verificar mudança de status
+    // 🔧 CORREÇÃO: Lógica mais rigorosa para mudança de status
     const wasCompleted = currentCampaign.status === 'completed';
     const isNowCompleted = progressData.isCompleted;
+    const progressPercentage = progressData.progressPercentage || 0;
 
-    if (isNowCompleted && !wasCompleted) {
+    // Só marcar como completed se TODOS os critérios foram atingidos (100%)
+    if (isNowCompleted && progressPercentage >= 100 && !wasCompleted) {
       updateData.status = 'completed';
       updateData.achieved_at = new Date().toISOString();
       updateData.achieved_value = progressData.currentValue;
-      } else if (!isNowCompleted && wasCompleted) {
+      console.log(`✅ Campanha ${campaignId} marcada como COMPLETED (${progressPercentage}%)`);
+      } else if (!isNowCompleted && progressPercentage < 100 && wasCompleted) {
+      // Se perdeu o status de completed, voltar para active
       updateData.status = 'active';
       updateData.achieved_at = null;
       updateData.achieved_value = null;
+      console.log(`🔄 Campanha ${campaignId} voltou para ACTIVE (${progressPercentage}%)`);
       }
 
     // Verificar expiração e atualizar status baseado nas regras
@@ -302,21 +307,25 @@ export const updateCampaignProgressAuxiliar = async (campaignId: string): Promis
     const endDate = new Date(currentCampaign.end_date || '');
     const isExpired = endDate < now;
     
+    // 🔧 CORREÇÃO: Lógica de expiração mais rigorosa
     if (isExpired && currentCampaign.status === 'active') {
-      if (isNowCompleted) {
+      if (isNowCompleted && progressPercentage >= 100) {
         // Expirou mas atingiu a meta = completed
         updateData.status = 'completed';
         updateData.achieved_at = new Date().toISOString();
         updateData.achieved_value = progressData.currentValue;
+        console.log(`✅ Campanha ${campaignId} expirou mas foi COMPLETED (${progressPercentage}%)`);
         } else {
         // Expirou e não atingiu a meta = cancelled (não atingida)
         updateData.status = 'cancelled';
+        console.log(`❌ Campanha ${campaignId} expirou sem atingir meta (${progressPercentage}%)`);
         }
-    } else if (!isExpired && isNowCompleted && currentCampaign.status === 'active') {
+    } else if (!isExpired && isNowCompleted && progressPercentage >= 100 && currentCampaign.status === 'active') {
       // Não expirou e atingiu a meta = completed
       updateData.status = 'completed';
       updateData.achieved_at = new Date().toISOString();
       updateData.achieved_value = progressData.currentValue;
+      console.log(`✅ Campanha ${campaignId} atingiu meta antes do prazo (${progressPercentage}%)`);
       }
 
     // Atualizar no banco

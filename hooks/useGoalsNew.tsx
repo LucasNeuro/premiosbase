@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { supabase } from '../lib/supabase';
 import { Goal } from '../types';
 import { updateAllUserCampaignProgressAuxiliar } from '../services/campaignProgressAuxiliar';
+import { CampaignStatusCorrectionService } from '../services/campaignStatusCorrectionService';
 import { useRealtimeListener } from './useRealtimeEvents';
 
 // Declaração global para TypeScript
@@ -120,6 +121,10 @@ export const GoalsProvider: React.FC<{ children: ReactNode; userId: string }> = 
         try {
             setLoading(true);
             setError(null);
+            
+            // 🔧 CORREÇÃO: Corrigir status das campanhas antes de buscar dados
+            console.log('🔧 Corrigindo status das campanhas...');
+            await CampaignStatusCorrectionService.correctUserCampaignStatuses(userId);
 
             // Buscar apenas campanhas do usuário logado
             const { data: campaignsData, error: campaignsError } = await supabase

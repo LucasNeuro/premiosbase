@@ -1,166 +1,181 @@
 import { supabase } from '../lib/supabase';
+import { calculateCampaignProgressAuxiliar } from './campaignProgressAuxiliar';
 
+/**
+ * 🔧 SERVIÇO DE CORREÇÃO DE STATUS DAS CAMPANHAS
+ * 
+ * Este serviço corrige campanhas que estão com status incorreto,
+ * especialmente aquelas que aparecem como "completed" mas não deveriam.
+ */
 export class CampaignStatusCorrectionService {
-    /**
-     * Força a correção do status de todas as campanhas
-     */
-    static async forceCorrectAllCampaignStatus(): Promise<{ corrected: number; errors: string[] }> {
-        const errors: string[] = [];
-        let corrected = 0;
-
-        try {
-            // 1. Buscar todas as campanhas
-            const { data: campaigns, error: campaignsError } = await supabase
-                .from('goals')
-                .select('*')
-                .eq('record_type', 'campaign')
-                .eq('acceptance_status', 'accepted');
-
-            if (campaignsError) {
-                throw campaignsError;
-            }
-            // 2. Para cada campanha, recalcular o progresso e corrigir o status
-            for (const campaign of campaigns || []) {
-                try {
-                    // Recalcular progresso baseado nos critérios
-                    const correctProgress = await this.recalculateCampaignProgress(campaign);
-                    
-                    // Atualizar status no banco
-                    const { error: updateError } = await supabase
-                        .from('goals')
-                        .update({
-                            status: correctProgress.is_completed ? 'completed' : 'active',
-                            progress_percentage: correctProgress.progress_percentage,
-                            current_value: correctProgress.current_value,
-                            achieved_at: correctProgress.is_completed ? new Date().toISOString() : null,
-                            last_updated: new Date().toISOString()
-                        })
-                        .eq('id', campaign.id);
-
-                    if (updateError) {
-                        errors.push(`Erro ao atualizar ${campaign.title}: ${updateError.message}`);
-                    } else {
-                        corrected++;
-                    }
-
-                } catch (error) {
-                    errors.push(`Erro ao processar ${campaign.title}: ${error}`);
-                }
-            }
-            return { corrected, errors };
-
-        } catch (error) {
-            errors.push(`Erro geral: ${error}`);
-            return { corrected, errors };
-        }
+  
+  /**
+   * Corrigir status de todas as campanhas de um usuário
+   */
+  static async correctUserCampaignStatuses(userId: string): Promise<void> {
+    try {
+      console.log(`🔧 CampaignStatusCorrectionService: Corrigindo status das campanhas do usuário ${userId}`);
+      
+      // Buscar todas as campanhas do usuário
+      const { data: campaigns, error } = await supabase
+        .from('goals')
+        .select('id, title, status, progress_percentage, acceptance_status')
+        .eq('user_id', userId)
+        .eq('record_type', 'campaign')
+        .eq('is_active', true)
+        .in('status', ['active', 'completed', 'cancelled']);
+      
+      if (error) {
+        console.error('❌ Erro ao buscar campanhas:', error);
+        return;
+      }
+      
+      if (!campaigns || campaigns.length === 0) {
+        console.log('ℹ️ Nenhuma campanha encontrada para correção');
+        return;
+      }
+      
+      console.log(`📊 Encontradas ${campaigns.length} campanhas para verificação`);
+      
+      // Verificar cada campanha
+      for (const campaign of campaigns) {
+        await this.correctCampaignStatus(campaign.id, campaign.title);
+      }
+      
+      console.log('✅ Correção de status concluída');
+      
+    } catch (error) {
+      console.error('❌ Erro na correção de status:', error);
     }
-
-    /**
-     * Recalcula o progresso de uma campanha baseado nos critérios
-     */
-    private static async recalculateCampaignProgress(campaign: any): Promise<any> {
-        // Buscar todas as apólices vinculadas a esta campanha
-        const { data: linkedPolicies, error: policiesError } = await supabase
-            .from('policy_campaign_links')
-            .select(`
-                policies (
-                    id,
-                    type,
-                    contract_type,
-                    premium_value,
-                    created_at
-                )
-            `)
-            .eq('campaign_id', campaign.id)
-            .eq('is_active', true);
-
-        if (policiesError) throw policiesError;
-
-        const allPolicies = linkedPolicies?.map(link => link.policies) || [];
-        // Calcular progresso baseado nos critérios
-        let allCriteriaCompleted = true;
-        let criteriaProgress = [];
-
-        // Processar critérios
-        const criteria = campaign.criteria;
-        if (criteria) {
-            let criteriaArray = [];
-            
-            if (Array.isArray(criteria)) {
-                criteriaArray = criteria;
-            } else if (typeof criteria === 'object') {
-                criteriaArray = Object.values(criteria);
-            }
-            for (let i = 0; i < criteriaArray.length; i++) {
-                const criterion = criteriaArray[i];
-                const matchingPolicies = allPolicies.filter(policy => {
-                    const policyTypeMap: { [key: string]: string } = {
-                        'Seguro Auto': 'auto',
-                        'Seguro Residencial': 'residencial'
-                    };
-
-                    // Verificar tipo de apólice
-                    if (criterion.policy_type && criterion.policy_type !== policyTypeMap[policy.type]) {
-                        return false;
-                    }
-
-                    // Verificar tipo de contrato
-                    if (criterion.contract_type && criterion.contract_type !== policy.contract_type) {
-                        return false;
-                    }
-
-                    // Verificar valor mínimo por apólice
-                    if (criterion.min_value_per_policy && policy.premium_value < criterion.min_value_per_policy) {
-                        return false;
-                    }
-
-                    return true;
-                });
-                let criterionCurrent = 0;
-                let criterionTarget = 0;
-                let criterionCompleted = false;
-                let criterionProgressPercentage = 0;
-
-                if (criterion.target_type === 'quantity') {
-                    // Critério por quantidade
-                    criterionCurrent = matchingPolicies.length;
-                    criterionTarget = criterion.target_value || 0;
-                    criterionProgressPercentage = criterionTarget > 0 ? (criterionCurrent / criterionTarget) * 100 : 0;
-                    criterionCompleted = criterionProgressPercentage >= 100;
-                } else if (criterion.target_type === 'value') {
-                    // Critério por valor
-                    criterionCurrent = matchingPolicies.reduce((sum, policy) => sum + policy.premium_value, 0);
-                    criterionTarget = criterion.target_value || 0;
-                    criterionProgressPercentage = criterionTarget > 0 ? (criterionCurrent / criterionTarget) * 100 : 0;
-                    criterionCompleted = criterionProgressPercentage >= 100;
-                }
-
-                criteriaProgress.push({
-                    criterion: i + 1,
-                    current: criterionCurrent,
-                    target: criterionTarget,
-                    progress: criterionProgressPercentage,
-                    completed: criterionCompleted
-                });
-                
-                if (!criterionCompleted) {
-                    allCriteriaCompleted = false;
-                } else {
-                }
-            }
+  }
+  
+  /**
+   * Corrigir status de uma campanha específica
+   */
+  static async correctCampaignStatus(campaignId: string, campaignTitle: string): Promise<void> {
+    try {
+      // Calcular progresso atual
+      const progressData = await calculateCampaignProgressAuxiliar(campaignId);
+      
+      if (!progressData) {
+        console.log(`⚠️ Não foi possível calcular progresso da campanha ${campaignTitle}`);
+        return;
+      }
+      
+      // Buscar status atual
+      const { data: currentCampaign, error: fetchError } = await supabase
+        .from('goals')
+        .select('status, progress_percentage, acceptance_status')
+        .eq('id', campaignId)
+        .single();
+      
+      if (fetchError) {
+        console.error(`❌ Erro ao buscar campanha ${campaignTitle}:`, fetchError);
+        return;
+      }
+      
+      const currentStatus = currentCampaign.status;
+      const currentProgress = currentCampaign.progress_percentage || 0;
+      const isAccepted = currentCampaign.acceptance_status === 'accepted';
+      
+      // Determinar status correto
+      let correctStatus = 'active';
+      
+      if (!isAccepted) {
+        // Campanha não aceita = pending (não deveria estar em completed)
+        if (currentStatus === 'completed') {
+          console.log(`🔧 CORREÇÃO: Campanha "${campaignTitle}" estava como completed mas não foi aceita`);
+          correctStatus = 'active'; // Voltar para active
         }
-
-        // Calcular progresso geral (média dos critérios)
-        const totalProgress = criteriaProgress.length > 0 
-            ? criteriaProgress.reduce((sum, c) => sum + c.progress, 0) / criteriaProgress.length 
-            : 0;
+      } else if (progressData.isCompleted && progressData.progressPercentage >= 100) {
+        // Campanha aceita E progresso >= 100% = completed
+        correctStatus = 'completed';
+      } else if (progressData.progressPercentage < 100) {
+        // Campanha aceita mas progresso < 100% = active
+        correctStatus = 'active';
+      }
+      
+      // Verificar se precisa corrigir
+      if (currentStatus !== correctStatus) {
+        console.log(`🔧 CORREÇÃO: Campanha "${campaignTitle}"`);
+        console.log(`   Status atual: ${currentStatus}`);
+        console.log(`   Status correto: ${correctStatus}`);
+        console.log(`   Progresso: ${progressData.progressPercentage}%`);
+        console.log(`   Critérios atendidos: ${progressData.isCompleted}`);
         
-        // Uma campanha só é concluída quando TODOS os critérios estão 100%
-        const isCompleted = allCriteriaCompleted && criteriaProgress.length > 0;
-        return {
-            current_value: criteriaProgress.reduce((sum, c) => sum + c.current, 0),
-            progress_percentage: Math.min(totalProgress, 100),
-            is_completed: isCompleted
+        // Atualizar status
+        const updateData: any = {
+          status: correctStatus,
+          progress_percentage: progressData.progressPercentage,
+          current_value: progressData.currentValue,
+          last_updated: new Date().toISOString()
         };
+        
+        // Se marcando como completed, adicionar timestamp
+        if (correctStatus === 'completed' && currentStatus !== 'completed') {
+          updateData.achieved_at = new Date().toISOString();
+          updateData.achieved_value = progressData.currentValue;
+        }
+        
+        // Se voltando para active, limpar timestamps
+        if (correctStatus === 'active' && currentStatus === 'completed') {
+          updateData.achieved_at = null;
+          updateData.achieved_value = null;
+        }
+        
+        const { error: updateError } = await supabase
+          .from('goals')
+          .update(updateData)
+          .eq('id', campaignId);
+        
+        if (updateError) {
+          console.error(`❌ Erro ao atualizar campanha ${campaignTitle}:`, updateError);
+        } else {
+          console.log(`✅ Campanha "${campaignTitle}" corrigida para ${correctStatus}`);
+        }
+      } else {
+        console.log(`✅ Campanha "${campaignTitle}" já está com status correto (${currentStatus})`);
+      }
+      
+    } catch (error) {
+      console.error(`❌ Erro ao corrigir campanha ${campaignTitle}:`, error);
     }
+  }
+  
+  /**
+   * Corrigir todas as campanhas com status incorreto no sistema
+   */
+  static async correctAllCampaignStatuses(): Promise<void> {
+    try {
+      console.log('🔧 CampaignStatusCorrectionService: Iniciando correção global de status');
+      
+      // Buscar todos os usuários com campanhas
+      const { data: users, error: usersError } = await supabase
+        .from('goals')
+        .select('user_id')
+        .eq('record_type', 'campaign')
+        .eq('is_active', true)
+        .not('user_id', 'is', null);
+      
+      if (usersError) {
+        console.error('❌ Erro ao buscar usuários:', usersError);
+        return;
+      }
+      
+      // Obter IDs únicos de usuários
+      const uniqueUserIds = [...new Set(users?.map(u => u.user_id) || [])];
+      
+      console.log(`📊 Encontrados ${uniqueUserIds.length} usuários com campanhas`);
+      
+      // Corrigir campanhas de cada usuário
+      for (const userId of uniqueUserIds) {
+        await this.correctUserCampaignStatuses(userId);
+      }
+      
+      console.log('✅ Correção global de status concluída');
+      
+    } catch (error) {
+      console.error('❌ Erro na correção global:', error);
+    }
+  }
 }
