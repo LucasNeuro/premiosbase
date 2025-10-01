@@ -151,11 +151,12 @@ const GoalsOverview: React.FC = () => {
             const goalProgress = getGoalProgress(goal.id);
             const progress = goalProgress ? goalProgress.progress : 0;
             const today = new Date();
-            const endDate = goal.end_date ? new Date(goal.end_date) : null;
+            const endDate = goal.end_date ? new Date(goal.end_date + 'T23:59:59') : null;
+            const todayNormalized = new Date(today.getFullYear(), today.getMonth(), today.getDate());
             
             if (progress >= 100) {
                 completed.push(goal);
-            } else if (endDate && today > endDate) {
+            } else if (endDate && todayNormalized > endDate) {
                 expired.push(goal);
             } else {
                 active.push(goal);

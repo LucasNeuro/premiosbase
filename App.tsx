@@ -10,6 +10,8 @@ import AdminDashboard from './components/pages/AdminDashboard';
 import PremiosPage from './components/pages/PremiosPage';
 import DebugPage from './components/pages/DebugPage';
 import AdminRedirect from './components/auth/AdminRedirect';
+import ModernResetPasswordForm from './components/auth/ModernResetPasswordForm';
+import ModernNewPasswordForm from './components/auth/ModernNewPasswordForm';
 import { PoliciesProvider } from './hooks/usePoliciesNew';
 import CacheProvider from './components/providers/CacheProvider';
 
@@ -34,6 +36,22 @@ const AppContent: React.FC = () => {
             <Route 
                 path="/register" 
                 element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} 
+            />
+            <Route 
+                path="/forgot-password" 
+                element={user ? <Navigate to="/dashboard" replace /> : (
+                    <div className="min-h-screen bg-dark-900 flex flex-col justify-center items-center p-4">
+                        <ModernResetPasswordForm />
+                    </div>
+                )} 
+            />
+            <Route 
+                path="/reset-password" 
+                element={user ? <Navigate to="/dashboard" replace /> : (
+                    <div className="min-h-screen bg-dark-900 flex flex-col justify-center items-center p-4">
+                        <ModernNewPasswordForm />
+                    </div>
+                )} 
             />
             <Route 
                 path="/dashboard" 

@@ -123,7 +123,7 @@ const CreateGoalModal: React.FC<CreateGoalModalProps> = ({ isOpen, onClose, onSu
                     period: formData.period,
                     type: formData.type,
                     status: 'active',
-                    admin_created_by: user?.id,
+                    admin_created_by: null, // Removido para evitar foreign key constraint error
                     target_period: formData.target_period,
                     is_active: true,
                     description: formData.description.trim()

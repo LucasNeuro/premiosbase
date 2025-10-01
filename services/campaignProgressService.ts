@@ -380,8 +380,8 @@ export const calculateCompositeCampaignProgress = async (campaignId: string): Pr
       }
     }
 
-    // CORREÇÃO: Progresso geral = 100% APENAS se TODOS os critérios = 100%
-    // Se qualquer critério < 100%, progresso geral < 100%
+    // 🔧 CORREÇÃO CRÍTICA: Progresso geral = 100% APENAS se TODOS os critérios = 100%
+    // Se qualquer critério < 100%, progresso geral = menor progresso entre os critérios
     let overallProgress = 0;
     const isCompleted = completedCriteria === criteria.length && criteria.length > 0;
     
@@ -389,8 +389,53 @@ export const calculateCompositeCampaignProgress = async (campaignId: string): Pr
         // Se todos os critérios estão 100%, progresso geral = 100%
         overallProgress = 100;
     } else {
-        // Se nem todos estão 100%, progresso geral = média dos critérios
-        overallProgress = criteria.length > 0 ? totalProgress / criteria.length : 0;
+        // Se nem todos estão 100%, progresso geral = MENOR progresso entre os critérios
+        // Isso garante que a campanha só é considerada completa quando TODOS os critérios são atingidos
+        const criterionProgresses = [];
+        for (const criterion of criteria) {
+            const matchingPolicies = policies.filter(policy => {
+                // Verificar tipo de apólice
+                if (criterion.policy_type === 'auto' && policy.policy_type !== 'auto') return false;
+                if (criterion.policy_type === 'residencial' && policy.policy_type !== 'residencial') return false;
+                
+                // Verificar tipo de contrato
+                if (criterion.contract_type === 'novo' && policy.contract_type !== 'Novo') return false;
+                if (criterion.contract_type === 'renovacao_bradesco' && policy.contract_type !== 'Renovação Bradesco') return false;
+                if (criterion.contract_type === 'ambos') {
+                    // Aceita qualquer tipo de contrato
+                }
+                
+                // Verificar valor mínimo
+                if (criterion.min_value_per_policy && (policy.policy_premium_value || 0) < criterion.min_value_per_policy) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            let criterionProgress = 0;
+            if (criterion.target_type === 'valor') {
+                const currentValue = matchingPolicies.reduce((sum, p) => sum + (p.policy_premium_value || 0), 0);
+                criterionProgress = criterion.target_value > 0 ? (currentValue / criterion.target_value) * 100 : 0;
+            } else {
+                criterionProgress = criterion.target_value > 0 ? (matchingPolicies.length / criterion.target_value) * 100 : 0;
+            }
+            
+            criterionProgresses.push(criterionProgress);
+        }
+        
+        // Progresso geral = MENOR progresso entre os critérios
+        overallProgress = criterionProgresses.length > 0 ? Math.min(...criterionProgresses) : 0;
+        
+        // Debug: Log para identificar o problema
+        console.log('🔍 COMPOSITE PROGRESS DEBUG:', {
+            campaignId,
+            criterionProgresses,
+            minProgress: overallProgress,
+            isCompleted,
+            completedCriteria,
+            totalCriteria: criteria.length
+        });
     }
 
     return {

@@ -9,10 +9,13 @@ export const calculateDaysRemaining = (endDate: string): {
     urgencyLevel: 'safe' | 'warning' | 'critical' | 'expired';
 } => {
     const now = new Date();
-    const end = new Date(endDate);
+    
+    // ✅ CORREÇÃO: Normalizar datas para evitar problemas de fuso horário
+    const end = new Date(endDate + 'T23:59:59'); // Fim do dia
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // Início do dia atual
     
     // Calcular diferença em milissegundos
-    const diffTime = end.getTime() - now.getTime();
+    const diffTime = end.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     const isExpired = diffDays < 0;

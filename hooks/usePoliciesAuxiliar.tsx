@@ -20,6 +20,7 @@ export interface PolicyAuxiliar {
     status: 'active' | 'cancelled';
     created_at: string;
     updated_at: string;
+    sale_date?: string | null;
     
     // Dados de vinculação (se existir)
     linked_campaigns?: {
@@ -185,24 +186,26 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
                     cpd_number: policyData.cpd_number,
                     city: policyData.city,
                     ticket_code: ticketCode,
-                    status: 'active'
+                    status: 'active',
+                    sale_date: policyData.sale_date || null
                 })
                 .select()
                 .single();
 
             if (policyError) throw policyError;
 
-            // 2. Buscar campanhas compatíveis aceitas
+            // 2. Buscar campanhas compatíveis aceitas (mesmo se expiradas)
 
-            console.log('🔍 Debug - Buscando campanhas ativas para o usuário:', userId);
+            console.log('🔍 Debug - Buscando campanhas aceitas para o usuário:', userId);
             const { data: acceptedCampaigns, error: campaignsError } = await supabase
                 .from('goals')
                 .select('*')
                 .eq('user_id', userId)
                 .eq('record_type', 'campaign')
-                .eq('acceptance_status', 'accepted')
+                .eq('acceptance_status', 'accepted') // ✅ SÓ CAMPANHAS ACEITAS
                 .eq('status', 'active')
                 .eq('is_active', true);
+                // ❌ REMOVIDO: .gte('end_date', ...) - Permite campanhas expiradas
 
             if (campaignsError) {
                 console.error('❌ Debug - Erro ao buscar campanhas:', campaignsError);
@@ -218,19 +221,37 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
 
             // 3. VINCULAR A TODAS AS CAMPANHAS ATIVAS DO CORRETOR (VIA CÓDIGO - SEM IA)
 
-            // 🎯 NOVA LÓGICA: Vincular apólice a TODAS as campanhas ativas que ela atender aos critérios
+            // 🎯 NOVA LÓGICA: Vincular apólice a campanhas que atendam aos critérios
             const policyCreatedAt = new Date(newPolicy.created_at);
+            const policySaleDate = newPolicy.sale_date ? new Date(newPolicy.sale_date) : null;
+            const effectiveDate = policySaleDate || policyCreatedAt; // ✅ USAR DATA EFETIVA
+            
             console.log('🔍 Debug - Apólice criada em:', policyCreatedAt.toISOString());
+            console.log('🔍 Debug - Data da venda:', policySaleDate?.toISOString() || 'Não informada');
+            console.log('🔍 Debug - Data efetiva:', effectiveDate.toISOString());
             
             for (const campaign of acceptedCampaigns || []) {
                 console.log(`🔍 Debug - Analisando campanha: ${campaign.title} (ID: ${campaign.id})`);
                 
-                // ✅ NOVA REGRA: Vincular a TODAS as campanhas aceitas (sem restrição de data)
-                console.log('✅ Debug - Apólice será analisada para vinculação à campanha');
+                // ✅ VERIFICAR SE A DATA EFETIVA ESTÁ DENTRO DO PERÍODO DA CAMPANHA
+                const campaignStart = new Date(campaign.start_date);
+                const campaignEnd = new Date(campaign.end_date);
+                const today = new Date();
+                
+                console.log(`📅 Debug - Período da campanha: ${campaignStart.toISOString()} até ${campaignEnd.toISOString()}`);
+                console.log(`📅 Debug - Campanha expirada: ${campaignEnd < today ? 'SIM' : 'NÃO'}`);
+                
+                // ✅ VINCULAR SE: Data efetiva está dentro do período (mesmo se campanha expirada)
+                if (effectiveDate >= campaignStart && effectiveDate <= campaignEnd) {
+                    console.log('✅ Debug - Data efetiva está dentro do período da campanha - VINCULANDO');
+                } else {
+                    console.log('❌ Debug - Data efetiva está FORA do período da campanha - PULANDO');
+                    continue; // Pular esta campanha
+                }
                 
                 // ✅ Vincular apólice à campanha
                 const confidence = 100; // Confiança máxima - código é confiável
-                const reasoning = `Apólice ${policyData.type} criada em ${policyCreatedAt.toISOString()} vinculada à campanha ${campaign.title}`;
+                const reasoning = `Apólice ${policyData.type} com data efetiva ${effectiveDate.toISOString()} vinculada à campanha ${campaign.title} (período: ${campaignStart.toISOString().split('T')[0]} até ${campaignEnd.toISOString().split('T')[0]})`;
 
                 console.log('🔗 Debug - Criando vinculação...');
                 const { error: linkError } = await supabase

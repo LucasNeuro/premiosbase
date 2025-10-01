@@ -8,6 +8,9 @@
  * Converte o valor interno do tipo de contrato para o texto de exibição
  */
 export const getContractTypeLabel = (contractType: string): string => {
+    // Debug: log do valor recebido
+    console.log('🔍 CONTRACT TYPE DEBUG:', contractType, typeof contractType);
+    
     switch (contractType) {
         case 'novo':
             return 'Novo';
@@ -19,8 +22,11 @@ export const getContractTypeLabel = (contractType: string): string => {
             return 'Novo';
         case 'Renovação Bradesco':
             return 'Renovação Bradesco';
+        case 'Renovação':
+            return 'Renovação Bradesco';
         default:
-            return contractType || 'Renovação';
+            // Se não encontrar, retorna o valor original ou 'Ambos' como fallback
+            return contractType || 'Ambos (Novo e Renovação)';
     }
 };
 
@@ -39,8 +45,11 @@ export const getContractTypeLabelShort = (contractType: string): string => {
             return 'Novo';
         case 'Renovação Bradesco':
             return 'Renovação';
+        case 'Renovação':
+            return 'Renovação';
         default:
-            return contractType || 'Renovação';
+            // Se não encontrar, retorna o valor original ou 'Ambos' como fallback
+            return contractType || 'Ambos';
     }
 };
 

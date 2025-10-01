@@ -205,15 +205,29 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
           // TODOS os critérios devem ser atendidos (lógica AND)
           isCompleted = criteriaResults.every(result => result.isThisCriterionMet);
           
-          // CORREÇÃO: Progresso geral = 100% APENAS se TODOS os critérios = 100%
+          // 🔧 CORREÇÃO CRÍTICA: Progresso geral = 100% APENAS se TODOS os critérios = 100%
           // Se qualquer critério < 100%, progresso geral = menor progresso entre os critérios
           if (isCompleted) {
               // Se todos os critérios estão 100%, progresso geral = 100%
               progressPercentage = 100;
           } else {
-              // Se nem todos estão 100%, progresso geral = menor progresso entre os critérios
+              // Se nem todos estão 100%, progresso geral = MENOR progresso entre os critérios
               // Isso garante que a campanha só é considerada completa quando TODOS os critérios são atingidos
-              progressPercentage = Math.min(...criteriaResults.map(result => result.percentage));
+              const minProgress = Math.min(...criteriaResults.map(result => result.percentage));
+              progressPercentage = minProgress;
+              
+              // Debug: Log para identificar o problema
+              console.log('🔍 PROGRESS DEBUG:', {
+                  campaignId,
+                  criteriaResults: criteriaResults.map(r => ({ 
+                      type: r.policyType, 
+                      percentage: r.percentage, 
+                      isMet: r.isThisCriterionMet 
+                  })),
+                  minProgress,
+                  isCompleted,
+                  finalProgress: progressPercentage
+              });
           }
           
           // Valor atual = soma de todos os valores (para display)

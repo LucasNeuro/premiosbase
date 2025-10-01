@@ -39,6 +39,11 @@ const LandingPage: React.FC = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative min-h-[600px]">
             {/* Texto */}
             <div className="space-y-8 relative z-10">
+              {/* Texto com gradiente vermelho */}
+              <h2 className="text-3xl md:text-6xl font-montserrat font-black text-left tracking-wider bg-gradient-to-r from-red-600 via-red-700 to-red-800 bg-clip-text text-transparent">
+                BASE CONSULTORIA
+              </h2>
+              
               <h1 className="text-4xl md:text-5xl font-bold leading-tight text-gray-900">
                 Muito mais que prêmios: parceria de verdade para o corretor
               </h1>
@@ -47,7 +52,7 @@ const LandingPage: React.FC = () => {
                 Com o suporte comercial da Base, você vende mais e vai mais longe.
               </p>
               <Link to="/register" className="bg-blue-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-all duration-200 inline-flex items-center">
-                Vem pra Prêmios.Base
+                Vem pra PrêmiosBase
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             </div>

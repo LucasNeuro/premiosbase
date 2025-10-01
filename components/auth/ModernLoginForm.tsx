@@ -4,10 +4,13 @@ import ModernForm from '../ui/ModernForm';
 import ModernInput from '../ui/ModernInput';
 import ModernButton from '../ui/ModernButton';
 import Alert from '../ui/Alert';
+import { Link } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 
 const ModernLoginForm: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -73,17 +76,26 @@ const ModernLoginForm: React.FC = () => {
                 error={errors.email}
             />
             
-            <ModernInput
-                id="password"
-                name="password"
-                label="Senha"
-                type="password"
-                value={password}
-                onChange={handleInputChange}
-                placeholder="Digite sua senha"
-                required
-                error={errors.password}
-            />
+            <div className="relative">
+                <ModernInput
+                    id="password"
+                    name="password"
+                    label="Senha"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={handleInputChange}
+                    placeholder="Digite sua senha"
+                    required
+                    error={errors.password}
+                />
+                <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 translate-y-0.5 text-gray-400 hover:text-gray-600 flex items-center justify-center p-1"
+                >
+                    {showPassword ? <EyeOff className="w-6 h-6" /> : <Eye className="w-6 h-6" />}
+                </button>
+            </div>
             
             <ModernButton
                 type="submit"
@@ -95,6 +107,15 @@ const ModernLoginForm: React.FC = () => {
             >
                 Entrar
             </ModernButton>
+
+            <div className="text-center mt-4">
+                <Link 
+                    to="/forgot-password" 
+                    className="text-sm text-blue-400 hover:text-blue-300 transition-colors font-medium"
+                >
+                    Esqueci minha senha
+                </Link>
+            </div>
         </ModernForm>
     );
 };

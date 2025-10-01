@@ -128,8 +128,9 @@ const GoalCard: React.FC<GoalCardProps> = ({ goal, progress, onClick }) => {
     // Status baseado no progresso e prazo
     const isCompleted = progress >= 100;
     const today = new Date();
-    const endDate = goal.end_date ? new Date(goal.end_date) : null;
-    const isExpiredByDate = endDate && today > endDate && !isCompleted;
+    const endDate = goal.end_date ? new Date(goal.end_date + 'T23:59:59') : null;
+    const todayNormalized = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const isExpiredByDate = endDate && todayNormalized > endDate && !isCompleted;
     
     const getStatusColor = () => {
         if (isCompleted) {

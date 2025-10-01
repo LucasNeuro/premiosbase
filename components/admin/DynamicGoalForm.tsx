@@ -164,7 +164,7 @@ const DynamicGoalForm: React.FC<DynamicGoalFormProps> = ({ goalType, onSuccess, 
                     unit: config.unit,
                     type: goalType,
                     status: 'active',
-                    created_by: user?.id,
+                    created_by: null, // Removido para evitar foreign key constraint error
                     start_date: formData.start_date,
                     end_date: formData.end_date,
                     is_active: true,

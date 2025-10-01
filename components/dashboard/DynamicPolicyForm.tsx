@@ -29,6 +29,7 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
     const [contractType, setContractType] = useState<ContractType>(ContractType.NOVO);
     const [premiumValue, setPremiumValue] = useState('');
     const [selectedCpd, setSelectedCpd] = useState('');
+    const [saleDate, setSaleDate] = useState('');
     const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [compatibleCampaigns, setCompatibleCampaigns] = useState<Goal[]>([]);
@@ -334,6 +335,7 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
     const clearForm = (showMessage = false) => {
         setPolicyNumber('');
         setPremiumValue('');
+        setSaleDate('');
         setType(PolicyType.AUTO);
         setContractType(ContractType.NOVO);
         setCompatibleCampaigns([]);
@@ -425,7 +427,8 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                 contract_type: contractType,
                 premium_value: numericPremium,
                 cpd_number: selectedCpd,
-                status: 'active'
+                status: 'active',
+                sale_date: saleDate || null // Incluir sale_date se preenchido
             });
 
             if (result.success) {
@@ -512,8 +515,8 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                         </div>
                     )}
                     
-                    {/* Campos Básicos - Grid 5 colunas */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                    {/* Campos Básicos - Grid 3 colunas */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {/* Número da Apólice */}
                         <div className="form-group">
                             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
@@ -604,6 +607,28 @@ const DynamicPolicyForm: React.FC<DynamicPolicyFormProps> = ({ selectedPeriod = 
                                 className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#49de80] focus:border-[#49de80] transition-all duration-200"
                                 required
                             />
+                        </div>
+
+                        {/* Data da Venda */}
+                        <div className="form-group">
+                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-3">
+                                <Calendar className="w-4 h-4 text-[#49de80]" />
+                                Data da Venda
+                                <span className="text-xs text-gray-500">(até 30 dias antes)</span>
+                            </label>
+                            <input
+                                type="date"
+                                value={saleDate}
+                                onChange={(e) => setSaleDate(e.target.value)}
+                                max={new Date().toISOString().split('T')[0]}
+                                min={new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                                className="w-full px-4 py-3 bg-white border-2 border-gray-200 rounded-xl text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#49de80] focus:border-[#49de80] transition-all duration-200"
+                            />
+                            {saleDate && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Se não preenchido, será usada a data de lançamento
+                                </p>
+                            )}
                         </div>
                     </div>
 

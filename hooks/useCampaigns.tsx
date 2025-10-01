@@ -213,7 +213,7 @@ export const useCampaigns = () => {
                         criteria: campaignData.criteria,
                         user_id: corretor.user_id, // Corretor específico
                         target_category_id: null, // Não precisa para campanhas individuais
-                        created_by: (await supabase.auth.getUser()).data.user?.id,
+                        created_by: null, // Removido para evitar foreign key constraint error
                         record_type: 'campaign' as const,
                         acceptance_status: 'pending' // ✅ IMPORTANTE: Definir como pending
                     };
@@ -297,7 +297,7 @@ export const useCampaigns = () => {
                 criteria: campaignData.criteria,
                 user_id: campaignData.target_user_id,
                 target_category_id: null,
-                created_by: (await supabase.auth.getUser()).data.user?.id,
+                created_by: null, // Removido para evitar foreign key constraint error
                 record_type: 'campaign' as const
             };
 

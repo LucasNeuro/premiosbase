@@ -6,9 +6,10 @@ import AdminPoliciesTable from '../admin/AdminPoliciesTable';
 import AdminUsersManager from '../admin/AdminUsersManager';
 import AdminStatsOverview from '../admin/AdminStatsOverview';
 import AdminPrizesManager from '../admin/AdminPrizesManager';
+import AdminPrizeRequestsManager from '../admin/AdminPrizeRequestsManager';
 import ForcePrizeAvailability from '../admin/ForcePrizeAvailability';
 import ErrorBoundary from '../ui/ErrorBoundary';
-import { Target, Users, FileText, BarChart3, Settings, Trophy, Package, Wrench } from 'lucide-react';
+import { Target, Users, FileText, BarChart3, Settings, Trophy, Package, Wrench, ShoppingCart } from 'lucide-react';
 
 const AdminDashboard: React.FC = () => {
     const { user } = useAuth();
@@ -47,6 +48,16 @@ const AdminDashboard: React.FC = () => {
             component: () => (
                 <ErrorBoundary>
                     <AdminPrizesManager />
+                </ErrorBoundary>
+            )
+        },
+        { 
+            id: 'prize-requests', 
+            label: 'Pedidos de Prêmios', 
+            icon: <ShoppingCart className="w-5 h-5" />,
+            component: () => (
+                <ErrorBoundary>
+                    <AdminPrizeRequestsManager />
                 </ErrorBoundary>
             )
         },

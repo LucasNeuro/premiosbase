@@ -15,6 +15,7 @@ interface AuthContextType {
         hasMultipleCpds?: boolean;
         additionalCpds?: Array<{id: string, number: string}>;
     }) => Promise<{ success: boolean; message: string }>;
+    resetPassword: (email: string) => Promise<{ success: boolean; message: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -105,13 +106,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                additionalCpds?: Array<{id: string, number: string}>;
            }) => {
         try {
+            console.log('🔐 REGISTER: Iniciando cadastro com:', userData);
             // Check if user already exists
+            console.log('🔍 REGISTER: Verificando usuários existentes...');
             const { data: existingUsers, error: checkError } = await supabase
                 .from('users')
                 .select('email, cnpj, cpd')
                 .or(`email.eq.${userData.email},cnpj.eq.${userData.cnpj}${userData.cpd ? `,cpd.eq.${userData.cpd}` : ''}`);
 
+            console.log('🔍 REGISTER: Resultado da verificação:', { existingUsers, checkError });
+
             if (checkError) {
+                console.log('⚠️ REGISTER: Erro na verificação, continuando...');
                 // Continue com o cadastro mesmo se houver erro na verificação
             } else if (existingUsers && existingUsers.length > 0) {
                 const existingUser = existingUsers[0];
@@ -137,7 +143,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                        cnpj: userData.cnpj,
                        has_multiple_cpds: userData.hasMultipleCpds || false,
                        password_hash: passwordHash,
-                       cnpj_data: null, // Sem dados de CNPJ por enquanto
+                       cnpj_data: userData.cnpjData || null, // Dados completos do CNPJ
+                       // Campos adicionais da tabela users
+                       natureza_juridica: userData.cnpjData?.natureza_juridica || null,
+                       endereco: userData.cnpjData?.endereco || null,
+                       capital_social: userData.cnpjData?.capital_social || null,
+                       porte_empresa: userData.cnpjData?.porte_empresa || null,
+                       razao_social: userData.cnpjData?.razao_social || null,
+                       nome_fantasia: userData.cnpjData?.nome_fantasia || null,
+                       situacao_cadastral: userData.cnpjData?.situacao_cadastral || null,
                    };
 
                    // Só adicionar CPD se não for múltiplos CPDs
@@ -145,13 +159,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                        userInsertData.cpd = userData.cpd;
                    }
 
+                   console.log('💾 REGISTER: Inserindo usuário com dados:', userInsertData);
                    const { data: newUser, error: userError } = await supabase
                        .from('users')
                        .insert(userInsertData)
                        .select('id, name, phone, email, cnpj, cpd, has_multiple_cpds')
                        .single();
 
+                   console.log('💾 REGISTER: Resultado da inserção:', { newUser, userError });
+
             if (userError) {
+                console.log('❌ REGISTER: Erro ao criar usuário:', userError);
                 return { success: false, message: `Erro ao criar usuário: ${userError.message}` };
             }
 
@@ -176,7 +194,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 }
             }
 
+            console.log('✅ REGISTER: Usuário criado com sucesso!');
             return { success: true, message: 'Conta criada com sucesso! Faça login para continuar.' };
+        } catch (error) {
+            console.log('❌ REGISTER: Erro interno:', error);
+            return { success: false, message: 'Erro interno do servidor.' };
+        }
+    };
+
+    const resetPassword = async (email: string) => {
+        try {
+            // 🔍 VERIFICAR SE O EMAIL EXISTE NO CADASTRO PRIMEIRO
+            const { data: userData, error: userError } = await supabase
+                .from('users')
+                .select('email')
+                .eq('email', email)
+                .single();
+            
+            if (userError || !userData) {
+                return { 
+                    success: false, 
+                    message: 'Email não encontrado em nosso sistema. Verifique se o email está correto.' 
+                };
+            }
+
+            // ✅ EMAIL EXISTE - ENVIAR LINK DE RECUPERAÇÃO
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+                redirectTo: `${window.location.origin}/reset-password`
+            });
+            
+            if (error) {
+                return { success: false, message: error.message };
+            }
+            
+            return { success: true, message: 'Email de recuperação enviado! Verifique sua caixa de entrada.' };
         } catch (error) {
             return { success: false, message: 'Erro interno do servidor.' };
         }
@@ -188,6 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         logout,
         register,
+        resetPassword,
     };
 
     return (

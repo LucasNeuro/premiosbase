@@ -18,7 +18,7 @@ export const cnpjMask = (value: string): string => {
 };
 
 export const cpdMask = (value: string): string => {
-    return value.replace(/\D/g, '').substring(0, 10);
+    return value.replace(/\D/g, '').substring(0, 6);
 };
 
 export const currencyMask = (value: string): string => {

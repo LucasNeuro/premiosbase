@@ -8,6 +8,7 @@ const AdminHeader: React.FC = () => {
   const { user, logout } = useAuth();
 
   const getInitials = (name: string) => {
+    if (!name || typeof name !== 'string') return 'AD';
     return name
       .split(' ')
       .map(word => word.charAt(0))
@@ -51,7 +52,7 @@ const AdminHeader: React.FC = () => {
               </div>
               <div className="flex flex-col">
                 <span className="text-sm font-semibold text-white">
-                  {user?.name.split(' ')[0]}
+                  {user?.name ? user.name.split(' ')[0] : 'Admin'}
                 </span>
                 <span className="text-xs text-gray-300">
                   Administrador
