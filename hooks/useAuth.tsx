@@ -219,10 +219,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             // ✅ EMAIL EXISTE - ENVIAR LINK DE RECUPERAÇÃO
-            // Usar URL absoluta para produção
-            const baseUrl = window.location.origin;
+            // Detectar ambiente e usar URL correta
+            const currentHost = window.location.hostname;
+            const isLocalhost = currentHost === 'localhost' || currentHost.includes('127.0.0.1');
+            
+            let baseUrl;
+            if (isLocalhost) {
+                // Desenvolvimento local
+                baseUrl = 'http://localhost:3000';
+            } else {
+                // Produção - usar a URL atual do Vercel
+                baseUrl = window.location.origin;
+            }
+            
             const resetUrl = `${baseUrl}/reset-password`;
             
+            console.log('🔗 Hostname atual:', currentHost);
+            console.log('🔗 Ambiente:', isLocalhost ? 'Desenvolvimento' : 'Produção');
             console.log('🔗 URL de recuperação:', resetUrl);
             
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
