@@ -12,6 +12,7 @@ import DebugPage from './components/pages/DebugPage';
 import AdminRedirect from './components/auth/AdminRedirect';
 import LogoutAndResetForm from './components/auth/LogoutAndResetForm';
 import LogoutAndNewPasswordForm from './components/auth/LogoutAndNewPasswordForm';
+import ErrorHandler from './components/auth/ErrorHandler';
 import { PoliciesProvider } from './hooks/usePoliciesNew';
 import CacheProvider from './components/providers/CacheProvider';
 
@@ -48,6 +49,10 @@ const AppContent: React.FC = () => {
                 element={
                     <LogoutAndNewPasswordForm />
                 } 
+            />
+            <Route 
+                path="/auth/error" 
+                element={<ErrorHandler />} 
             />
             <Route 
                 path="/dashboard" 

@@ -26,10 +26,31 @@ const ModernNewPasswordForm: React.FC = () => {
     useEffect(() => {
         // Verificar se há sessão ativa (usuário clicou no link)
         const checkSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
+            try {
+                // Verificar se há parâmetros de erro na URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const error = urlParams.get('error');
+                const errorCode = urlParams.get('error_code');
+                
+                if (error === 'access_denied' && errorCode === 'otp_expired') {
+                    setMessage({ 
+                        text: 'Link de recuperação expirado. Solicite um novo link.', 
+                        type: 'error' 
+                    });
+                    return;
+                }
+                
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    setMessage({ 
+                        text: 'Link inválido ou expirado. Solicite um novo link de recuperação.', 
+                        type: 'error' 
+                    });
+                }
+            } catch (error) {
+                console.error('Erro ao verificar sessão:', error);
                 setMessage({ 
-                    text: 'Link inválido ou expirado. Solicite um novo link de recuperação.', 
+                    text: 'Erro ao verificar link. Tente novamente.', 
                     type: 'error' 
                 });
             }

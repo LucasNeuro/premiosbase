@@ -219,8 +219,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             // ✅ EMAIL EXISTE - ENVIAR LINK DE RECUPERAÇÃO
+            // Usar URL absoluta para produção
+            const baseUrl = window.location.origin;
+            const resetUrl = `${baseUrl}/reset-password`;
+            
+            console.log('🔗 URL de recuperação:', resetUrl);
+            
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: `${window.location.origin}/reset-password`
+                redirectTo: resetUrl
             });
             
             if (error) {

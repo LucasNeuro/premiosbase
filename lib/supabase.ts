@@ -9,7 +9,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
         persistSession: true,
         autoRefreshToken: true,
-        detectSessionInUrl: true
+        detectSessionInUrl: true,
+        // Configurações específicas para produção
+        flowType: 'pkce'
     },
     global: {
         headers: {
@@ -19,6 +21,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         }
     }
 });
+
+// Debug para produção
+console.log('🔧 Supabase configurado para:', window.location.origin);
 
 // Database types
 export interface Database {
