@@ -9,10 +9,8 @@ import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
 
 const ModernNewPasswordForm: React.FC = () => {
     const navigate = useNavigate();
-    const [currentPassword, setCurrentPassword] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
@@ -42,9 +40,7 @@ const ModernNewPasswordForm: React.FC = () => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         
-        if (name === 'currentPassword') {
-            setCurrentPassword(value);
-        } else if (name === 'password') {
+        if (name === 'password') {
             setPassword(value);
             // Atualizar força da senha
             setPasswordStrength({
@@ -66,35 +62,6 @@ const ModernNewPasswordForm: React.FC = () => {
     const validateForm = async () => {
         const newErrors: Record<string, string> = {};
         
-        // Validar senha atual
-        if (!currentPassword.trim()) {
-            newErrors.currentPassword = 'Senha atual é obrigatória';
-        } else {
-            // Verificar se a senha atual está correta
-            try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user?.email) {
-                    const { data: userData } = await supabase
-                        .from('users')
-                        .select('password_hash')
-                        .eq('email', user.email)
-                        .single();
-                    
-                    if (userData?.password_hash) {
-                        const bcrypt = await import('bcryptjs');
-                        const isCurrentPasswordCorrect = await bcrypt.compare(currentPassword, userData.password_hash);
-                        
-                        if (!isCurrentPasswordCorrect) {
-                            newErrors.currentPassword = 'Senha atual incorreta.';
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('Erro ao verificar senha atual:', error);
-                newErrors.currentPassword = 'Erro ao verificar senha atual.';
-            }
-        }
-        
         // Validar nova senha
         if (!password.trim()) {
             newErrors.password = 'Nova senha é obrigatória';
@@ -111,13 +78,6 @@ const ModernNewPasswordForm: React.FC = () => {
             newErrors.confirmPassword = 'Confirmação de senha é obrigatória';
         } else if (password !== confirmPassword) {
             newErrors.confirmPassword = 'Senhas não coincidem';
-        }
-        
-        // Verificar se a nova senha é diferente da atual
-        if (password.trim() && currentPassword.trim() && Object.keys(newErrors).length === 0) {
-            if (password === currentPassword) {
-                newErrors.password = 'A nova senha deve ser diferente da senha atual.';
-            }
         }
         
         setErrors(newErrors);
@@ -194,9 +154,9 @@ const ModernNewPasswordForm: React.FC = () => {
                 <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Lock className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-white mb-2">Nova Senha</h2>
+                <h2 className="text-2xl font-bold text-white mb-2">Definir Nova Senha</h2>
                 <p className="text-gray-300">
-                    Digite sua nova senha abaixo
+                    Crie uma nova senha segura para sua conta. Você foi redirecionado aqui através do link de recuperação.
                 </p>
             </div>
 
@@ -204,28 +164,6 @@ const ModernNewPasswordForm: React.FC = () => {
                 {message && <Alert message={message.text} type={message.type} onClose={() => setMessage(null)} />}
 
                 <div className="space-y-4">
-                    {/* Campo Senha Atual */}
-                    <div className="relative">
-                        <ModernInput
-                            id="currentPassword"
-                            name="currentPassword"
-                            label="Senha Atual"
-                            type={showCurrentPassword ? "text" : "password"}
-                            value={currentPassword}
-                            onChange={handleInputChange}
-                            placeholder="Digite sua senha atual"
-                            required
-                            error={errors.currentPassword}
-                        />
-                        <button
-                            type="button"
-                            onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 flex items-center justify-center p-1"
-                        >
-                            {showCurrentPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                    </div>
-
                     {/* Campo Nova Senha */}
                     <div className="relative">
                         <ModernInput
