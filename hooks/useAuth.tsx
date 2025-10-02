@@ -219,27 +219,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
 
             // ✅ EMAIL EXISTE - ENVIAR LINK DE RECUPERAÇÃO
-            // Detectar ambiente e usar URL correta
+            // FORÇAR URL DE PRODUÇÃO - O Supabase está ignorando a configuração dinâmica
             const currentHost = window.location.hostname;
             const isLocalhost = currentHost === 'localhost' || currentHost.includes('127.0.0.1');
             
-            let baseUrl;
+            let resetUrl;
             if (isLocalhost) {
                 // Desenvolvimento local
-                baseUrl = 'http://localhost:3000';
+                resetUrl = 'http://localhost:3000/reset-password';
             } else {
-                // Produção - usar a URL atual do Vercel
-                baseUrl = window.location.origin;
+                // Produção - SEMPRE usar a URL atual do Vercel
+                resetUrl = `${window.location.origin}/reset-password`;
             }
-            
-            const resetUrl = `${baseUrl}/reset-password`;
             
             console.log('🔗 Hostname atual:', currentHost);
             console.log('🔗 Ambiente:', isLocalhost ? 'Desenvolvimento' : 'Produção');
-            console.log('🔗 URL de recuperação:', resetUrl);
+            console.log('🔗 URL de recuperação FORÇADA:', resetUrl);
             
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
-                redirectTo: resetUrl
+                redirectTo: resetUrl,
+                // Forçar URL específica para sobrescrever configuração do Dashboard
+                emailRedirectTo: resetUrl
             });
             
             if (error) {

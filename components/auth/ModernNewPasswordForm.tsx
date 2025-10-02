@@ -27,10 +27,18 @@ const ModernNewPasswordForm: React.FC = () => {
         // Verificar se há sessão ativa (usuário clicou no link)
         const checkSession = async () => {
             try {
-                // Verificar se há parâmetros de erro na URL
+                // Verificar se há parâmetros de erro na URL (query params e hash)
                 const urlParams = new URLSearchParams(window.location.search);
-                const error = urlParams.get('error');
-                const errorCode = urlParams.get('error_code');
+                const hashParams = new URLSearchParams(window.location.hash.substring(1));
+                
+                const error = urlParams.get('error') || hashParams.get('error');
+                const errorCode = urlParams.get('error_code') || hashParams.get('error_code');
+                
+                console.log('🔍 URL atual:', window.location.href);
+                console.log('🔍 Query params:', window.location.search);
+                console.log('🔍 Hash:', window.location.hash);
+                console.log('🔍 Error detectado:', error);
+                console.log('🔍 Error code:', errorCode);
                 
                 if (error === 'access_denied' && errorCode === 'otp_expired') {
                     setMessage({ 
