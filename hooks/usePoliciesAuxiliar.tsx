@@ -219,9 +219,9 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
             let linkedCampaigns = 0;
             let campaignMessage = '';
 
-            // 3. VINCULAR A TODAS AS CAMPANHAS ATIVAS DO CORRETOR (VIA CÓDIGO - SEM IA)
+            // 3. VINCULAR APENAS A CAMPANHAS COMPATÍVEIS (CORREÇÃO CRÍTICA)
 
-            // 🎯 NOVA LÓGICA: Vincular apólice a campanhas que atendam aos critérios
+            // 🎯 NOVA LÓGICA: Vincular apólice apenas a campanhas que atendam aos critérios
             const policyCreatedAt = new Date(newPolicy.created_at);
             const policySaleDate = newPolicy.sale_date ? new Date(newPolicy.sale_date) : null;
             const effectiveDate = policySaleDate || policyCreatedAt; // ✅ USAR DATA EFETIVA
@@ -243,15 +243,90 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
                 
                 // ✅ VINCULAR SE: Data efetiva está dentro do período (mesmo se campanha expirada)
                 if (effectiveDate >= campaignStart && effectiveDate <= campaignEnd) {
-                    console.log('✅ Debug - Data efetiva está dentro do período da campanha - VINCULANDO');
+                    console.log('✅ Debug - Data efetiva está dentro do período da campanha');
                 } else {
                     console.log('❌ Debug - Data efetiva está FORA do período da campanha - PULANDO');
                     continue; // Pular esta campanha
                 }
                 
-                // ✅ Vincular apólice à campanha
+                // 🔧 CORREÇÃO CRÍTICA: Verificar se a apólice atende aos critérios da campanha
+                let isCompatible = true;
+                let compatibilityReason = '';
+                
+                // Se a campanha tem critérios específicos, verificar compatibilidade
+                if (campaign.criteria) {
+                    try {
+                        const criteria = Array.isArray(campaign.criteria) ? campaign.criteria : JSON.parse(campaign.criteria);
+                        
+                        if (Array.isArray(criteria) && criteria.length > 0) {
+                            console.log(`🔍 Debug - Verificando ${criteria.length} critérios da campanha`);
+                            
+                            // Verificar se a apólice atende a pelo menos um critério
+                            isCompatible = criteria.some(criterion => {
+                                // Verificar tipo de apólice
+                                if (criterion.policy_type && criterion.policy_type !== 'geral') {
+                                    const policyTypeMap = {
+                                        'auto': 'Seguro Auto',
+                                        'residencial': 'Seguro Residencial'
+                                    };
+                                    const expectedType = policyTypeMap[criterion.policy_type];
+                                    if (expectedType && policyData.type !== expectedType) {
+                                        console.log(`❌ Debug - Tipo de apólice não compatível: esperado ${expectedType}, recebido ${policyData.type}`);
+                                        return false;
+                                    }
+                                }
+                                
+                                // Verificar tipo de contrato
+                                if (criterion.contract_type && criterion.contract_type !== 'ambos') {
+                                    const contractTypeMap = {
+                                        'novo': 'Novo',
+                                        'renovacao_bradesco': 'Renovação Bradesco'
+                                    };
+                                    const expectedContractType = contractTypeMap[criterion.contract_type];
+                                    if (expectedContractType && policyData.contract_type !== expectedContractType) {
+                                        console.log(`❌ Debug - Tipo de contrato não compatível: esperado ${expectedContractType}, recebido ${policyData.contract_type}`);
+                                        return false;
+                                    }
+                                }
+                                
+                                // Verificar valor mínimo
+                                if (criterion.min_value_per_policy && policyData.premium_value < criterion.min_value_per_policy) {
+                                    console.log(`❌ Debug - Valor mínimo não atingido: esperado ${criterion.min_value_per_policy}, recebido ${policyData.premium_value}`);
+                                    return false;
+                                }
+                                
+                                console.log(`✅ Debug - Critério atendido: ${criterion.policy_type || 'geral'} - ${criterion.contract_type || 'ambos'}`);
+                                return true;
+                            });
+                            
+                            compatibilityReason = isCompatible ? 'Apólice atende aos critérios da campanha' : 'Apólice não atende aos critérios da campanha';
+                        } else {
+                            // Campanha sem critérios específicos = compatível
+                            isCompatible = true;
+                            compatibilityReason = 'Campanha sem critérios específicos - compatível';
+                        }
+                    } catch (error) {
+                        console.error('❌ Debug - Erro ao processar critérios:', error);
+                        // Em caso de erro, considerar compatível para não quebrar o fluxo
+                        isCompatible = true;
+                        compatibilityReason = 'Erro ao processar critérios - considerado compatível';
+                    }
+                } else {
+                    // Campanha sem critérios = compatível (campanha tradicional)
+                    isCompatible = true;
+                    compatibilityReason = 'Campanha tradicional sem critérios - compatível';
+                }
+                
+                if (!isCompatible) {
+                    console.log(`❌ Debug - Campanha ${campaign.title} não é compatível: ${compatibilityReason}`);
+                    continue; // Pular esta campanha
+                }
+                
+                console.log(`✅ Debug - Campanha ${campaign.title} é compatível: ${compatibilityReason}`);
+                
+                // ✅ Vincular apólice à campanha compatível
                 const confidence = 100; // Confiança máxima - código é confiável
-                const reasoning = `Apólice ${policyData.type} com data efetiva ${effectiveDate.toISOString()} vinculada à campanha ${campaign.title} (período: ${campaignStart.toISOString().split('T')[0]} até ${campaignEnd.toISOString().split('T')[0]})`;
+                const reasoning = `Apólice ${policyData.type} com data efetiva ${effectiveDate.toISOString()} vinculada à campanha ${campaign.title} (período: ${campaignStart.toISOString().split('T')[0]} até ${campaignEnd.toISOString().split('T')[0]}) - ${compatibilityReason}`;
 
                 console.log('🔗 Debug - Criando vinculação...');
                 const { error: linkError } = await supabase
@@ -268,7 +343,7 @@ export const PoliciesAuxiliarProvider: React.FC<{ children: React.ReactNode, use
 
                 if (!linkError) {
                     linkedCampaigns++;
-                    campaignMessage += `✅ Vinculada à campanha "${campaign.title}"\n`;
+                    campaignMessage += `✅ Vinculada à campanha "${campaign.title}" (${compatibilityReason})\n`;
                     console.log('✅ Debug - Vinculação criada com sucesso!');
                 } else {
                     console.error('❌ Debug - Erro ao criar vinculação:', linkError);
