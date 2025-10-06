@@ -349,10 +349,6 @@ const UnifiedCampaignCard: React.FC<UnifiedCampaignCardProps> = ({
 
                             {/* Critérios da Campanha */}
                             <div className="mb-3">
-                                <div className="flex items-center gap-2 mb-2">
-                                    <Target className="w-5 h-5 text-green-400" />
-                                    <span className="text-white font-bold text-lg">Critérios da Campanha</span>
-                                </div>
                                 
                                 <div className="max-h-48 overflow-y-auto">
                                     {loadingDetails ? (
