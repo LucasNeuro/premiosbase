@@ -322,8 +322,7 @@ const ActiveCampaignCard: React.FC<ActiveCampaignCardProps> = ({
                                         if ((campaign as any).campaign_source) {
                                             additionalInfo.push({
                                                 label: 'Fonte',
-                                                value: (campaign as any).campaign_source === 'traditional' ? 'Tradicional' : 
-                                                       (campaign as any).campaign_source === 'bateu_levou' ? 'Bateu Levou' : (campaign as any).campaign_source,
+                                                value: (campaign as any).campaign_source === 'traditional' ? 'Tradicional' : 'Outro',
                                                 icon: <Target className="w-4 h-4 text-green-400" />
                                             });
                                         }

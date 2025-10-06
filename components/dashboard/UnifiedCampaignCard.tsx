@@ -289,35 +289,6 @@ const UnifiedCampaignCard: React.FC<UnifiedCampaignCardProps> = ({
                     </div>
                 )}
 
-                {/* Status da Campanha */}
-                <div className="mb-2">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-                        <div className="flex items-center gap-1">
-                            <div className={`w-2 h-2 rounded-full ${
-                                campaign.status === 'active' ? 'bg-green-500' :
-                                campaign.status === 'completed' ? 'bg-blue-500' :
-                                campaign.status === 'paused' ? 'bg-yellow-500' :
-                                'bg-gray-500'
-                            }`}></div>
-                            <span className="text-xs text-gray-400 uppercase tracking-wide font-medium">
-                                {campaign.status === 'active' ? 'Ativa' :
-                                 campaign.status === 'completed' ? 'Concluída' :
-                                 campaign.status === 'paused' ? 'Pausada' :
-                                 'Inativa'}
-                            </span>
-                        </div>
-                        
-                        <div className="flex items-center gap-1">
-                            <span className="text-xs text-gray-400 font-medium">
-                                {campaign.campaign_type === 'simple' ? 'Simples' : 'Composta'}
-                            </span>
-                            <span className="text-xs text-gray-400">•</span>
-                            <span className="text-xs text-gray-400 font-medium">
-                                {(campaign as any).target_type === 'individual' ? 'Individual' : 'Grupo'}
-                            </span>
-                        </div>
-                    </div>
-                </div>
 
                 {/* Overlay de Detalhes - Cobre todo o card */}
                 {showDetails && (
