@@ -10,6 +10,9 @@ import Badge from '../ui/Badge';
 import Spinner from '../ui/Spinner';
 import Alert from '../ui/Alert';
 import CampaignDetailsSidepanel from './CampaignDetailsSidepanel';
+import CompletedCampaignsCard from './CompletedCampaignsCard';
+import ActiveCampaignCard from './ActiveCampaignCard';
+import UnifiedCampaignCard from './UnifiedCampaignCard';
 import { 
     CheckCircle, 
     XCircle, 
@@ -465,11 +468,12 @@ const CampaignsKanban: React.FC = () => {
                         
                         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                             {activeCampaigns.map((campaign) => (
-                                <CampaignCard
+                                <UnifiedCampaignCard
                                     key={campaign.id}
                                     campaign={campaign}
+                                    onViewDetails={openDetails}
                                     showActions={false}
-                                    columnType="active"
+                                    cardType="active"
                                 />
                             ))}
                         </div>
@@ -494,13 +498,16 @@ const CampaignsKanban: React.FC = () => {
                             </div>
                         </div>
                         
-                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                             {newCampaigns.map((campaign) => (
-                                <CampaignCard
+                                <UnifiedCampaignCard
                                     key={campaign.id}
                                     campaign={campaign}
+                                    onViewDetails={openDetails}
+                                    onAccept={handleAcceptFromSidepanel}
+                                    onReject={handleRejectFromSidepanel}
                                     showActions={true}
-                                    columnType="new"
+                                    cardType="new"
                                 />
                             ))}
                         </div>
@@ -525,13 +532,14 @@ const CampaignsKanban: React.FC = () => {
                             </div>
                         </div>
                         
-                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                             {rejectedCampaigns.map((campaign) => (
-                                <CampaignCard
+                                <UnifiedCampaignCard
                                     key={campaign.id}
                                     campaign={campaign}
+                                    onViewDetails={openDetails}
                                     showActions={false}
-                                    columnType="rejected"
+                                    cardType="nao_atingidas"
                                 />
                             ))}
                         </div>
@@ -556,13 +564,12 @@ const CampaignsKanban: React.FC = () => {
                             </div>
                         </div>
                         
-                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                             {completedCampaigns.map((campaign) => (
-                                <CampaignCard
+                                <CompletedCampaignsCard
                                     key={campaign.id}
                                     campaign={campaign}
-                                    showActions={false}
-                                    columnType="completed"
+                                    onViewDetails={openDetails}
                                 />
                             ))}
                         </div>
