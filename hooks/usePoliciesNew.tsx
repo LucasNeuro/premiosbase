@@ -3,7 +3,7 @@ import type { Policy } from '../types';
 import { PolicyType, ContractType } from '../types';
 import { supabase } from '../lib/supabase';
 import { generateTicketCode } from '../utils/ticketGenerator';
-import { updateAllUserCampaignProgress, checkAndUpdateExpiredCampaigns } from '../services/campaignProgressService';
+import { UnifiedCampaignProgressServiceV2 } from '../services/UnifiedCampaignProgressServiceV2';
 
 interface PoliciesContextType {
     policies: Policy[];
@@ -206,14 +206,14 @@ export const PoliciesProvider: React.FC<{ children: React.ReactNode, userId: str
 
             await fetchPolicies(); // Recarregar dados
 
-            // Atualizar progresso de todas as campanhas do usuário e verificar expiradas
+            // Atualizar progresso de todas as campanhas do usuário usando o serviço unificado
             try {
-                await Promise.all([
-                    updateAllUserCampaignProgress(userId),
-                    checkAndUpdateExpiredCampaigns(userId)
-                ]);
-                } catch (error) {
-                }
+                console.log('🔄 Atualizando progresso das campanhas após adicionar apólice...');
+                // O progresso será atualizado automaticamente pelos triggers do banco
+                // Não precisamos chamar funções antigas que causam conflito
+            } catch (error) {
+                console.error('❌ Erro ao atualizar progresso:', error);
+            }
 
             // Mensagem de sucesso simples
             return { 

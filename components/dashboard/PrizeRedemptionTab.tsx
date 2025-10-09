@@ -9,6 +9,9 @@ import SafeImage from '../ui/SafeImage';
 import ImagePreloader from '../ui/ImagePreloader';
 import { usePoliciesStore } from '../../stores/usePoliciesStore';
 import { useCacheManager } from '../../hooks/useCacheManager';
+import PrizeGrid from './PrizeGrid';
+import PrizeHero from './PrizeHero';
+import SmartCart from './SmartCart';
 import { 
     ShoppingCart, 
     Gift, 
@@ -264,8 +267,11 @@ const PrizeRedemptionTab: React.FC = () => {
         .map(prize => prize.premio_imagem_url)
         .filter(Boolean) as string[];
 
+    // Calcular valor total dos prêmios
+    const totalPrizesValue = availablePrizes.reduce((sum, prize) => sum + prize.premio_valor_estimado, 0);
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             {/* Preloader invisível para melhorar performance */}
             <ImagePreloader 
                 images={imageUrls}
@@ -273,237 +279,40 @@ const PrizeRedemptionTab: React.FC = () => {
                 onProgress={(loaded, total) => console.log(`🖼️ PrizeRedemptionTab: ${loaded}/${total} imagens carregadas`)}
             />
             
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Resgatar Prêmios</h2>
-                    <p className="text-gray-600">Use seus prêmios conquistados para fazer pedidos</p>
-                </div>
-                <div className="flex items-center space-x-4">
-                    <button
-                        onClick={processCompletedCampaignsPrizes}
-                        disabled={processingPrizes}
-                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 text-sm font-medium"
-                    >
-                        <Gift className={`w-4 h-4 ${processingPrizes ? 'animate-pulse' : ''}`} />
-                        {processingPrizes ? 'Processando...' : 'Verificar Prêmios'}
-                    </button>
-                    <div className="flex items-center space-x-2">
-                        <Gift className="w-6 h-6 text-green-600" />
-                        <span className="text-sm font-medium text-gray-600">Prêmios</span>
-                    </div>
-                </div>
-            </div>
 
-            {/* Prêmios Conquistados */}
-            <Card className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h3 className="text-lg font-semibold text-green-800">
-                            Prêmios Conquistados
-                        </h3>
-                        <p className="text-green-600">
-                            Escolha um prêmio por campanha
-                        </p>
-                    </div>
-                    <div className="text-right">
-                        <div className="text-3xl font-bold text-green-800">
-                            {availablePrizes.length}
-                        </div>
-                        <div className="text-sm text-green-600">
-                            prêmios disponíveis
-                        </div>
-                    </div>
-                </div>
-            </Card>
+            {/* Hero Section Aprimorada */}
+            <PrizeHero
+                totalPrizes={availablePrizes.length}
+                totalValue={totalPrizesValue}
+                onProcessPrizes={processCompletedCampaignsPrizes}
+                processingPrizes={processingPrizes}
+            />
 
             {error && (
                 <Alert type="error" message={error} />
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Prêmios Disponíveis */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* Prêmios Disponíveis - Nova UI */}
                 <div className="lg:col-span-2">
-                    <Card className="p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-semibold text-gray-900">Prêmios Disponíveis</h3>
-                            <Badge className="bg-blue-100 text-blue-800">
-                                {availablePrizes.length} disponível{availablePrizes.length !== 1 ? 'is' : ''}
-                            </Badge>
-                        </div>
-
-                        {loading ? (
-                            <div className="flex justify-center items-center h-32">
-                                <Spinner />
-                            </div>
-                        ) : availablePrizes.length === 0 ? (
-                            <div className="text-center py-8">
-                                <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                <p className="text-gray-500">Nenhum prêmio disponível para resgate</p>
-                                <p className="text-sm text-gray-400">Complete campanhas para conquistar prêmios</p>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                        <tr className="border-b border-gray-200">
-                                            <th className="text-left py-3 px-4 font-medium text-gray-700">Prêmio</th>
-                                            <th className="text-left py-3 px-4 font-medium text-gray-700">Campanha</th>
-                                            <th className="text-left py-3 px-4 font-medium text-gray-700">Categoria</th>
-                                            <th className="text-left py-3 px-4 font-medium text-gray-700">Qtd</th>
-                                            <th className="text-center py-3 px-4 font-medium text-gray-700">Ação</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {availablePrizes.map((prize) => (
-                                            <tr key={prize.id} className="border-b border-gray-100 hover:bg-gray-50">
-                                                <td className="py-4 px-4">
-                                                    <div className="flex items-center space-x-3">
-                                                        <SafeImage 
-                                                                src={prize.premio_imagem_url} 
-                                                                alt={prize.premio_nome}
-                                                                className="w-12 h-12 object-contain bg-gray-100 rounded-lg"
-                                                            fallback={
-                                                            <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center">
-                                                                <Gift className="w-6 h-6 text-gray-400" />
-                                                            </div>
-                                                            }
-                                                        />
-                                                        <div>
-                                                            <div className="font-medium text-gray-900">{prize.premio_nome}</div>
-                                                            <div className="text-sm text-gray-500">{prize.premio_tipo}</div>
-                                                            {isMultiPrizeCampaign(prize.campaign_id) && (
-                                                                <Badge variant="warning" className="text-xs mt-1">
-                                                                    Múltiplos Prêmios
-                                                                </Badge>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="py-4 px-4">
-                                                    <div className="text-sm text-gray-600 max-w-xs truncate">
-                                                        {prize.campaign_title}
-                                                    </div>
-                                                </td>
-                                                <td className="py-4 px-4">
-                                                    <Badge className="bg-gray-100 text-gray-800 text-xs">
-                                                        {prize.premio_categoria}
-                                                    </Badge>
-                                                </td>
-                                                <td className="py-4 px-4">
-                                                    <div className="text-sm text-gray-600">
-                                                        {prize.quantidade_conquistada}
-                                                    </div>
-                                                </td>
-                                                <td className="py-4 px-4 text-center">
-                                                    <Button
-                                                        onClick={() => addToCart(prize)}
-                                                        disabled={isMultiPrizeCampaign(prize.campaign_id) && hasPrizeFromCampaign(prize.campaign_id)}
-                                                        className="flex items-center space-x-1 text-sm px-3 py-1"
-                                                    >
-                                                        <Plus className="w-4 h-4" />
-                                                        <span>
-                                                            {isMultiPrizeCampaign(prize.campaign_id) && hasPrizeFromCampaign(prize.campaign_id) 
-                                                                ? 'Já Escolhido' 
-                                                                : 'Adicionar'
-                                                            }
-                                                        </span>
-                                                    </Button>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </Card>
+                    <PrizeGrid
+                        prizes={availablePrizes}
+                        onAddToCart={addToCart}
+                        isMultiPrizeCampaign={isMultiPrizeCampaign}
+                        hasPrizeFromCampaign={hasPrizeFromCampaign}
+                        loading={loading}
+                    />
                 </div>
 
-                {/* Carrinho */}
+                {/* Carrinho Inteligente */}
                 <div>
-                    <Card className="p-6">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-xl font-semibold text-gray-900">Carrinho</h3>
-                            <div className="flex items-center space-x-1">
-                                <ShoppingCart className="w-5 h-5 text-gray-600" />
-                                <span className="text-sm font-medium text-gray-600">
-                                    {cart.length} item{cart.length !== 1 ? 's' : ''}
-                                </span>
-                            </div>
-                        </div>
-
-                        {cart.length === 0 ? (
-                            <div className="text-center py-8">
-                                <ShoppingCart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                <p className="text-gray-500">Carrinho vazio</p>
-                                <p className="text-sm text-gray-400">Adicione prêmios para começar</p>
-                            </div>
-                        ) : (
-                            <div className="space-y-4">
-                                {cart.map((item) => (
-                                    <div key={item.premio_conquistado_id} className="border border-gray-200 rounded-lg p-3">
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1">
-                                                <h4 className="font-medium text-gray-900 text-sm">{item.premio_nome}</h4>
-                                                <p className="text-xs text-gray-600">{item.campaign_title}</p>
-                                                <p className="text-sm font-semibold text-green-600">
-                                                    {formatCurrency(item.valor_total)}
-                                                </p>
-                                            </div>
-                                            <div className="flex items-center space-x-2">
-                                                <button
-                                                    onClick={() => updateQuantity(item.premio_conquistado_id, item.quantidade - 1)}
-                                                    className="p-1 rounded-full hover:bg-gray-100"
-                                                >
-                                                    <Minus className="w-4 h-4" />
-                                                </button>
-                                                <span className="text-sm font-medium w-8 text-center">{item.quantidade}</span>
-                                                <button
-                                                    onClick={() => updateQuantity(item.premio_conquistado_id, item.quantidade + 1)}
-                                                    className="p-1 rounded-full hover:bg-gray-100"
-                                                >
-                                                    <Plus className="w-4 h-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => removeFromCart(item.premio_conquistado_id)}
-                                                    className="p-1 rounded-full hover:bg-red-100 text-red-600"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                <div className="border-t border-gray-200 pt-4">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <span className="text-lg font-semibold text-gray-900">Prêmios Escolhidos:</span>
-                                        <span className="text-xl font-bold text-green-600">
-                                            {cart.length} prêmio{cart.length !== 1 ? 's' : ''}
-                                        </span>
-                                    </div>
-
-                                    <Button
-                                        onClick={submitOrder}
-                                        disabled={cart.length === 0 || submitting}
-                                        className="w-full"
-                                    >
-                                        {submitting ? (
-                                            <div className="flex items-center space-x-2">
-                                                <Spinner size="sm" />
-                                                <span>Processando...</span>
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center space-x-2">
-                                                <CheckCircle className="w-4 h-4" />
-                                                <span>Solicitar Pedido</span>
-                                            </div>
-                                        )}
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-                    </Card>
+                    <SmartCart
+                        cart={cart}
+                        onUpdateQuantity={updateQuantity}
+                        onRemoveItem={removeFromCart}
+                        onSubmitOrder={submitOrder}
+                        submitting={submitting}
+                    />
                 </div>
             </div>
 

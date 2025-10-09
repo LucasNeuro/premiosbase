@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { calculateCampaignProgressAuxiliar } from './campaignProgressAuxiliar';
+import { UnifiedCampaignProgressServiceV2 } from './UnifiedCampaignProgressServiceV2';
 
 /**
  * 🔧 SERVIÇO DE CORREÇÃO DE STATUS DAS CAMPANHAS
@@ -54,8 +54,8 @@ export class CampaignStatusCorrectionService {
    */
   static async correctCampaignStatus(campaignId: string, campaignTitle: string): Promise<void> {
     try {
-      // Calcular progresso atual
-      const progressData = await calculateCampaignProgressAuxiliar(campaignId);
+      // Calcular progresso atual usando o novo serviço unificado
+      const progressData = await UnifiedCampaignProgressServiceV2.calculateCampaignProgress(campaignId);
       
       if (!progressData) {
         console.log(`⚠️ Não foi possível calcular progresso da campanha ${campaignTitle}`);
@@ -89,8 +89,8 @@ export class CampaignStatusCorrectionService {
         }
       } else if (progressData.isCompleted && progressData.progressPercentage >= 100) {
         // 🔧 VALIDAÇÃO RIGOROSA: Só completed se TODOS os critérios foram atingidos
-        const allCriteriaMet = progressData.criteriaDetails?.every(criterion => 
-          criterion.isThisCriterionMet && criterion.percentage >= 100
+        const allCriteriaMet = progressData.criteriaProgress?.every(criterion => 
+          criterion.isCompleted && criterion.progress >= 100
         ) || false;
         
         if (allCriteriaMet) {

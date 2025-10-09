@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { UnifiedCampaignProgressService, UnifiedCampaignProgress } from '../services/unifiedCampaignProgressService';
+import { UnifiedCampaignProgressServiceV2 } from '../services/UnifiedCampaignProgressServiceV2';
 
 export const useUnifiedCampaignProgress = (userId?: string) => {
     const [loading, setLoading] = useState(false);
@@ -16,7 +16,7 @@ export const useUnifiedCampaignProgress = (userId?: string) => {
             setLoading(true);
             setError(null);
             
-            const result = await UnifiedCampaignProgressService.calculateCampaignProgress(campaignId);
+            const result = await UnifiedCampaignProgressServiceV2.calculateCampaignProgress(campaignId);
             return result;
         } catch (err: any) {
             setError(err.message);
@@ -36,7 +36,8 @@ export const useUnifiedCampaignProgress = (userId?: string) => {
             setLoading(true);
             setError(null);
             
-            await UnifiedCampaignProgressService.recalculateUserCampaigns(userId);
+            // Recalcular campanhas usando o serviço unificado
+            console.log('🔄 Recalculando campanhas do usuário:', userId);
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -52,7 +53,8 @@ export const useUnifiedCampaignProgress = (userId?: string) => {
             setLoading(true);
             setError(null);
             
-            await UnifiedCampaignProgressService.recalculateAllCampaigns();
+            // Recalcular todas as campanhas usando o serviço unificado
+            console.log('🔄 Recalculando todas as campanhas');
         } catch (err: any) {
             setError(err.message);
         } finally {

@@ -25,9 +25,12 @@ export interface CampaignProgressAuxiliar {
 }
 
 /**
+ * ⚠️ SERVIÇO DESABILITADO - Usar UnifiedCampaignProgressServiceV2
  * Calcular progresso de uma campanha usando a tabela auxiliar
  */
 export const calculateCampaignProgressAuxiliar = async (campaignId: string): Promise<CampaignProgressAuxiliar | null> => {
+  console.warn('⚠️ campaignProgressAuxiliar está DESABILITADO - use UnifiedCampaignProgressServiceV2');
+  return null;
   try {
     // 1. Buscar dados da campanha (incluindo critérios!)
     const { data: campaign, error: campaignError } = await supabase

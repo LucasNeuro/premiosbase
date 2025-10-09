@@ -143,7 +143,15 @@ export class RealTimeAuditService {
                 unmatchedCriteria.push('Valor do prêmio inadequado');
             }
 
-            // Critério 3: Data de lançamento
+            // 🎯 NOVO CRITÉRIO 3: Tipo de contrato (CRÍTICO!)
+            if (this.isContractTypeCompatible(policy.contract_type, campaign)) {
+                matchedCriteria.push('Tipo de contrato compatível');
+                confidence += 25;
+            } else {
+                unmatchedCriteria.push('Tipo de contrato incompatível');
+            }
+
+            // Critério 4: Data de lançamento
             if (this.isDateCompatible(policy.registration_date, campaign)) {
                 matchedCriteria.push('Data de lançamento dentro do período');
                 confidence += 20;
@@ -151,13 +159,13 @@ export class RealTimeAuditService {
                 unmatchedCriteria.push('Data de lançamento fora do período');
             }
 
-            // Critério 4: Critérios específicos da campanha
+            // Critério 5: Critérios específicos da campanha
             const specificCriteria = this.analyzeSpecificCriteria(policy, campaign);
             matchedCriteria.push(...specificCriteria.matched);
             unmatchedCriteria.push(...specificCriteria.unmatched);
             confidence += specificCriteria.confidenceBonus;
 
-            // Critério 5: Análise com IA
+            // Critério 6: Análise com IA
             const aiAnalysis = await this.getAIAnalysis(policy, campaign);
             if (aiAnalysis.isCompatible) {
                 matchedCriteria.push('Análise IA positiva');
@@ -236,6 +244,46 @@ export class RealTimeAuditService {
         const endDate = new Date(campaign.end_date);
         
         return policyDate >= startDate && policyDate <= endDate;
+    }
+
+    /**
+     * 🎯 NOVA FUNÇÃO: Verifica compatibilidade do tipo de contrato
+     */
+    private static isContractTypeCompatible(policyContractType: string, campaign: any): boolean {
+        // Se a campanha não tem critérios específicos, aceita qualquer tipo
+        if (!campaign.criteria || !Array.isArray(campaign.criteria)) {
+            return true;
+        }
+
+        // Verificar se algum critério da campanha aceita o tipo de contrato da apólice
+        for (const criterion of campaign.criteria) {
+            const criterionContractType = criterion.contract_type?.toLowerCase();
+            const policyContractTypeLower = policyContractType?.toLowerCase();
+
+            // Se o critério aceita "ambos", aceita qualquer tipo
+            if (criterionContractType === 'ambos') {
+                return true;
+            }
+
+            // Verificar compatibilidade específica
+            if (criterionContractType === policyContractTypeLower) {
+                return true;
+            }
+
+            // Mapeamento de compatibilidades específicas
+            if (criterionContractType === 'novo' && policyContractTypeLower === 'novo') {
+                return true;
+            }
+            if (criterionContractType === 'renovacao_bradesco' && policyContractTypeLower?.includes('renovação')) {
+                return true;
+            }
+            if (criterionContractType === 'renovacao_bradesco' && policyContractTypeLower?.includes('bradesco')) {
+                return true;
+            }
+        }
+
+        // Se nenhum critério aceita, retorna false
+        return false;
     }
 
     /**

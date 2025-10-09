@@ -2,6 +2,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { useGoalsNew } from '../../hooks/useGoalsNew';
 import { useRealtimeListener } from '../../hooks/useRealtimeEvents';
 import { useCampaignsStore } from '../../stores/useCampaignsStore';
+import { useRealtimeRender } from '../../hooks/useRealtimeRender';
 import { useCacheManager } from '../../hooks/useCacheManager';
 import { calculateDaysRemaining } from '../../utils/dateUtils';
 import Card from '../ui/Card';
@@ -13,6 +14,8 @@ import CampaignDetailsSidepanel from './CampaignDetailsSidepanel';
 import CompletedCampaignsCard from './CompletedCampaignsCard';
 import ActiveCampaignCard from './ActiveCampaignCard';
 import UnifiedCampaignCard from './UnifiedCampaignCard';
+import { CampaignCardsSkeleton } from './CampaignCardSkeleton';
+import { UnifiedCampaignCardsSkeleton } from './UnifiedCampaignCardSkeleton';
 import { 
     CheckCircle, 
     XCircle, 
@@ -38,6 +41,9 @@ const CampaignsKanban: React.FC = () => {
     // 🔧 CORREÇÃO: Cache restaurado com lógica melhorada
     const campaignsStore = useCampaignsStore();
     const cacheManager = useCacheManager();
+    
+    // 🚀 HOOK DE RENDERIZAÇÃO EM TEMPO REAL
+    const { isConnected, forceUpdateAllCampaigns } = useRealtimeRender();
 
     // Listener para atualizações em tempo real das campanhas
     useRealtimeListener('campaigns', useCallback(() => {
@@ -51,21 +57,18 @@ const CampaignsKanban: React.FC = () => {
         }
     }, [refreshCampaigns, fetchCampaigns]), [refreshCampaigns, fetchCampaigns]);
 
-    // 🔧 CORREÇÃO: Cache inteligente - usar cache para performance, mas sempre validar status
+    // 🔧 CORREÇÃO: Sempre buscar dados frescos ao montar o componente (para resolver problema entre abas)
     useEffect(() => {
-        // Se cache é válido, usar dados do cache MAS sempre validar status
-        if (campaignsStore.isCacheValid() && campaignsStore.campaigns.length > 0) {
-            console.log('📦 CampaignsKanban: Usando cache, mas validando status...');
-            
-            // Buscar dados frescos em background para validar status
-            fetchCampaigns().catch(err => {
-                console.error('Erro ao validar dados:', err);
-            });
-        } else {
-            console.log('🔄 CampaignsKanban: Cache inválido, buscando dados frescos...');
-            fetchCampaigns().catch(err => {
-                console.error('Erro ao buscar campanhas:', err);
-            });
+        console.log('🔄 CampaignsKanban: Montando componente, buscando dados frescos...');
+        
+        // Sempre buscar dados frescos para garantir que dados apareçam ao trocar de aba
+        fetchCampaigns().catch(err => {
+            console.error('Erro ao buscar campanhas:', err);
+        });
+        
+        // Se há dados no cache, usar como fallback imediato
+        if (campaignsStore.campaigns.length > 0) {
+            console.log('📦 CampaignsKanban: Usando dados do cache como fallback...');
         }
     }, []); // Apenas na inicialização
 
@@ -77,6 +80,21 @@ const CampaignsKanban: React.FC = () => {
             campaignsStore.setPendingCampaigns(pendingCampaigns);
         }
     }, [campaigns, pendingCampaigns]); // Sincronizar sempre que dados mudarem
+
+    // 🔧 CORREÇÃO: Refresh quando a aba ganha foco (resolve problema de renderização entre abas)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (!document.hidden) {
+                console.log('🔄 CampaignsKanban: Aba ganhou foco, atualizando dados...');
+                fetchCampaigns().catch(err => {
+                    console.error('Erro ao atualizar ao ganhar foco:', err);
+                });
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [fetchCampaigns]);
 
     // 🔧 CORREÇÃO: Auto-refresh inteligente com cache
     useEffect(() => {
@@ -422,8 +440,52 @@ const CampaignsKanban: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-64">
-                <Spinner />
+            <div className="animate-fade-in">
+                {/* Header com skeleton */}
+                <div className="mb-6">
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <div className="h-8 bg-gray-200 rounded w-64 mb-2 animate-pulse"></div>
+                            <div className="h-4 bg-gray-200 rounded w-80 animate-pulse"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Skeleton para campanhas ativas */}
+                <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200 shadow-sm mb-8">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="p-3 bg-gray-200 rounded-xl animate-pulse">
+                            <div className="w-8 h-8 bg-gray-300 rounded"></div>
+                        </div>
+                        <div className="flex-1">
+                            <div className="h-6 bg-gray-200 rounded w-48 mb-2 animate-pulse"></div>
+                            <div className="h-4 bg-gray-200 rounded w-72 animate-pulse"></div>
+                        </div>
+                        <div className="ml-auto">
+                            <div className="h-8 bg-gray-200 rounded-full w-20 animate-pulse"></div>
+                        </div>
+                    </div>
+                    <UnifiedCampaignCardsSkeleton count={3} />
+                </div>
+
+                {/* Skeleton para outras seções */}
+                <div className="space-y-8">
+                    <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-3 bg-gray-200 rounded-xl animate-pulse">
+                                <div className="w-6 h-6 bg-gray-300 rounded"></div>
+                            </div>
+                            <div className="flex-1">
+                                <div className="h-5 bg-gray-200 rounded w-40 mb-2 animate-pulse"></div>
+                                <div className="h-4 bg-gray-200 rounded w-56 animate-pulse"></div>
+                            </div>
+                            <div className="ml-auto">
+                                <div className="h-6 bg-gray-200 rounded-full w-16 animate-pulse"></div>
+                            </div>
+                        </div>
+                        <UnifiedCampaignCardsSkeleton count={2} />
+                    </div>
+                </div>
             </div>
         );
     }
@@ -434,6 +496,16 @@ const CampaignsKanban: React.FC = () => {
 
     return (
         <div className="animate-fade-in">
+            {/* 🚀 INDICADOR DE CONEXÃO EM TEMPO REAL */}
+            {isConnected && (
+                <div className="fixed top-4 right-4 z-50">
+                    <div className="bg-green-500 text-white px-3 py-2 rounded-lg shadow-lg flex items-center gap-2 text-sm">
+                        <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                        <span>Tempo Real Ativo</span>
+                    </div>
+                </div>
+            )}
+            
             {/* Header moderno */}
             <div className="mb-6">
                 <div className="flex justify-between items-center">

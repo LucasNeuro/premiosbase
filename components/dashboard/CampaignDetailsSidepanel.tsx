@@ -9,7 +9,7 @@ import { currencyMaskFree } from '../../utils/masks';
 import { getContractTypeLabel } from '../../utils/contractTypeUtils';
 // Removido imports de debug
 import { useGoalsNew } from '../../hooks/useGoalsNew';
-import { getCampaignCriteriaDetails, CriterionProgress } from '../../services/campaignProgressAuxiliar';
+import { UnifiedCampaignProgressServiceV2 } from '../../services/UnifiedCampaignProgressServiceV2';
 
 interface CampaignDetailsSidepanelProps {
     campaign: Goal | null;
@@ -29,7 +29,7 @@ const CampaignDetailsSidepanel: React.FC<CampaignDetailsSidepanelProps> = ({
     isLoading = false
 }) => {
     const { fetchCampaigns } = useGoalsNew();
-    const [criteriaDetails, setCriteriaDetails] = useState<CriterionProgress[]>([]);
+    const [criteriaDetails, setCriteriaDetails] = useState<any[]>([]);
     const [loadingCriteria, setLoadingCriteria] = useState(false);
 
     // Carregar detalhes dos critérios quando o sidepanel abre
@@ -38,11 +38,17 @@ const CampaignDetailsSidepanel: React.FC<CampaignDetailsSidepanelProps> = ({
             setLoadingCriteria(true);
             setCriteriaDetails([]); // Limpar critérios anteriores
             
-            getCampaignCriteriaDetails(campaign.id)
-                .then(details => {
-                    setCriteriaDetails(details);
+            UnifiedCampaignProgressServiceV2.calculateCampaignProgress(campaign.id)
+                .then(progressData => {
+                    if (progressData && progressData.criteriaProgress) {
+                        setCriteriaDetails(progressData.criteriaProgress);
+                        console.log('🎯 Critérios carregados no sidepanel:', progressData.criteriaProgress);
+                    } else {
+                        setCriteriaDetails([]);
+                    }
                 })
                 .catch(err => {
+                    console.error('❌ Erro ao carregar critérios no sidepanel:', err);
                     setCriteriaDetails([]);
                 })
                 .finally(() => setLoadingCriteria(false));
@@ -286,59 +292,88 @@ const CampaignDetailsSidepanel: React.FC<CampaignDetailsSidepanelProps> = ({
                                                     <div className="flex justify-between items-start mb-2">
                                                         <div>
                                                             <h4 className="font-medium text-gray-900 capitalize">
-                                                                {detail.policyType}
+                                                                {detail.criterion?.policy_type || 'N/A'}
                                                             </h4>
                                                             <p className="text-sm text-gray-600">
-                                                                {detail.targetType === 'quantity' 
-                                                                    ? `Meta: ${detail.targetValue} apólices`
-                                                                    : `Meta: ${currencyMaskFree(detail.targetValue.toString())}`
+                                                                {detail.criterion?.target_type === 'quantity' 
+                                                                    ? `Meta: ${detail.criterion?.target_value || 0} apólices`
+                                                                    : `Meta: ${currencyMaskFree((detail.criterion?.target_value || 0).toString())}`
                                                                 }
+                                                            </p>
+                                                            <p className="text-xs text-gray-500">
+                                                                Valor mín: {currencyMaskFree((detail.criterion?.min_value_per_policy || 0).toString())}
                                                             </p>
                                                         </div>
                                                         <div className="text-right">
                                                             <span className={`text-sm font-medium ${
-                                                                detail.isThisCriterionMet ? 'text-green-600' : 'text-gray-600'
+                                                                detail.isCompleted ? 'text-green-600' : 'text-gray-600'
                                                             }`}>
-                                                                {detail.percentage.toFixed(1)}%
+                                                                {detail.progress.toFixed(1)}%
                                                             </span>
-                                                            {detail.isThisCriterionMet && (
+                                                            {detail.isCompleted && (
                                                                 <div className="text-xs text-green-600">✅ Atingido</div>
                                                             )}
                                                         </div>
                                                     </div>
                                                     
-                                                    {/* Progresso atual vs meta */}
-                                                    <div className="flex justify-between text-sm text-gray-700 mb-2">
-                                                        <span>
-                                                            {detail.targetType === 'quantity'
-                                                                ? `${detail.currentProgress} apólices`
-                                                                : currencyMaskFree(detail.currentProgress.toString())
-                                                            }
-                                                        </span>
-                                                        <span className="text-gray-500">
-                                                            de {detail.targetType === 'quantity'
-                                                                ? `${detail.targetValue} apólices`
-                                                                : currencyMaskFree(detail.targetValue.toString())
-                                                            }
-                                                        </span>
-                                                    </div>
-                                                    
-                                                    {/* Barra de progresso individual */}
-                                                    <div className="w-full bg-gray-200 rounded-full h-2">
-                                                        <div 
-                                                            className={`h-2 rounded-full transition-all duration-500 ${
-                                                                detail.isThisCriterionMet ? 'bg-green-500' : 'bg-blue-500'
-                                                            }`}
-                                                            style={{ width: `${Math.min(detail.percentage, 100)}%` }}
-                                                        />
-                                                    </div>
-                                                    
-                                                    {/* Apólices vinculadas */}
-                                                    {detail.matchingPolicies.length > 0 && (
-                                                        <div className="mt-2 text-xs text-gray-500">
-                                                            {detail.matchingPolicies.length} apólice(s) vinculada(s)
+                                                    {/* 🎯 NOVA BARRA DE PROGRESSO DETALHADA */}
+                                                    <div className="space-y-2">
+                                                        {/* Informações detalhadas */}
+                                                        <div className="flex justify-between text-sm">
+                                                            <span className="font-medium text-gray-700">
+                                                                {detail.criterion.target_type === 'quantity'
+                                                                    ? `${detail.matchingPolicies.length} de ${detail.criterion.target_value} apólices`
+                                                                    : `${currencyMaskFree(detail.totalValue.toString())} de ${currencyMaskFree(detail.criterion.target_value.toString())}`
+                                                                }
+                                                            </span>
+                                                            <span className={`font-semibold ${
+                                                                detail.isCompleted ? 'text-green-600' : 'text-blue-600'
+                                                            }`}>
+                                                                {detail.progress.toFixed(1)}%
+                                                            </span>
                                                         </div>
-                                                    )}
+                                                        
+                                                        {/* Barra de progresso aprimorada */}
+                                                        <div className="relative">
+                                                            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                                                <div 
+                                                                    className={`h-3 rounded-full transition-all duration-700 ${
+                                                                        detail.isCompleted 
+                                                                            ? 'bg-gradient-to-r from-green-500 to-green-600' 
+                                                                            : 'bg-gradient-to-r from-blue-500 to-blue-600'
+                                                                    }`}
+                                                                    style={{ width: `${Math.min(detail.progress, 100)}%` }}
+                                                                />
+                                                            </div>
+                                                            
+                                                            {/* Indicador de progresso na barra */}
+                                                            {detail.progress > 10 && (
+                                                                <div 
+                                                                    className="absolute top-0 h-3 flex items-center justify-center"
+                                                                    style={{ left: `${Math.min(detail.progress, 100)}%`, transform: 'translateX(-50%)' }}
+                                                                >
+                                                                    <div className="w-1 h-1 bg-white rounded-full shadow-sm"></div>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        
+                                                        {/* Status detalhado */}
+                                                        <div className="flex justify-between text-xs text-gray-600">
+                                                            <span>
+                                                                {detail.criterion.target_type === 'quantity'
+                                                                    ? detail.isCompleted 
+                                                                        ? `✅ Meta atingida! (${detail.matchingPolicies.length} apólices)`
+                                                                        : `📋 Faltam ${detail.criterion.target_value - detail.matchingPolicies.length} apólice(s)`
+                                                                    : detail.isCompleted
+                                                                        ? `✅ Meta atingida! (${currencyMaskFree(detail.totalValue.toString())})`
+                                                                        : `💰 Faltam ${currencyMaskFree((detail.criterion.target_value - detail.totalValue).toString())}`
+                                                                }
+                                                            </span>
+                                                            <span className="text-gray-500">
+                                                                {detail.matchingPolicies.length} apólice(s) vendida(s)
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>

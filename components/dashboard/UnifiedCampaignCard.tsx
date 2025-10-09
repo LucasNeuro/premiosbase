@@ -26,16 +26,18 @@ interface UnifiedCampaignCardProps {
     onAccept?: (campaignId: string) => void;
     onReject?: (campaignId: string) => void;
     showActions?: boolean;
+    isUpdating?: boolean;
     cardType?: 'new' | 'active' | 'rejected' | 'completed' | 'não atingidas' | 'nao_atingidas';
 }
 
 const UnifiedCampaignCard: React.FC<UnifiedCampaignCardProps> = ({ 
     campaign, 
-    onViewDetails,
-    onAccept,
-    onReject,
+    onViewDetails, 
+    onAccept, 
+    onReject, 
     showActions = false,
-    cardType = 'active'
+    cardType = 'active',
+    isUpdating = false
 }) => {
     const [currentPremioIndex, setCurrentPremioIndex] = useState(0);
     const [showDetails, setShowDetails] = useState(false);
@@ -102,7 +104,42 @@ const UnifiedCampaignCard: React.FC<UnifiedCampaignCardProps> = ({
     }, [campaign.campanhas_premios]);
 
     const daysRemaining = calculateDaysRemaining(campaign.end_date);
-    const progressPercentage = Math.min((campaign.progress_percentage || campaign.current_value || 0), 100);
+    
+    // 🔧 USAR NOVO SERVIÇO UNIFICADO PARA CALCULAR PROGRESSO
+    const [unifiedProgress, setUnifiedProgress] = useState<any>(null);
+    const [progressLoading, setProgressLoading] = useState(false);
+    
+    useEffect(() => {
+        const calculateProgress = async () => {
+            setProgressLoading(true);
+            try {
+                const { UnifiedCampaignProgressServiceV2 } = await import('../../services/UnifiedCampaignProgressServiceV2');
+                const result = await UnifiedCampaignProgressServiceV2.calculateCampaignProgress(campaign.id);
+                if (result) {
+                    setUnifiedProgress(result);
+                    console.log('🎯 Progresso unificado calculado (UnifiedCampaignCard):', {
+                        campaignId: campaign.id,
+                        progressPercentage: result.progressPercentage,
+                        isCompleted: result.isCompleted,
+                        criteriaProgress: result.criteriaProgress
+                    });
+                }
+            } catch (error) {
+                console.error('❌ Erro ao calcular progresso unificado (UnifiedCampaignCard):', error);
+                // Fallback para o valor antigo
+                setUnifiedProgress({
+                    progressPercentage: Math.min((campaign.progress_percentage || campaign.current_value || 0), 100),
+                    isCompleted: false
+                });
+            } finally {
+                setProgressLoading(false);
+            }
+        };
+        
+        calculateProgress();
+    }, [campaign.id]);
+    
+    const progressPercentage = unifiedProgress?.progressPercentage || Math.min((campaign.progress_percentage || campaign.current_value || 0), 100);
     
     // Debug do progresso
     console.log('Campaign Progress Debug:', {
@@ -111,6 +148,7 @@ const UnifiedCampaignCard: React.FC<UnifiedCampaignCardProps> = ({
         progress_percentage: campaign.progress_percentage,
         current_value: campaign.current_value,
         target: campaign.target,
+        unified_progress: unifiedProgress?.progressPercentage,
         calculated: progressPercentage
     });
 
@@ -308,44 +346,6 @@ const UnifiedCampaignCard: React.FC<UnifiedCampaignCardProps> = ({
                                 </button>
                             </div>
 
-                            {/* Informações Básicas - Uma única linha */}
-                            <div className="mb-3">
-                                {(() => {
-                                    // Informações básicas da campanha
-                                    const basicInfo = [
-                                        {
-                                            label: 'Tipo',
-                                            value: campaign.type === 'valor' ? 'Valor' : 
-                                                   campaign.type === 'apolices' ? 'Apólices' : 
-                                                   campaign.type === 'crescimento' ? 'Crescimento' : campaign.type,
-                                            icon: <TrendingUp className="w-4 h-4 text-green-400" />
-                                        },
-                                        {
-                                            label: 'Meta',
-                                            value: formatCurrency(campaign.target),
-                                            icon: <DollarSign className="w-4 h-4 text-green-400" />
-                                        },
-                                        {
-                                            label: 'Alvo',
-                                            value: (campaign as any).target_type === 'individual' ? 'Individual' : 
-                                                   (campaign as any).target_type === 'group' ? 'Grupo' : (campaign as any).target_type || 'Individual',
-                                            icon: <Users className="w-4 h-4 text-green-400" />
-                                        }
-                                    ];
-
-                                    return (
-                                        <div className="flex items-center gap-4 text-sm">
-                                            {basicInfo.map((info, index) => (
-                                                <div key={index} className="flex items-center gap-2">
-                                                    {info.icon}
-                                                    <span className="text-white font-medium">{info.label}: </span>
-                                                    <span className="text-gray-300">{info.value}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    );
-                                })()}
-                            </div>
 
                             {/* Critérios da Campanha */}
                             <div className="mb-3">
@@ -433,8 +433,14 @@ const UnifiedCampaignCard: React.FC<UnifiedCampaignCardProps> = ({
                                                                       String(criterion.target_value)}`);
                                                     }
 
-                                                    // Calcular progresso do critério (sincronizado com o progresso geral)
-                                                    const criterionProgress = Math.min(progressPercentage, 100);
+                                                    // Calcular progresso específico do critério usando dados unificados
+                                                    let criterionProgress = 0;
+                                                    if (unifiedProgress && unifiedProgress.criteriaProgress && unifiedProgress.criteriaProgress[index]) {
+                                                        criterionProgress = unifiedProgress.criteriaProgress[index].progress;
+                                                    } else {
+                                                        // Fallback: usar progresso geral dividido pelo número de critérios
+                                                        criterionProgress = Math.min(progressPercentage, 100) / criteriaList.length;
+                                                    }
 
                                                     return (
                                                         <div key={index} className="p-3 bg-gray-700 rounded-lg">
@@ -449,7 +455,7 @@ const UnifiedCampaignCard: React.FC<UnifiedCampaignCardProps> = ({
                                                                     </div>
                                                                 </div>
                                                                 
-                                                                {/* Donut Progress do Critério */}
+                                                                {/* 🎯 DONUT PROGRESS APRIMORADO */}
                                                                 <div className="flex-shrink-0 ml-4">
                                                                     <div className="relative w-16 h-16">
                                                                         <svg className="w-16 h-16 transform -rotate-90" viewBox="0 0 36 36">
@@ -464,7 +470,7 @@ const UnifiedCampaignCard: React.FC<UnifiedCampaignCardProps> = ({
                                                                             <path
                                                                                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                                                                                 fill="none"
-                                                                                stroke="#10B981"
+                                                                                stroke={criterionProgress >= 100 ? "#10B981" : "#3B82F6"}
                                                                                 strokeWidth="2"
                                                                                 strokeDasharray={`${criterionProgress}, 100`}
                                                                                 strokeLinecap="round"
@@ -479,6 +485,37 @@ const UnifiedCampaignCard: React.FC<UnifiedCampaignCardProps> = ({
                                                                     </div>
                                                                 </div>
                                                             </div>
+                                                            
+                                                            {/* 📊 INFORMAÇÕES DETALHADAS DO CRITÉRIO */}
+                                                            {unifiedProgress && unifiedProgress.criteriaProgress && unifiedProgress.criteriaProgress[index] && (
+                                                                <div className="mt-2 p-2 bg-gray-800 rounded text-xs">
+                                                                    <div className="flex justify-between items-center text-gray-300">
+                                                                        <span>
+                                                                            {criterion.target_type === 'quantity'
+                                                                                ? `${unifiedProgress.criteriaProgress[index].matchingPolicies} de ${criterion.target_value} apólices`
+                                                                                : `${formatCurrency(unifiedProgress.criteriaProgress[index].currentValue)} de ${formatCurrency(criterion.target_value)}`
+                                                                            }
+                                                                        </span>
+                                                                        <span className={`font-semibold ${
+                                                                            unifiedProgress.criteriaProgress[index].isCompleted ? 'text-green-400' : 'text-blue-400'
+                                                                        }`}>
+                                                                            {unifiedProgress.criteriaProgress[index].progress.toFixed(1)}%
+                                                                        </span>
+                                                                    </div>
+                                                                    
+                                                                    {/* Status detalhado */}
+                                                                    <div className="mt-1 text-gray-400">
+                                                                        {criterion.target_type === 'quantity'
+                                                                            ? unifiedProgress.criteriaProgress[index].isCompleted 
+                                                                                ? `✅ Meta atingida! (${unifiedProgress.criteriaProgress[index].matchingPolicies} apólices)`
+                                                                                : `📋 Faltam ${criterion.target_value - unifiedProgress.criteriaProgress[index].matchingPolicies} apólice(s)`
+                                                                            : unifiedProgress.criteriaProgress[index].isCompleted
+                                                                                ? `✅ Meta atingida! (${formatCurrency(unifiedProgress.criteriaProgress[index].currentValue)})`
+                                                                                : `💰 Faltam ${formatCurrency(criterion.target_value - unifiedProgress.criteriaProgress[index].currentValue)}`
+                                                                        }
+                                                                    </div>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     );
                                                 });

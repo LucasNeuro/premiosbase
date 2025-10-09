@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Goal } from '../types';
-import { updateAllUserCampaignProgressAuxiliar } from '../services/campaignProgressAuxiliar';
+// Removido import do serviço antigo - agora usa apenas UnifiedCampaignProgressServiceV2
 import { CampaignStatusCorrectionService } from '../services/campaignStatusCorrectionService';
 import { useRealtimeListener } from './useRealtimeEvents';
 

@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { calculateCampaignProgressAuxiliar } from './campaignProgressAuxiliar';
+import { UnifiedCampaignProgressServiceV2 } from './UnifiedCampaignProgressServiceV2';
 
 /**
  * Serviço unificado para cálculo de progresso
@@ -20,8 +20,8 @@ export class UnifiedProgressService {
         try {
             console.log(`🔄 UnifiedProgressService - Calculando progresso unificado para campanha: ${campaignId}`);
 
-            // Usar EXATAMENTE a mesma lógica do corretor
-            const progressData = await calculateCampaignProgressAuxiliar(campaignId);
+            // Usar o novo serviço unificado
+            const progressData = await UnifiedCampaignProgressServiceV2.calculateCampaignProgress(campaignId);
             
             if (!progressData) {
                 console.log('❌ UnifiedProgressService - Nenhum dado de progresso retornado');

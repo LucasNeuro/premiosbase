@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { calculateCampaignProgressAuxiliar } from '../services/campaignProgressAuxiliar';
+import { UnifiedCampaignProgressServiceV2 } from '../services/UnifiedCampaignProgressServiceV2';
 
 interface RealtimeProgressData {
   campaignId: string;
@@ -31,8 +31,8 @@ export const useRealtimeCampaignProgress = (campaignId?: string) => {
         return;
       }
 
-      // Calcular progresso usando o mesmo serviço
-      const progressResult = await calculateCampaignProgressAuxiliar(campaign);
+      // Calcular progresso usando o novo serviço unificado
+      const progressResult = await UnifiedCampaignProgressServiceV2.calculateCampaignProgress(campaignId);
       
       if (progressResult) {
         const newProgressData: RealtimeProgressData = {

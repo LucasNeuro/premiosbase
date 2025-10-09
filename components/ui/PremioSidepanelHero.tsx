@@ -8,7 +8,7 @@ interface PremioSidepanelHeroProps {
             nome: string;
             imagem_url?: string;
             imagem_miniatura_url?: string;
-            valor_estimado: number;
+            valor_estimado?: number;
         };
         quantidade: number;
     }>;
@@ -101,7 +101,7 @@ const PremioSidepanelHero: React.FC<PremioSidepanelHeroProps> = ({
                                     <span>Qtd: {premios[currentIndex].quantidade}</span>
                                     <span>•</span>
                                     <span className="font-semibold text-lg">
-                                        R$ {premios[currentIndex].premio.valor_estimado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                        R$ {(premios[currentIndex].premio.valor_estimado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                                     </span>
                                 </div>
                             </div>

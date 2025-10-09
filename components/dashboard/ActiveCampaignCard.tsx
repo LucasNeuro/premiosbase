@@ -88,7 +88,42 @@ const ActiveCampaignCard: React.FC<ActiveCampaignCardProps> = ({
     }, [campaign.campanhas_premios]);
 
     const daysRemaining = calculateDaysRemaining(campaign.end_date);
-    const progressPercentage = Math.min((campaign.progress_percentage || 0), 100);
+    
+    // 🔧 USAR NOVO SERVIÇO UNIFICADO PARA CALCULAR PROGRESSO
+    const [unifiedProgress, setUnifiedProgress] = useState<any>(null);
+    const [progressLoading, setProgressLoading] = useState(false);
+    
+    useEffect(() => {
+        const calculateProgress = async () => {
+            setProgressLoading(true);
+            try {
+                const { UnifiedCampaignProgressServiceV2 } = await import('../../services/UnifiedCampaignProgressServiceV2');
+                const result = await UnifiedCampaignProgressServiceV2.calculateCampaignProgress(campaign.id);
+                if (result) {
+                    setUnifiedProgress(result);
+                    console.log('🎯 Progresso unificado calculado:', {
+                        campaignId: campaign.id,
+                        progressPercentage: result.progressPercentage,
+                        isCompleted: result.isCompleted,
+                        criteriaProgress: result.criteriaProgress
+                    });
+                }
+            } catch (error) {
+                console.error('❌ Erro ao calcular progresso unificado:', error);
+                // Fallback para o valor antigo
+                setUnifiedProgress({
+                    progressPercentage: Math.min((campaign.progress_percentage || 0), 100),
+                    isCompleted: false
+                });
+            } finally {
+                setProgressLoading(false);
+            }
+        };
+        
+        calculateProgress();
+    }, [campaign.id]);
+    
+    const progressPercentage = unifiedProgress?.progressPercentage || Math.min((campaign.progress_percentage || 0), 100);
 
     return (
         <div className="bg-[#1E293B] rounded-xl shadow-lg overflow-hidden relative">
@@ -294,27 +329,8 @@ const ActiveCampaignCard: React.FC<ActiveCampaignCardProps> = ({
                                             );
                                         }
 
-                                        // Adicionar informações da tabela goals primeiro - organizadas por prioridade
-                                        const goalsInfo = [
-                                            {
-                                                label: 'Tipo de Campanha',
-                                                value: campaign.type === 'valor' ? 'Valor' : 
-                                                       campaign.type === 'apolices' ? 'Apólices' : 
-                                                       campaign.type === 'crescimento' ? 'Crescimento' : campaign.type,
-                                                icon: <TrendingUp className="w-4 h-4 text-green-400" />
-                                            },
-                                            {
-                                                label: 'Meta Total',
-                                                value: formatCurrency(campaign.target),
-                                                icon: <DollarSign className="w-4 h-4 text-green-400" />
-                                            },
-                                            {
-                                                label: 'Tipo de Alvo',
-                                                value: (campaign as any).target_type === 'individual' ? 'Individual' : 
-                                                       (campaign as any).target_type === 'group' ? 'Grupo' : (campaign as any).target_type || 'Individual',
-                                                icon: <Users className="w-4 h-4 text-green-400" />
-                                            }
-                                        ];
+                                        // Informações básicas da campanha - removendo informações redundantes
+                                        const goalsInfo = [];
 
                                         // Adicionar informações adicionais se disponíveis
                                         const additionalInfo = [];
