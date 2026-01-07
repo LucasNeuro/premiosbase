@@ -9,7 +9,7 @@ import Alert from '../ui/Alert';
 import { CnpjCard } from '../ui/CnpjCard';
 import { fetchCnpjData } from '../../services/cnpjService';
 import { validateCpds } from '../../services/cpdService';
-import { phoneMask, cnpjMask, cpdMask } from '../../utils/masks';
+import { phoneMask, cnpjMask, cpdMask, cpfMask } from '../../utils/masks';
 import { Plus, Trash2, ArrowLeft, ArrowRight, Lock, Eye, EyeOff, CheckCircle, XCircle } from 'lucide-react';
 
 const ModernRegisterForm: React.FC = () => {
@@ -18,11 +18,13 @@ const ModernRegisterForm: React.FC = () => {
     const [cpds, setCpds] = useState<string[]>(['']);
     const [showPassword, setShowPassword] = useState(false);
     const [hasMultipleCpds, setHasMultipleCpds] = useState(false);
+    const [documentType, setDocumentType] = useState<'cpf' | 'cnpj'>('cnpj');
     const [formData, setFormData] = useState({
         name: '',
         phone: '',
         email: '',
         cnpj: '',
+        cpf: '',
         password: '',
     });
     const [message, setMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
@@ -99,6 +101,7 @@ const ModernRegisterForm: React.FC = () => {
         
         if (name === 'phone') maskedValue = phoneMask(value);
         if (name === 'cnpj') maskedValue = cnpjMask(value);
+        if (name === 'cpf') maskedValue = cpfMask(value);
         
         setFormData(prev => ({ ...prev, [name]: maskedValue }));
         
@@ -109,6 +112,17 @@ const ModernRegisterForm: React.FC = () => {
 
         if (name === 'cnpj' && value.length !== 18) {
             setCnpjData(null);
+        }
+        
+        // Limpar o outro campo quando um é preenchido
+        if (name === 'cnpj' && value.length > 0) {
+            setFormData(prev => ({ ...prev, cpf: '' }));
+            setDocumentType('cnpj');
+        }
+        if (name === 'cpf' && value.length > 0) {
+            setFormData(prev => ({ ...prev, cnpj: '' }));
+            setCnpjData(null);
+            setDocumentType('cpf');
         }
 
         // Verificar força da senha
@@ -182,7 +196,27 @@ const ModernRegisterForm: React.FC = () => {
         if (!formData.name.trim()) newErrors.name = 'Nome é obrigatório';
         if (!formData.phone.trim()) newErrors.phone = 'Telefone é obrigatório';
         if (!formData.email.trim()) newErrors.email = 'Email é obrigatório';
-        if (!formData.cnpj.trim()) newErrors.cnpj = 'CNPJ é obrigatório';
+        
+        // Validar CPF ou CNPJ baseado no tipo de documento escolhido
+        if (documentType === 'cnpj') {
+            if (!formData.cnpj.trim()) {
+                newErrors.cnpj = 'CNPJ é obrigatório';
+            } else if (formData.cnpj.length !== 18) {
+                newErrors.cnpj = 'CNPJ inválido (deve ter 18 caracteres)';
+            }
+        } else if (documentType === 'cpf') {
+            if (!formData.cpf.trim()) {
+                newErrors.cpf = 'CPF é obrigatório';
+            } else if (formData.cpf.length !== 14) {
+                newErrors.cpf = 'CPF inválido (deve ter 14 caracteres)';
+            }
+        } else {
+            // Fallback: pelo menos um deve ser preenchido
+            if (!formData.cnpj.trim() && !formData.cpf.trim()) {
+                newErrors.document = 'CPF ou CNPJ é obrigatório';
+            }
+        }
+        
         if (cpds.some(cpd => !cpd.trim())) newErrors.cpds = 'Todos os CPDs são obrigatórios';
         if (!formData.password.trim()) newErrors.password = 'Senha é obrigatória';
         
@@ -221,7 +255,8 @@ const ModernRegisterForm: React.FC = () => {
             return;
         }
         
-        if (!cnpjData) {
+        // Validar CNPJ apenas se estiver preenchido
+        if (formData.cnpj && !cnpjData) {
             console.log('❌ CNPJ não validado');
             setMessage({ text: 'Por favor, valide o CNPJ antes de continuar.', type: 'error' });
             return;
@@ -257,7 +292,8 @@ const ModernRegisterForm: React.FC = () => {
             name: formData.name,
             phone: formData.phone,
             email: formData.email,
-            cnpj: formData.cnpj,
+            cnpj: formData.cnpj || undefined,
+            cpf: formData.cpf || undefined,
             cpd: cpds[0], // Primeiro CPD como string
             password: formData.password,
             hasMultipleCpds: hasMultipleCpds,
@@ -265,7 +301,7 @@ const ModernRegisterForm: React.FC = () => {
                 id: (index + 2).toString(), 
                 number: cpd 
             })) : undefined,
-            cnpjData: cnpjDataForDB, // Dados estruturados para o banco
+            cnpjData: cnpjDataForDB, // Dados estruturados para o banco (apenas se CNPJ)
         };
 
         console.log('📤 Enviando userData:', userData);
@@ -502,32 +538,84 @@ const ModernRegisterForm: React.FC = () => {
 
             {message && <Alert message={message.text} type={message.type} onClose={() => setMessage(null)} />}
 
-            <div className="space-y-">
+            <div className="space-y-6">
                 {/* Dados pessoais */}
                 <div className="space-y-6">
+                    {/* Seleção de tipo de documento */}
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                            Tipo de Cadastro *
+                        </label>
+                        <div className="flex space-x-4">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setDocumentType('cnpj');
+                                    setFormData(prev => ({ ...prev, cpf: '' }));
+                                    setCnpjData(null);
+                                }}
+                                className={`flex-1 px-4 py-2 rounded-lg border-2 transition-all ${
+                                    documentType === 'cnpj'
+                                        ? 'border-red-600 bg-red-50 text-red-700 font-semibold'
+                                        : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                                }`}
+                            >
+                                Pessoa Jurídica (CNPJ)
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setDocumentType('cpf');
+                                    setFormData(prev => ({ ...prev, cnpj: '' }));
+                                    setCnpjData(null);
+                                }}
+                                className={`flex-1 px-4 py-2 rounded-lg border-2 transition-all ${
+                                    documentType === 'cpf'
+                                        ? 'border-red-600 bg-red-50 text-red-700 font-semibold'
+                                        : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                                }`}
+                            >
+                                Pessoa Física (CPF)
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Primeira linha - 2 campos */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="relative">
+                {documentType === 'cnpj' ? (
+                    <div className="relative">
+                        <ModernInput
+                            id="cnpj"
+                            name="cnpj"
+                            label="CNPJ*"
+                            value={formData.cnpj}
+                            onChange={handleInputChange}
+                            onBlur={handleCnpjBlur}
+                            placeholder="00.000.000/0000-00"
+                            required
+                            error={errors.cnpj}
+                        />
+                        {isCnpjLoading && (
+                            <div className="absolute top-9 right-3 text-gray-400">
+                                <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                        )}
+                    </div>
+                ) : (
                     <ModernInput
-                        id="cnpj"
-                        name="cnpj"
-                                label="CNPJ*"
-                        value={formData.cnpj}
+                        id="cpf"
+                        name="cpf"
+                        label="CPF*"
+                        value={formData.cpf}
                         onChange={handleInputChange}
-                        onBlur={handleCnpjBlur}
-                        placeholder="00.000.000/0000-00"
+                        placeholder="000.000.000-00"
                         required
-                        error={errors.cnpj}
+                        error={errors.cpf || errors.document}
                     />
-                    {isCnpjLoading && (
-                        <div className="absolute top-9 right-3 text-gray-400">
-                            <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                        </div>
-                    )}
-                </div>
+                )}
                 
                 <ModernInput
                     id="name"
@@ -661,7 +749,8 @@ const ModernRegisterForm: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Dados da empresa - sempre visíveis */}
+                {/* Dados da empresa - apenas para CNPJ */}
+                {documentType === 'cnpj' && cnpjData && (
                 <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-gray-900">Dados da Empresa</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -751,6 +840,7 @@ const ModernRegisterForm: React.FC = () => {
                         />
                     </div>
                 </div>
+                )}
 
                 {/* Espaçamento antes dos botões */}
                 <div className="mt-8"></div>

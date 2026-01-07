@@ -21,6 +21,15 @@ export const cpdMask = (value: string): string => {
     return value.replace(/\D/g, '').substring(0, 6);
 };
 
+export const cpfMask = (value: string): string => {
+    return value
+        .replace(/\D/g, '')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1-$2')
+        .substring(0, 14);
+};
+
 export const currencyMask = (value: string): string => {
     if (!value || value.trim() === '') {
         return '';

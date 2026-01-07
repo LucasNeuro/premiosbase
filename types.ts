@@ -4,7 +4,8 @@ export interface User {
     name: string;
     phone: string;
     email: string;
-    cnpj: string;
+    cnpj?: string;
+    cpf?: string;
     cpd: string;
     hasMultipleCpds?: boolean;
     is_admin?: boolean;

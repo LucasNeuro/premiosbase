@@ -109,10 +109,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log('🔐 REGISTER: Iniciando cadastro com:', userData);
             // Check if user already exists
             console.log('🔍 REGISTER: Verificando usuários existentes...');
+            
+            // Construir query de verificação dinamicamente
+            let orConditions = `email.eq.${userData.email}`;
+            if (userData.cnpj) {
+                orConditions += `,cnpj.eq.${userData.cnpj}`;
+            }
+            if (userData.cpf) {
+                orConditions += `,cpf.eq.${userData.cpf}`;
+            }
+            if (userData.cpd) {
+                orConditions += `,cpd.eq.${userData.cpd}`;
+            }
+            
             const { data: existingUsers, error: checkError } = await supabase
                 .from('users')
-                .select('email, cnpj, cpd')
-                .or(`email.eq.${userData.email},cnpj.eq.${userData.cnpj}${userData.cpd ? `,cpd.eq.${userData.cpd}` : ''}`);
+                .select('email, cnpj, cpf, cpd')
+                .or(orConditions);
 
             console.log('🔍 REGISTER: Resultado da verificação:', { existingUsers, checkError });
 
@@ -124,8 +137,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (existingUser.email === userData.email) {
                     return { success: false, message: 'Email já cadastrado.' };
                 }
-                if (existingUser.cnpj === userData.cnpj) {
+                if (userData.cnpj && existingUser.cnpj === userData.cnpj) {
                     return { success: false, message: 'CNPJ já cadastrado.' };
+                }
+                if (userData.cpf && existingUser.cpf === userData.cpf) {
+                    return { success: false, message: 'CPF já cadastrado.' };
                 }
                 if (userData.cpd && existingUser.cpd === userData.cpd) {
                     return { success: false, message: 'CPD já cadastrado.' };
@@ -136,15 +152,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const passwordHash = await bcrypt.hash(userData.password, 10);
             
                    // Create user record in our custom users table
+                   // Tratar strings vazias como null para CPF e CNPJ
+                   const cnpjValue = userData.cnpj && userData.cnpj.trim() ? userData.cnpj.trim() : null;
+                   const cpfValue = userData.cpf && userData.cpf.trim() ? userData.cpf.trim() : null;
+                   
                    const userInsertData: any = {
                        name: userData.name,
                        phone: userData.phone,
                        email: userData.email,
-                       cnpj: userData.cnpj,
+                       cnpj: cnpjValue,
+                       cpf: cpfValue,
                        has_multiple_cpds: userData.hasMultipleCpds || false,
                        password_hash: passwordHash,
                        cnpj_data: userData.cnpjData || null, // Dados completos do CNPJ
-                       // Campos adicionais da tabela users
+                       // Campos adicionais da tabela users (apenas para CNPJ)
                        natureza_juridica: userData.cnpjData?.natureza_juridica || null,
                        endereco: userData.cnpjData?.endereco || null,
                        capital_social: userData.cnpjData?.capital_social || null,
@@ -163,7 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                    const { data: newUser, error: userError } = await supabase
                        .from('users')
                        .insert(userInsertData)
-                       .select('id, name, phone, email, cnpj, cpd, has_multiple_cpds')
+                       .select('id, name, phone, email, cnpj, cpf, cpd, has_multiple_cpds')
                        .single();
 
                    console.log('💾 REGISTER: Resultado da inserção:', { newUser, userError });

@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { X, Save, User, Mail, Phone, Building, Shield, Plus, Trash2 } from 'lucide-react';
+import { phoneMask, cnpjMask, cpfMask } from '../../utils/masks';
 
 interface User {
     id: string;
     name: string;
     email: string;
     phone: string;
-    cnpj: string;
+    cnpj?: string;
+    cpf?: string;
     cpd: any;
     is_admin: boolean;
     created_at: string;
@@ -37,6 +39,7 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
         email: user?.email || '',
         phone: user?.phone || '',
         cnpj: user?.cnpj || '',
+        cpf: user?.cpf || '',
         is_admin: user?.is_admin || false
     });
 
@@ -84,10 +87,25 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value, type, checked } = e.target;
+        let maskedValue = value;
+        
+        // Aplicar máscaras
+        if (name === 'phone') maskedValue = phoneMask(value);
+        if (name === 'cnpj') maskedValue = cnpjMask(value);
+        if (name === 'cpf') maskedValue = cpfMask(value);
+        
         setFormData(prev => ({
             ...prev,
-            [name]: type === 'checkbox' ? checked : value
+            [name]: type === 'checkbox' ? checked : maskedValue
         }));
+        
+        // Limpar o outro campo quando um é preenchido
+        if (name === 'cnpj' && maskedValue.length > 0) {
+            setFormData(prev => ({ ...prev, cpf: '' }));
+        }
+        if (name === 'cpf' && maskedValue.length > 0) {
+            setFormData(prev => ({ ...prev, cnpj: '' }));
+        }
     };
 
     const addCpd = () => {
@@ -128,8 +146,8 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.cnpj.trim()) {
-            alert('Preencha todos os campos obrigatórios');
+        if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim() || (!formData.cnpj.trim() && !formData.cpf.trim())) {
+            alert('Preencha todos os campos obrigatórios (CPF ou CNPJ é necessário)');
             return;
         }
 
@@ -139,11 +157,12 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
             // Preparar dados dos CPDs
             const cpdData = cpds.length > 0 ? { cpds } : null;
             
-            const userData = {
+            const userData: any = {
                 name: formData.name.trim(),
                 email: formData.email.trim(),
                 phone: formData.phone.trim(),
-                cnpj: formData.cnpj.trim(),
+                cnpj: formData.cnpj.trim() || null,
+                cpf: formData.cpf.trim() || null,
                 cpd: cpdData,
                 is_admin: formData.is_admin,
                 updated_at: new Date().toISOString()
@@ -255,22 +274,40 @@ const AdminUsersSidepanel: React.FC<AdminUsersSidepanelProps> = ({
                         </div>
                     </div>
 
-                    {/* CNPJ */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            CNPJ *
-                        </label>
-                        <div className="relative">
-                            <Building className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                            <input
-                                type="text"
-                                name="cnpj"
-                                value={formData.cnpj}
-                                onChange={handleInputChange}
-                                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                placeholder="00.000.000/0000-00"
-                                required
-                            />
+                    {/* CNPJ ou CPF */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                CNPJ
+                            </label>
+                            <div className="relative">
+                                <Building className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="text"
+                                    name="cnpj"
+                                    value={formData.cnpj}
+                                    onChange={handleInputChange}
+                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="00.000.000/0000-00"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                CPF
+                            </label>
+                            <div className="relative">
+                                <User className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                <input
+                                    type="text"
+                                    name="cpf"
+                                    value={formData.cpf}
+                                    onChange={handleInputChange}
+                                    className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="000.000.000-00"
+                                />
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">Preencha CPF ou CNPJ (pelo menos um)</p>
                         </div>
                     </div>
 
