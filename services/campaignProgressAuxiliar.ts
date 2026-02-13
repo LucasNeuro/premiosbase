@@ -57,6 +57,7 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
     }
 
     // 2. Buscar apólices vinculadas através da tabela de links (somente após aceitar)
+    console.log(`🔍 Debug - Buscando apólices vinculadas para campanha ${campaignId}`);
     const { data: linkedData, error: linkError } = await supabase
       .from('policy_campaign_links')
       .select(`
@@ -77,8 +78,11 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
       .eq('policies.status', 'active');
 
     if (linkError) {
+      console.error('❌ Debug - Erro ao buscar apólices vinculadas:', linkError);
       return null;
     }
+
+    console.log(`📊 Debug - Encontradas ${linkedData?.length || 0} vinculações ativas`);
 
     // 🎯 FILTRO RIGOROSO: Só contar apólices criadas APÓS aceite da campanha
     const acceptedAt = campaign.accepted_at ? new Date(campaign.accepted_at) : new Date();
@@ -241,18 +245,35 @@ export const calculateCampaignProgressAuxiliar = async (campaignId: string): Pro
     } else if (parsedCriteria) {
       }
     
-    // Fallback para campanhas sem critérios específicos
+    // 🔧 CORREÇÃO CRÍTICA: Fallback para campanhas tradicionais (sem critérios específicos)
     if (criteriaResults.length === 0) {
+      console.log('🔍 Debug - Campanha tradicional sem critérios específicos');
+      
       if (campaign.type === 'valor') {
+        // Campanha por valor: somar valores das apólices vinculadas
         currentValue = linkedPolicies.reduce((sum: number, link: any) => {
           return sum + (link.policies?.premium_value || 0);
         }, 0);
         progressPercentage = campaign.target > 0 ? (currentValue / campaign.target) * 100 : 0;
         isCompleted = progressPercentage >= 100;
+        
+        console.log(`📊 Debug - Campanha por valor: ${currentValue}/${campaign.target} = ${progressPercentage.toFixed(1)}%`);
         } else if (campaign.type === 'apolices') {
+        // Campanha por quantidade: contar número de apólices vinculadas
         currentValue = linkedPolicies.length;
         progressPercentage = campaign.target > 0 ? (currentValue / campaign.target) * 100 : 0;
         isCompleted = progressPercentage >= 100;
+        
+        console.log(`📊 Debug - Campanha por quantidade: ${currentValue}/${campaign.target} = ${progressPercentage.toFixed(1)}%`);
+        } else {
+        // Tipo não reconhecido - usar valor como fallback
+        currentValue = linkedPolicies.reduce((sum: number, link: any) => {
+          return sum + (link.policies?.premium_value || 0);
+        }, 0);
+        progressPercentage = campaign.target > 0 ? (currentValue / campaign.target) * 100 : 0;
+        isCompleted = progressPercentage >= 100;
+        
+        console.log(`📊 Debug - Tipo não reconhecido (${campaign.type}), usando valor: ${currentValue}/${campaign.target} = ${progressPercentage.toFixed(1)}%`);
         }
     }
 
